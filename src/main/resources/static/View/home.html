@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Inicio - PMV</title>
+  <link rel="stylesheet" href="styles.css">
+  <script type="module" src="main2.js"></script>
+</head>
+<body>
+  <!-- Barra superior -->
+  <header class="topbar">
+    <div class="brand">Inicio</div>
+    <!-- Icono perfil -->
+    <button id="profileBtn" class="profile-btn" title="Editar perfil" aria-label="Abrir perfil">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+        <circle cx="12" cy="8" r="3.2" stroke="currentColor" stroke-width="1.2"/>
+        <path d="M4 20c0-3.3 4-5.5 8-5.5s8 2.2 8 5.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+      </svg>
+    </button>
+  </header>
+ 
+  <main class="main-empty">
+    <div class="centered">
+      <h1>Bienvenido</h1>
+    </div>
+  </main>
+
+  <div id="profileModal" class="modal" aria-hidden="true">
+    <div class="modal-content">
+      <header class="modal-header">
+        <h3>Editar perfil</h3>
+        <button id="closeModal" class="modal-close">&times;</button>
+      </header>
+
+      <div class="modal-body">
+        <form id="profileForm">
+          <label for="celular">Celular</label>
+          <input id="celular" name="celular" type="text" placeholder="3101234567">
+
+          <label for="password">Nueva contraseña</label>
+          <input id="password" name="password" type="password" placeholder="********">
+
+          <label for="foto">Foto de perfil</label>
+          <input id="foto" name="foto" type="file" accept="image/*">
+
+          <div class="form-row">
+            <button type="submit" class="btn primary">Guardar</button>
+            <button type="button" id="cancelBtn" class="btn ghost">Cancelar</button>
+          </div>
+
+          <div id="profileMsg" class="form-msg" role="status"></div>
+        </form>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,147 @@
+package com.gestion.eventos.Service;
+
+import java.util.List;
+import java.util.Optional;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.stereotype.Service;
+
+import com.gestion.eventos.Model.UsuarioModel;
+import com.gestion.eventos.Repository.IUsuarioRepository;
+
+@Service
+public class UsuarioServiceImp implements IUsuarioService {
+    
+    @Autowired IUsuarioRepository usuarioRepository;  
+    @Autowired JavaMailSender mailSender;
+   
+    @Override
+    public UsuarioModel guardarUsuario(UsuarioModel usuarios) {
+        // Validación de campos obligatorios
+         if(usuarios.getIdentificacion()==null || usuarios.getNombre()==null || usuarios.getApellido()==null ||
+        usuarios.getCorreoInstitucional()==null || usuarios.getContrasena()==null || usuarios.getRol()==null){
+            throw new RuntimeException("Hay campos obligatorios vacíos");
+        }
+        //Validar correo institucional
+        if(!usuarios.getCorreoInstitucional().endsWith("@uao.edu.co")){
+            throw new RuntimeException("Solo se permite el uso del correo institucional");
+        }
+        // Validación de usuario único
+        if(usuarioRepository.findByIdentificacion(usuarios.getIdentificacion()).isPresent()){
+            throw new RuntimeException("Ya existe un usuario con ese número de identificación");
+        }
+        if(usuarioRepository.findByCorreoInstitucional(usuarios.getCorreoInstitucional()).isPresent()){
+            throw new RuntimeException("Ya existe un usuario registrado con ese correo");
+        }
+        //Campos opcionales según el rol
+        switch (usuarios.getRol()) {
+            case estudiante -> {
+                if(usuarios.getCodigo()==null || usuarios.getCodigo_programa()==null){
+                    throw new RuntimeException("El estudiante debe llenar su código y código del programa");
+                }
+            }
+            case docente -> {
+                if(usuarios.getCodigo_unidad()==null){
+                    throw new RuntimeException("El docente debe estar asociado a una unidad académica");
+                }
+            }
+            case secretaria_academica -> {
+                if(usuarios.getId_facultad()==null){
+                    throw new RuntimeException("La secretaría debe tener una facultad asociada");
+                }
+            }
+            default -> {
+            }
+        }
+        return usuarioRepository.save(usuarios);    
+    }
+ 
+
+    @Override
+    public List<UsuarioModel> listarUsuario() {
+        return usuarioRepository.findAll();
+    }
+
+    @Override
+    public UsuarioModel autenticarUsuario(String correoInstitucional, String contrasena) {
+        if (correoInstitucional == null || correoInstitucional.trim().isEmpty()) {
+            throw new IllegalArgumentException("El correo es obligatorio para autenticación");
+        }
+        if (contrasena == null || contrasena.trim().isEmpty()) {
+            throw new IllegalArgumentException("La contraseña es obligatoria para autenticación");
+        }
+
+        Optional<UsuarioModel> usuarioOpt = usuarioRepository.findByCorreoInstitucional(correoInstitucional);
+        if (usuarioOpt.isEmpty()) {
+            throw new IllegalArgumentException("Credenciales inválidas");
+        }
+
+        UsuarioModel usuario = usuarioOpt.get();
+        
+        // Verificación de contraseña (INSEGURO: comparación directa)
+        if (!contrasena.equals(usuario.getContrasena())) {
+            throw new IllegalArgumentException("Credenciales inválidas");
+        }
+
+        return usuario;
+    }
+
+    @Override
+    public void enviarCredencialesPorCorreo(String correo) {
+        if (correo == null || correo.trim().isEmpty()) {
+            throw new IllegalArgumentException("El correo es obligatorio");
+        }
+
+        Optional<UsuarioModel> usuarioOpt = usuarioRepository.findByCorreoInstitucional(correo);
+        if (usuarioOpt.isEmpty()) {
+            throw new IllegalArgumentException("No existe un usuario con ese correo");
+        }
+
+        UsuarioModel usuario = usuarioOpt.get();
+        String contrasena = usuario.getContrasena();
+
+        SimpleMailMessage mensaje = new SimpleMailMessage();
+        mensaje.setTo(correo);
+        mensaje.setSubject("Recuperación de credenciales");
+        mensaje.setText("Hola " + usuario.getNombre() + 
+                        ",\n\nTu contraseña registrada en el sistema es: " + contrasena +
+                        "\n\nPor seguridad, te recomendamos cambiarla después de iniciar sesión.");
+
+        
+                        
+        mailSender.send(mensaje);
+    }
+    @Override
+    public UsuarioModel actualizarPerfil(Integer identificacion, String nuevaContrasena, String nuevoCelular) {
+    Optional<UsuarioModel> usuarioOpt = usuarioRepository.findById(identificacion);
+    if (usuarioOpt.isEmpty()) {
+        throw new RuntimeException("El usuario no existe");
+    }
+
+    UsuarioModel usuario = usuarioOpt.get();
+
+    if (nuevaContrasena != null && !nuevaContrasena.trim().isEmpty()) {
+        usuario.setContrasena(nuevaContrasena);
+    }
+
+    if (nuevoCelular != null && !nuevoCelular.trim().isEmpty()) {
+    // Validar que tenga exactamente 10 dígitos
+    if (!nuevoCelular.matches("\\d{10}")) {
+        throw new RuntimeException("El número de celular debe contener exactamente 10 dígitos");
+    }
+    usuario.setCelular(nuevoCelular);
+    }
+
+
+    return usuarioRepository.save(usuario);
+    }
+
+}
+
+
+
+
+
+

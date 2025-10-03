@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Registro de Usuario</title>
+  <link rel="stylesheet" href="style.css">
+  <script type="module" src="main1.js"></script>
+</head>
+<body>
+  <div class="form-container">
+    <h2>Crear Cuenta</h2>
+    <form action="/usuarios/registrar" method="POST">
+
+      <label for="identificacion">Identificación</label>
+      <input type="number" id="identificacion" name="identificacion" required>
+
+      <label for="nombre">Nombre</label>
+      <input type="text" id="nombre" name="nombre" required>
+
+      <label for="apellido">Apellido</label>
+      <input type="text" id="apellido" name="apellido" required>
+
+      <label for="correo">Correo institucional</label>
+      <input type="email" id="correo" name="correo" required>
+
+      <label for="rol">Rol</label>
+      <select id="rol" name="rol" required>
+        <option value="">Seleccione un rol</option>
+        <option value="estudiante">Estudiante</option>
+        <option value="docente">Docente</option>
+        <option value="secretaria_academica">Secretaría Académica</option>
+      </select>
+
+      <div id="extra-fields"></div>
+
+      <label for="password">Contraseña</label>
+      <input type="password" id="password" name="password" required>
+
+      <button type="submit">Registrarse</button>
+    </form>
+    <p>¿Ya tienes cuenta? <a href="inicio.html">Inicia sesión</a></p>
+  </div>
+
+  <script>
+    const rolSelect = document.getElementById("rol");
+    const extraFields = document.getElementById("extra-fields");
+
+    rolSelect.addEventListener("change", function () {
+      extraFields.innerHTML = ""; 
+
+      if (this.value === "estudiante") {
+        extraFields.innerHTML = `
+          <label for="codigo">Código</label>
+          <input type="text" id="codigo" name="codigo" required>
+
+          <label for="codigo_programa">Código Programa</label>
+          <input type="text" id="codigo_programa" name="Código programa" required>
+        `;
+      } else if (this.value === "docente") {
+        extraFields.innerHTML = `
+          <label for="unidad_academica">Unidad Académica</label>
+          <input type="text" id="unidad_academica" name="unidad_academica" required>
+        `;
+      } else if (this.value === "secretaria_academica") {
+        extraFields.innerHTML = `
+          <label for="facultad">Facultad</label>
+          <input type="text" id="facultad" name="facultad" required>
+        `;
+      }
+    });
+  </script>
+</body>
+</html>
