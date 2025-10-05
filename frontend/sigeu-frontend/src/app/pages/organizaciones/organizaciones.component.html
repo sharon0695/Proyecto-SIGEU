@@ -1,0 +1,7 @@
+<div class="container">
+  <h1>Organizaciones</h1>
+  <div *ngIf="loading">Cargando...</div>
+  <ul>
+    <li *ngFor="let o of organizaciones">{{ o.nombre }} ({{ o.nit }})</li>
+  </ul>
+</div>
