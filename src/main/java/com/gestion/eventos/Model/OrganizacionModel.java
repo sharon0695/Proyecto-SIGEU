@@ -7,7 +7,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 @Entity
-@Table (name ="OrganizacionExt")
+@Table (name ="Organizacion")
 @Data
 @AllArgsConstructor
 @NoArgsConstructor

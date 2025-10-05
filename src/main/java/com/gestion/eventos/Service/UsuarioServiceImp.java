@@ -6,18 +6,22 @@ import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.gestion.eventos.DTO.LoginRequest;
+import com.gestion.eventos.DTO.LoginResponse;
 import com.gestion.eventos.Model.UsuarioModel;
 import com.gestion.eventos.Repository.IUsuarioRepository;
+import com.gestion.eventos.Security.JwtUtil;
+import com.gestion.eventos.Security.TokenBlacklistService;
 
 @Service
 public class UsuarioServiceImp implements IUsuarioService {
     
     @Autowired IUsuarioRepository usuarioRepository;  
     @Autowired JavaMailSender mailSender;
-    @Autowired PasswordEncoder passwordEncoder;
+    @Autowired JwtUtil jwtUtil;
+    @Autowired TokenBlacklistService tokenBlacklistService;
    
     @Override
     public UsuarioModel guardarUsuario(UsuarioModel usuarios) {
@@ -57,7 +61,6 @@ public class UsuarioServiceImp implements IUsuarioService {
             default -> {
             }
         }
-        usuarios.setContrasena(passwordEncoder.encode(usuarios.getContrasena()));
         return usuarioRepository.save(usuarios);    
     }
  
@@ -68,28 +71,41 @@ public class UsuarioServiceImp implements IUsuarioService {
     }
 
     @Override
-    public UsuarioModel autenticarUsuario(String correoInstitucional, String contrasena) {
-        if (correoInstitucional == null || correoInstitucional.trim().isEmpty()) {
-            throw new IllegalArgumentException("El correo es obligatorio para autenticación");
+    public LoginResponse login(LoginRequest request) {
+        String correo = request.getCorreoInstitucional();
+        String contrasena = request.getContrasena();
+
+        if (correo == null || correo.trim().isEmpty()) {
+            throw new IllegalArgumentException("El correo es obligatorio");
         }
         if (contrasena == null || contrasena.trim().isEmpty()) {
-            throw new IllegalArgumentException("La contraseña es obligatoria para autenticación");
+            throw new IllegalArgumentException("La contraseña es obligatoria");
         }
 
-        Optional<UsuarioModel> usuarioOpt = usuarioRepository.findByCorreoInstitucional(correoInstitucional);
+        Optional<UsuarioModel> usuarioOpt = usuarioRepository.findByCorreoInstitucional(correo);
         if (usuarioOpt.isEmpty()) {
             throw new IllegalArgumentException("Credenciales inválidas");
         }
 
         UsuarioModel usuario = usuarioOpt.get();
-        
-        // Verificación de contraseña (INSEGURO: comparación directa)
-        boolean matches = passwordEncoder.matches(contrasena, usuario.getContrasena());
-        if (!matches && !contrasena.equals(usuario.getContrasena())) {
+
+        // Aquí puedes usar BCrypt si ya lo tienes configurado
+        if (!contrasena.equals(usuario.getContrasena())) {
             throw new IllegalArgumentException("Credenciales inválidas");
         }
 
-        return usuario;
+        String token = jwtUtil.generateToken(usuario);
+
+        return new LoginResponse(
+            token,
+            "Bearer",
+            jwtUtil.getExpirationMillis(),
+            usuario.getIdentificacion(),
+            usuario.getNombre(),
+            usuario.getApellido(),
+            usuario.getCorreoInstitucional(),
+            usuario.getRol().name()
+        );
     }
 
     @Override
@@ -127,7 +143,7 @@ public class UsuarioServiceImp implements IUsuarioService {
     UsuarioModel usuario = usuarioOpt.get();
 
     if (nuevaContrasena != null && !nuevaContrasena.trim().isEmpty()) {
-        usuario.setContrasena(passwordEncoder.encode(nuevaContrasena));
+        usuario.setContrasena(nuevaContrasena);
     }
 
     if (nuevoCelular != null && !nuevoCelular.trim().isEmpty()) {
@@ -140,6 +156,14 @@ public class UsuarioServiceImp implements IUsuarioService {
 
 
     return usuarioRepository.save(usuario);
+    }
+
+    @Override
+    public void logout(String authHeader) {
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            String token = authHeader.substring(7);
+            tokenBlacklistService.blacklist(token);
+        }
     }
 
 }

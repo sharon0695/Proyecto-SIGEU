@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -26,36 +27,24 @@ public class UsuarioController {
     @Autowired IUsuarioService usuarioService;
     @Autowired JwtUtil jwtUtil;
     @Autowired TokenBlacklistService tokenBlacklistService;
+    
     @PostMapping ("/registrar")
     public ResponseEntity<UsuarioModel> crearUsuario(@RequestBody UsuarioModel usuario){
         return new ResponseEntity<>(usuarioService.guardarUsuario(usuario),HttpStatus.CREATED);
     }
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest request) {
-        UsuarioModel u = usuarioService.autenticarUsuario(request.getCorreoInstitucional(), request.getContrasena());
-        String token = jwtUtil.generateToken(u);
-        LoginResponse response = new LoginResponse(
-            token,
-            "Bearer",
-            jwtUtil.getExpirationMillis(),
-            u.getIdentificacion(),
-            u.getNombre(),
-            u.getApellido(),
-            u.getCorreoInstitucional(),
-            u.getRol().name()
-        );
+        LoginResponse response = usuarioService.login(request);
         return ResponseEntity.ok(response);
     }
+
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(@RequestHeader(value = "Authorization", required = false) String authHeader) {
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            String token = authHeader.substring(7);
-            tokenBlacklistService.blacklist(token);
-        }
-        return ResponseEntity.noContent().build();
+        usuarioService.logout(authHeader);
+        return ResponseEntity.noContent().build(); // 204 sin contenido
     }
     
-    @GetMapping ("/ruta")
+    @GetMapping ("/listar")
     public ResponseEntity<List<UsuarioModel>> listarUsuarios(){
         return new ResponseEntity<>(usuarioService.listarUsuario(), HttpStatus.OK);
     }
@@ -64,5 +53,15 @@ public class UsuarioController {
     public ResponseEntity<String> recuperarContrasena(@RequestParam String correo) {
         usuarioService.enviarCredencialesPorCorreo(correo);
         return ResponseEntity.ok("Se ha enviado la contraseña al correo registrado");
+    }
+
+    @PutMapping("/editarPerfil")
+    public ResponseEntity<UsuarioModel> editarPerfil(
+        @RequestParam Integer identificacion,
+        @RequestParam(required = false) String contrasena,
+        @RequestParam(required = false) String celular) {
+    
+    UsuarioModel actualizado = usuarioService.actualizarPerfil(identificacion, contrasena, celular);
+    return ResponseEntity.ok(actualizado);
     }
 }   

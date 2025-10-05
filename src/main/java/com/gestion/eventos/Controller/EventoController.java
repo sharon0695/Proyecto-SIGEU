@@ -16,14 +16,14 @@ import com.gestion.eventos.Service.IEventoService;
 
 
 @RestController
-@RequestMapping ("/rutaEve")
+@RequestMapping ("/Evento")
 public class EventoController {
     @Autowired IEventoService eventoService;
-    @PostMapping ("/ruta1")
+    @PostMapping ("/registrar")
     public ResponseEntity<EventoModel> crearEvento(@RequestBody EventoModel evento){
         return new ResponseEntity<>(eventoService.guardarEvento(evento),HttpStatus.CREATED);
     }
-    @GetMapping ("/ruta2")
+    @GetMapping ("/listar")
     public ResponseEntity<List<EventoModel>> listarEventos(){
         return new ResponseEntity<>(eventoService.listarEventos(), HttpStatus.OK);
     }

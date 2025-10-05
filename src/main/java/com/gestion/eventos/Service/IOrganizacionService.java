@@ -6,6 +6,7 @@ import com.gestion.eventos.Model.OrganizacionModel;
 
 public interface IOrganizacionService {
     OrganizacionModel guardarOrganizacion(OrganizacionModel organizacion);
-    List<OrganizacionModel> listarORganizaciones();
+    List<OrganizacionModel> listarOrganizaciones();
     String buscarOrganizacionPorNombre(String nombre);
+    OrganizacionModel editarOrganizacion(String nit, OrganizacionModel organizacionActualizada);
 }
