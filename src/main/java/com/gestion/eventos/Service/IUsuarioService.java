@@ -10,7 +10,6 @@ public interface IUsuarioService {
     List<UsuarioModel> listarUsuario();
     void enviarCredencialesPorCorreo(String correo);
     UsuarioModel actualizarPerfil(Integer identificacion, String nuevaContrasena, String nuevoCelular);
-
 }
 
 

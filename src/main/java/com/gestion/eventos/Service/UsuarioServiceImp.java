@@ -6,6 +6,7 @@ import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.gestion.eventos.Model.UsuarioModel;
@@ -16,6 +17,7 @@ public class UsuarioServiceImp implements IUsuarioService {
     
     @Autowired IUsuarioRepository usuarioRepository;  
     @Autowired JavaMailSender mailSender;
+    @Autowired PasswordEncoder passwordEncoder;
    
     @Override
     public UsuarioModel guardarUsuario(UsuarioModel usuarios) {
@@ -55,6 +57,7 @@ public class UsuarioServiceImp implements IUsuarioService {
             default -> {
             }
         }
+        usuarios.setContrasena(passwordEncoder.encode(usuarios.getContrasena()));
         return usuarioRepository.save(usuarios);    
     }
  
@@ -81,7 +84,8 @@ public class UsuarioServiceImp implements IUsuarioService {
         UsuarioModel usuario = usuarioOpt.get();
         
         // Verificación de contraseña (INSEGURO: comparación directa)
-        if (!contrasena.equals(usuario.getContrasena())) {
+        boolean matches = passwordEncoder.matches(contrasena, usuario.getContrasena());
+        if (!matches && !contrasena.equals(usuario.getContrasena())) {
             throw new IllegalArgumentException("Credenciales inválidas");
         }
 
@@ -123,7 +127,7 @@ public class UsuarioServiceImp implements IUsuarioService {
     UsuarioModel usuario = usuarioOpt.get();
 
     if (nuevaContrasena != null && !nuevaContrasena.trim().isEmpty()) {
-        usuario.setContrasena(nuevaContrasena);
+        usuario.setContrasena(passwordEncoder.encode(nuevaContrasena));
     }
 
     if (nuevoCelular != null && !nuevoCelular.trim().isEmpty()) {

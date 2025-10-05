@@ -7,7 +7,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 @Entity
-@Table (name ="Organizacion")
+@Table (name ="OrganizacionExt")
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -21,5 +21,3 @@ public class OrganizacionModel {
     private String sector_economico;
     private String actividad_principal;
 }
-
-
