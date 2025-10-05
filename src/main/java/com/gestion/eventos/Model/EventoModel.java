@@ -26,6 +26,5 @@ public class EventoModel {
     public enum estado{aprobado, rechazado, borrado, enviado, publicado}
     private estado estado;
     private String codigo_lugar;
-    private String documentoAval;
     private String nit_organizacion;
 }
