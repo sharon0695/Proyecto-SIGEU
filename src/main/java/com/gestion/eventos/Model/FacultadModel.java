@@ -16,6 +16,5 @@ public class FacultadModel {
     @Id
     private String id;
     private String nombre;
-    private String codigo_uniAcad;
-    private String codigo_programa;
+    private String decano;
 }

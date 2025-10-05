@@ -89,7 +89,6 @@ public class UsuarioServiceImp implements IUsuarioService {
 
         UsuarioModel usuario = usuarioOpt.get();
 
-        // Aquí puedes usar BCrypt si ya lo tienes configurado
         if (!contrasena.equals(usuario.getContrasena())) {
             throw new IllegalArgumentException("Credenciales inválidas");
         }

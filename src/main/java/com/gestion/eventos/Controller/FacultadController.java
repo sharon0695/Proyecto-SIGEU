@@ -15,14 +15,14 @@ import com.gestion.eventos.Model.FacultadModel;
 import com.gestion.eventos.Service.IFacultadService;
 
 @RestController
-@RequestMapping ("/rutaFac")
+@RequestMapping ("/facultad")
 public class FacultadController {
     @Autowired IFacultadService facultadService;
-    @PostMapping ("/ruta1")
+    @PostMapping ("/registrar")
     public ResponseEntity<FacultadModel> crearFacultad(@RequestBody FacultadModel facultad){
         return new ResponseEntity<>(facultadService.guardarFacultad(facultad),HttpStatus.CREATED);
     }
-    @GetMapping ("/ruta2")
+    @GetMapping ("/listar")
     public ResponseEntity<List<FacultadModel>> listarFacultades(){
         return new ResponseEntity<>(facultadService.listarFacultades(), HttpStatus.OK);
     }

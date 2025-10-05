@@ -15,14 +15,14 @@ import com.gestion.eventos.Model.UnidadAcademicaModel;
 import com.gestion.eventos.Service.IUnidadAcademicaService;
 
 @RestController
-@RequestMapping ("/rutaUni")
+@RequestMapping ("/unidad")
 public class UnidadAcademicaController {
     @Autowired IUnidadAcademicaService unidadAcademicaService;
-    @PostMapping ("/ruta1")
+    @PostMapping ("/registrar")
     public ResponseEntity<UnidadAcademicaModel> crearUnidadAcad(@RequestBody UnidadAcademicaModel unidadAcademica){
         return new ResponseEntity<>(unidadAcademicaService.guardarUniAcad(unidadAcademica),HttpStatus.CREATED);
     }
-    @GetMapping ("/ruta2")
+    @GetMapping ("/listar")
     public ResponseEntity<List<UnidadAcademicaModel>> listarUnidades(){
         return new ResponseEntity<>(unidadAcademicaService.listarUnidades(), HttpStatus.OK);
     }

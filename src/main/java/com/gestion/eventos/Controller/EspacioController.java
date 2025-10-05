@@ -15,14 +15,14 @@ import com.gestion.eventos.Model.EspacioModel;
 import com.gestion.eventos.Service.IEspacioService;
 
 @RestController
-@RequestMapping ("/rutaEsp")
+@RequestMapping ("/espacio")
 public class EspacioController {
     @Autowired IEspacioService espacioService;
-    @PostMapping ("/ruta1")
+    @PostMapping ("/registrar")
     public ResponseEntity<EspacioModel> crearEspacio(@RequestBody EspacioModel espacio){
         return new ResponseEntity<>(espacioService.guardarEspacio(espacio),HttpStatus.CREATED);
     }
-    @GetMapping ("/ruta2")
+    @GetMapping ("/listar")
     public ResponseEntity<List<EspacioModel>> listarEspacios(){
         return new ResponseEntity<>(espacioService.listarEspacios(), HttpStatus.OK);
     }

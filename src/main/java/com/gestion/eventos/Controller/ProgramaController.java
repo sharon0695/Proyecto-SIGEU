@@ -15,14 +15,14 @@ import com.gestion.eventos.Model.ProgramaModel;
 import com.gestion.eventos.Service.IProgramaService;
 
 @RestController
-@RequestMapping ("/rutaPro")
+@RequestMapping ("/programas")
 public class ProgramaController {
     @Autowired IProgramaService programaService;
-    @PostMapping ("/ruta1")
+    @PostMapping ("/registrar")
     public ResponseEntity<ProgramaModel> crearPrograma(@RequestBody ProgramaModel programa){
         return new ResponseEntity<>(programaService.guardarPrograma(programa),HttpStatus.CREATED);
     }
-    @GetMapping ("/ruta2")
+    @GetMapping ("/listar")
     public ResponseEntity<List<ProgramaModel>> listarProgramas(){
         return new ResponseEntity<>(programaService.listarProgramas(), HttpStatus.OK);
     }

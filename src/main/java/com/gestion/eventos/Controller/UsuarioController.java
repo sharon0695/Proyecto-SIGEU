@@ -17,16 +17,12 @@ import org.springframework.web.bind.annotation.RestController;
 import com.gestion.eventos.DTO.LoginRequest;
 import com.gestion.eventos.DTO.LoginResponse;
 import com.gestion.eventos.Model.UsuarioModel;
-import com.gestion.eventos.Security.JwtUtil;
-import com.gestion.eventos.Security.TokenBlacklistService;
 import com.gestion.eventos.Service.IUsuarioService;
 
 @RestController
 @RequestMapping ("/usuarios")
 public class UsuarioController {
     @Autowired IUsuarioService usuarioService;
-    @Autowired JwtUtil jwtUtil;
-    @Autowired TokenBlacklistService tokenBlacklistService;
     
     @PostMapping ("/registrar")
     public ResponseEntity<UsuarioModel> crearUsuario(@RequestBody UsuarioModel usuario){

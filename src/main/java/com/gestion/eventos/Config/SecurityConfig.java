@@ -37,12 +37,13 @@ public class SecurityConfig {
                     "/usuarios/login",
                     "/usuarios/registrar",
                     "/usuarios/recuperar",
+                    "/programas/registrar",
+                    "/facultad/registrar",
+                    "/unidad/registrar",
+                    "/espacio/registrar",
                     "/error",
-                    "/",
-                    "/View/**",
-                    "/static/**",
-                    "/css/**",
-                    "/js/**",
+                    "/",            
+                    "/static/**",                    
                     "/images/**"
                 ).permitAll()
                 .anyRequest().authenticated()
