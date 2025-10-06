@@ -8,5 +8,5 @@ public interface IOrganizacionService {
     OrganizacionModel guardarOrganizacion(OrganizacionModel organizacion);
     List<OrganizacionModel> listarOrganizaciones();
     String buscarOrganizacionPorNombre(String nombre);
-    OrganizacionModel editarOrganizacion(String nit, OrganizacionModel organizacionActualizada);
+    OrganizacionModel editarOrganizacion(String nit, Integer idUsuarioEditor, OrganizacionModel organizacionActualizada);
 }

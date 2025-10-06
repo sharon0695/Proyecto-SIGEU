@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.gestion.eventos.Model.OrganizacionModel;
@@ -33,9 +34,12 @@ public class OrganizacionController {
         return ResponseEntity.ok(organizacionService.buscarOrganizacionPorNombre(nombre));
     }
     @PutMapping("/editar/{nit}")
-    public ResponseEntity<?> editarOrganizacion(@PathVariable String nit,
-                                                @RequestBody OrganizacionModel organizacionActualizada) {
-        OrganizacionModel orgActualizada = organizacionService.editarOrganizacion(nit, organizacionActualizada);
+    public ResponseEntity<?> editarOrganizacion(
+        @PathVariable String nit,
+        @RequestParam Integer idUsuarioEditor, 
+        @RequestBody OrganizacionModel organizacionActualizada) {
+
+        OrganizacionModel orgActualizada = organizacionService.editarOrganizacion(nit, idUsuarioEditor, organizacionActualizada);
         return new ResponseEntity<>(orgActualizada, HttpStatus.OK);
-    }   
+    }
 }

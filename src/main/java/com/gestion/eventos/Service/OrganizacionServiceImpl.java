@@ -37,7 +37,7 @@ public class OrganizacionServiceImpl implements IOrganizacionService {
     }
 
     @Override
-    public OrganizacionModel editarOrganizacion(String nit, OrganizacionModel organizacionActualizada) {
+    public OrganizacionModel editarOrganizacion(String nit, Integer idUsuarioEditor, OrganizacionModel organizacionActualizada) {
         Optional<OrganizacionModel> organizacionExistenteOpt = organizacionRepository.findByNit(nit);
 
         if (organizacionExistenteOpt.isEmpty()) {
@@ -45,6 +45,11 @@ public class OrganizacionServiceImpl implements IOrganizacionService {
         }
 
         OrganizacionModel organizacionExistente = organizacionExistenteOpt.get();
+
+        if (organizacionExistente.getUsuario() == null ||
+            !organizacionExistente.getUsuario().getIdentificacion().equals(idUsuarioEditor)) {
+            throw new RuntimeException("No tiene permisos para editar esta organización");
+        }
 
         if (organizacionActualizada.getNombre() != null) {
             organizacionExistente.setNombre(organizacionActualizada.getNombre());
