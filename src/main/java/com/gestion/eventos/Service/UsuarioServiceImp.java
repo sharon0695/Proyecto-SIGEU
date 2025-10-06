@@ -1,12 +1,20 @@
 package com.gestion.eventos.Service;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
+import org.springframework.http.ResponseEntity;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.gestion.eventos.DTO.LoginRequest;
 import com.gestion.eventos.DTO.LoginResponse;
@@ -133,28 +141,59 @@ public class UsuarioServiceImp implements IUsuarioService {
         mailSender.send(mensaje);
     }
     @Override
-    public UsuarioModel actualizarPerfil(Integer identificacion, String nuevaContrasena, String nuevoCelular) {
-    Optional<UsuarioModel> usuarioOpt = usuarioRepository.findById(identificacion);
-    if (usuarioOpt.isEmpty()) {
-        throw new RuntimeException("El usuario no existe");
+    public UsuarioModel actualizarPerfil(Integer identificacion, String contrasena, String celular, MultipartFile fotoPerfil) throws IOException {
+        UsuarioModel usuario = usuarioRepository.findById(identificacion)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+        // Actualizar contraseña
+        if (contrasena != null && !contrasena.trim().isEmpty()) {
+            usuario.setContrasena(contrasena);
+        }
+
+        // Validar y actualizar celular (solo números y 10 dígitos)
+        if (celular != null && !celular.trim().isEmpty()) {
+            if (!celular.matches("\\d{10}")) {
+                throw new RuntimeException("El número de celular debe contener exactamente 10 dígitos");
+            }
+            usuario.setCelular(celular);
+        }
+
+        // Guardar imagen si viene
+        if (fotoPerfil != null && !fotoPerfil.isEmpty()) {
+            String contentType = fotoPerfil.getContentType();
+            if (contentType == null || !contentType.equals("image/png")) {
+                throw new RuntimeException("Solo se permiten imágenes PNG");
+            }
+
+            String directorio = "src/main/resources/static/uploads/perfiles/";
+            String nombreArchivo = usuario.getIdentificacion() + "_" + fotoPerfil.getOriginalFilename();
+            Path rutaArchivo = Paths.get(directorio, nombreArchivo);
+            Files.createDirectories(rutaArchivo.getParent());
+            fotoPerfil.transferTo(rutaArchivo.toFile());
+
+            usuario.setFotoPerfil("/uploads/perfiles/" + nombreArchivo);
+        }
+
+        return usuarioRepository.save(usuario);
     }
 
-    UsuarioModel usuario = usuarioOpt.get();
+    @Override
+    public ResponseEntity<Resource> obtenerFoto(Integer id) throws IOException {
+        UsuarioModel usuario = usuarioRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
-    if (nuevaContrasena != null && !nuevaContrasena.trim().isEmpty()) {
-        usuario.setContrasena(nuevaContrasena);
-    }
+        if (usuario.getFotoPerfil() == null) {
+            return ResponseEntity.notFound().build();
+        }
 
-    if (nuevoCelular != null && !nuevoCelular.trim().isEmpty()) {
-    // Validar que tenga exactamente 10 dígitos
-    if (!nuevoCelular.matches("\\d{10}")) {
-        throw new RuntimeException("El número de celular debe contener exactamente 10 dígitos");
-    }
-    usuario.setCelular(nuevoCelular);
-    }
+        Path ruta = Paths.get("src/main/resources/static" + usuario.getFotoPerfil());
+        Resource recurso = new UrlResource(ruta.toUri());
 
+        if (!recurso.exists() || !recurso.isReadable()) {
+            return ResponseEntity.notFound().build();
+        }
 
-    return usuarioRepository.save(usuario);
+        return ResponseEntity.ok(recurso);
     }
 
     @Override

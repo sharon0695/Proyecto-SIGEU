@@ -38,4 +38,6 @@ public class UsuarioModel {
     @ManyToOne
     @JoinColumn (name="codigo_unidad")
     private UnidadAcademicaModel codigo_unidad;
+    @Column(name = "foto_perfil", nullable = true)
+    private String fotoPerfil;
 }

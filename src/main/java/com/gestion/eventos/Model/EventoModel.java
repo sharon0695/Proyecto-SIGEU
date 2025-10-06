@@ -4,6 +4,8 @@ import java.sql.Date;
 import java.sql.Time;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
@@ -24,6 +26,7 @@ public class EventoModel {
     private Time hora_inicio;
     private Time hora_fin;
     public enum estado{aprobado, rechazado, borrado, enviado, publicado}
+    @Enumerated(EnumType.STRING)
     private estado estado;
     private String codigo_lugar;
     private String nit_organizacion;

@@ -19,9 +19,11 @@ import com.gestion.eventos.Service.IEventoService;
 @RequestMapping ("/Evento")
 public class EventoController {
     @Autowired IEventoService eventoService;
-    @PostMapping ("/registrar")
-    public ResponseEntity<EventoModel> crearEvento(@RequestBody EventoModel evento){
-        return new ResponseEntity<>(eventoService.guardarEvento(evento),HttpStatus.CREATED);
+
+    @PostMapping("/registrar")
+    public ResponseEntity<EventoModel> registrarEvento(@RequestBody EventoModel evento) {
+        EventoModel eventoRegistrado = eventoService.registrarEvento(evento);
+        return ResponseEntity.status(HttpStatus.CREATED).body(eventoRegistrado);
     }
     @GetMapping ("/listar")
     public ResponseEntity<List<EventoModel>> listarEventos(){
