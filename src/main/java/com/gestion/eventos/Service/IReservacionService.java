@@ -1,10 +1,9 @@
 package com.gestion.eventos.Service;
 
+import com.gestion.eventos.Model.ReservacionModel;
 import java.util.List;
 
-import com.gestion.eventos.Model.ReservacionModel;
-
 public interface IReservacionService {
-    ReservacionModel guardarReservacion(ReservacionModel reservacion);
+    ReservacionModel crearReservacion(ReservacionModel reservacion);
     List<ReservacionModel> listarReservaciones();
 }

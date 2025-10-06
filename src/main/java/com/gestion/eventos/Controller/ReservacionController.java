@@ -15,12 +15,14 @@ import com.gestion.eventos.Model.ReservacionModel;
 import com.gestion.eventos.Service.IReservacionService;
 
 @RestController
-@RequestMapping ("/rutaRes")
+@RequestMapping ("/reservacion")
 public class ReservacionController {
     @Autowired IReservacionService reservacionService;
-    @PostMapping ("/ruta1")
-    public ResponseEntity<ReservacionModel> crearReservacion(@RequestBody ReservacionModel reservacion){
-        return new ResponseEntity<>(reservacionService.guardarReservacion(reservacion),HttpStatus.CREATED);
+    
+    @PostMapping
+    public ResponseEntity<ReservacionModel> crearReservacion(@RequestBody ReservacionModel reservacion) {
+        ReservacionModel nuevaReservacion = reservacionService.crearReservacion(reservacion);
+        return ResponseEntity.status(HttpStatus.CREATED).body(nuevaReservacion);
     }
     @GetMapping ("/ruta2")
     public ResponseEntity<List<ReservacionModel>> listarReservaciones(){

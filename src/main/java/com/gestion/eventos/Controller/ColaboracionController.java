@@ -15,12 +15,13 @@ import com.gestion.eventos.Model.ColaboracionModel;
 import com.gestion.eventos.Service.IColaboracionService;
 
 @RestController
-@RequestMapping ("/rutaCol")
+@RequestMapping ("/colaboracion")
 public class ColaboracionController {
     @Autowired IColaboracionService colaboracionService;
-    @PostMapping ("/ruta1")
-    public ResponseEntity<ColaboracionModel> crearColaboracion(@RequestBody ColaboracionModel colaboracion){
-        return new ResponseEntity<>(colaboracionService.guardarColaboracion(colaboracion),HttpStatus.CREATED);
+    
+    @PostMapping
+    public ResponseEntity<ColaboracionModel> crearColaboracion(@RequestBody ColaboracionModel colaboracion) {
+        return ResponseEntity.ok(colaboracionService.crearColaboracion(colaboracion));
     }
     @GetMapping ("/ruta2")
     public ResponseEntity<List<ColaboracionModel>> listarColaboraciones(){

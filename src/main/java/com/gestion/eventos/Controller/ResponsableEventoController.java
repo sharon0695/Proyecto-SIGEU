@@ -15,12 +15,13 @@ import com.gestion.eventos.Model.ResponsableEventoModel;
 import com.gestion.eventos.Service.IResponsableEventoService;
 
 @RestController
-@RequestMapping ("/rutaResp")
+@RequestMapping ("/responsable")
 public class ResponsableEventoController {
     @Autowired IResponsableEventoService responsableEventoService;
-    @PostMapping ("/ruta1")
-    public ResponseEntity<ResponsableEventoModel> crearResponsable(@RequestBody ResponsableEventoModel responsableEvento){
-        return new ResponseEntity<>(responsableEventoService.guardarResponsable(responsableEvento),HttpStatus.CREATED);
+    @PostMapping
+    public ResponseEntity<ResponsableEventoModel> crearResponsable(@RequestBody ResponsableEventoModel responsable) {
+        ResponsableEventoModel nuevo = responsableEventoService.crearResponsable(responsable);
+        return ResponseEntity.status(HttpStatus.CREATED).body(nuevo);
     }
     @GetMapping ("/ruta2")
     public ResponseEntity<List<ResponsableEventoModel>> listarResponsables(){

@@ -1,10 +1,9 @@
 package com.gestion.eventos.Service;
 
+import com.gestion.eventos.Model.ResponsableEventoModel;
 import java.util.List;
 
-import com.gestion.eventos.Model.ResponsableEventoModel;
-
 public interface IResponsableEventoService {
-    ResponsableEventoModel guardarResponsable(ResponsableEventoModel responsableEvento);
+    ResponsableEventoModel crearResponsable(ResponsableEventoModel responsableEvento);
     List<ResponsableEventoModel> listarResponsables();
 }

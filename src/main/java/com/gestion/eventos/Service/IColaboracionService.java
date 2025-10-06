@@ -1,10 +1,9 @@
 package com.gestion.eventos.Service;
 
+import com.gestion.eventos.Model.ColaboracionModel;
 import java.util.List;
 
-import com.gestion.eventos.Model.ColaboracionModel;
-
 public interface IColaboracionService {
-    ColaboracionModel guardarColaboracion(ColaboracionModel colaboracion);
+    ColaboracionModel crearColaboracion(ColaboracionModel colaboracion);
     List<ColaboracionModel> listarColaboraciones();
 }

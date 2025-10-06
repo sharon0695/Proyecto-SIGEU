@@ -1,12 +1,11 @@
 package com.gestion.eventos.Service;
 
-import java.util.List;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
 import com.gestion.eventos.Model.EventoModel;
 import com.gestion.eventos.Repository.IEventoRepository;
+import java.util.List;
+import java.util.Optional;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 @Service
 public class EventoServiceImp implements IEventoService{
     @Autowired IEventoRepository eventoRepository;
@@ -54,6 +53,10 @@ public class EventoServiceImp implements IEventoService{
     @Override
     public List<EventoModel> listarEventos() {
         return eventoRepository.findAll();    
+    }
+
+    public Optional<EventoModel> buscarPorCodigo(Integer codigo) {
+        return eventoRepository.findById(codigo);
     }
     
 }
