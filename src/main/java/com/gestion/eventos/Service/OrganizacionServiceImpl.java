@@ -96,5 +96,8 @@ public class OrganizacionServiceImpl implements IOrganizacionService {
             return "La organización '" + nombre + "' no existe en el sistema.";
         }
     }
-
+    @Override
+    public Optional<OrganizacionModel> obtenerOrganizacionPorNit(String nit) {
+        return organizacionRepository.findByNit(nit);
+    }
 }

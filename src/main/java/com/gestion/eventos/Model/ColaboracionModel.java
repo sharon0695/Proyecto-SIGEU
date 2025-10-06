@@ -1,6 +1,9 @@
 package com.gestion.eventos.Model;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
@@ -15,11 +18,12 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class ColaboracionModel {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
     @ManyToOne
     @JoinColumn (name="nit_organizacion")
     private OrganizacionModel nit_organizacion;
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn (name="codigo_evento")
     private EventoModel codigo_evento;
     private String certificado_participacion;

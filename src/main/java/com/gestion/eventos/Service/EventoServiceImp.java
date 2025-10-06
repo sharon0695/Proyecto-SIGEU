@@ -12,18 +12,14 @@ public class EventoServiceImp implements IEventoService{
     @Autowired IEventoRepository eventoRepository;
 
     @Override
-    public EventoModel guardarEvento(EventoModel evento) {
-        return eventoRepository.save(evento);    
-    }
-
-    @Override
     public EventoModel registrarEvento(EventoModel evento) {
         try {
-            // Validar campos obligatorios según el diagrama de secuencia
+            // Validar campos obligatorios 
             validarCamposEvento(evento);
             
             // Establecer estado inicial como borrador
-            //evento.setEstado("borrador");
+            evento.setEstado(EventoModel.estado.valueOf("borrador"));
+
 
             return eventoRepository.save(evento);
 
@@ -45,6 +41,9 @@ public class EventoServiceImp implements IEventoService{
         if (evento.getFecha() == null) {
             throw new IllegalArgumentException("La fecha del evento es obligatoria");
         }
+        if (evento.getHora_inicio() == null) {
+            throw new IllegalArgumentException("La hora de inicio del evento es obligatoria");
+        }
         if (evento.getHora_fin() == null) {
             throw new IllegalArgumentException("La hora de fin del evento es obligatoria");
         }
@@ -52,10 +51,9 @@ public class EventoServiceImp implements IEventoService{
             throw new IllegalArgumentException("El código del lugar es obligatorio");
         }
     }
-
     @Override
     public List<EventoModel> listarEventos() {
         return eventoRepository.findAll();    
     }
-
+    
 }

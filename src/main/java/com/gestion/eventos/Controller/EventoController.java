@@ -16,7 +16,7 @@ import com.gestion.eventos.Service.IEventoService;
 
 
 @RestController
-@RequestMapping ("/Evento")
+@RequestMapping ("/eventos")
 public class EventoController {
     @Autowired IEventoService eventoService;
 

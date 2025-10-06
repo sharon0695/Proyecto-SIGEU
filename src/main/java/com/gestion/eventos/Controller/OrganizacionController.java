@@ -1,6 +1,7 @@
 package com.gestion.eventos.Controller;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -42,4 +43,12 @@ public class OrganizacionController {
         OrganizacionModel orgActualizada = organizacionService.editarOrganizacion(nit, idUsuarioEditor, organizacionActualizada);
         return new ResponseEntity<>(orgActualizada, HttpStatus.OK);
     }
+    @GetMapping("/{nit}")
+    public ResponseEntity<OrganizacionModel> obtenerOrganizacionPorNit(@PathVariable String nit) {
+        Optional<OrganizacionModel> organizacion = organizacionService.obtenerOrganizacionPorNit(nit);
+        return organizacion
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
 }
