@@ -17,7 +17,7 @@ import com.gestion.eventos.Model.OrganizacionModel;
 import com.gestion.eventos.Service.IOrganizacionService;
 
 @RestController
-@RequestMapping ("/OrganizacionExterna")
+@RequestMapping ("/organizacionExterna")
 public class OrganizacionController {
     @Autowired IOrganizacionService organizacionService;
     @PostMapping ("/registrar")

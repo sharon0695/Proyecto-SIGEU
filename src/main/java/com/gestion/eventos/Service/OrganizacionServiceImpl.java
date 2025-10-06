@@ -17,8 +17,16 @@ public class OrganizacionServiceImpl implements IOrganizacionService {
 
     @Override
     public OrganizacionModel guardarOrganizacion(OrganizacionModel organizacion) {
+        //Campos obligatorios
+        if(organizacion.getNit()==null || organizacion.getNombre()==null || organizacion.getRepresentante_legal()==null ||
+        organizacion.getUbicacion()==null || organizacion.getSector_economico()==null || organizacion.getActividad_principal()==null){
+            throw new RuntimeException("Hay campos obligatorios vacíos");
+        }
         if (organizacion.getTelefono() == null || !organizacion.getTelefono().matches("\\d+")) {
             throw new IllegalArgumentException("El teléfono solo debe contener números y no puede estar vacío");
+        }
+        if(organizacionRepository.findByNit(organizacion.getNit()).isPresent()){
+            throw new RuntimeException("Ya existe una organización con ese NIT");
         }
         return organizacionRepository.save(organizacion);
     }
@@ -62,14 +70,26 @@ public class OrganizacionServiceImpl implements IOrganizacionService {
 
         return organizacionRepository.save(organizacionExistente);
     }
-    @Override
+     @Override
     public String buscarOrganizacionPorNombre(String nombre) {
-        Optional<OrganizacionModel> organizacion = organizacionRepository.findByNombre(nombre);
+        Optional<OrganizacionModel> organizacionOpt = organizacionRepository.findByNombre(nombre);
         
-        if (organizacion.isPresent()) {
-            return "Organización encontrada: " + organizacion.get().getNombre();
+        if (organizacionOpt.isPresent()) {
+            OrganizacionModel organizacion = organizacionOpt.get();
+            
+            // Construimos la información detallada
+            StringBuilder info = new StringBuilder();
+            info.append(" Organización encontrada:\n");
+            info.append(" Nombre: ").append(organizacion.getNombre()).append("\n");
+            info.append(" Representante legal: ").append(organizacion.getRepresentante_legal()).append("\n");
+            info.append(" Ubicación: ").append(organizacion.getUbicacion()).append("\n");
+            info.append(" Actividad principal: ").append(organizacion.getActividad_principal()).append("\n");
+            info.append(" Teléfono: ").append(organizacion.getTelefono());
+            
+            return info.toString();
         } else {
-            return "La organización '" + nombre + "' no existe.";
+            return "La organización '" + nombre + "' no existe en el sistema.";
         }
     }
+
 }
