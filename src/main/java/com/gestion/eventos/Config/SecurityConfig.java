@@ -2,6 +2,8 @@ package com.gestion.eventos.Config;
 
 import com.gestion.eventos.Repository.IUsuarioRepository;
 import com.gestion.eventos.Security.JwtAuthenticationFilter;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -21,11 +23,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableMethodSecurity
 public class SecurityConfig {
 
-    private final JwtAuthenticationFilter jwtAuthenticationFilter;
-
-    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
-        this.jwtAuthenticationFilter = jwtAuthenticationFilter;
-    }
+    @Autowired JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -46,6 +44,12 @@ public class SecurityConfig {
                     "/static/**",                    
                     "/images/**"
                 ).permitAll()
+                .requestMatchers("/organizacionExterna/**", "/eventos/**")
+                .hasAnyRole("ESTUDIANTE", "DOCENTE")
+
+                .requestMatchers("/evaluacion/**")
+                    .hasRole("SECRETARIA_ACADEMICA")
+
                 .anyRequest().authenticated()
             );
 
