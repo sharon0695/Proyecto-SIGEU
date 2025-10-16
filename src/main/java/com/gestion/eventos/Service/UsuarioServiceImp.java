@@ -18,6 +18,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.gestion.eventos.DTO.LoginRequest;
 import com.gestion.eventos.DTO.LoginResponse;
+import com.gestion.eventos.DTO.MensajeResponse;
+import com.gestion.eventos.DTO.UsuarioRegistroRequest;
 import com.gestion.eventos.Model.UsuarioModel;
 import com.gestion.eventos.Repository.IUsuarioRepository;
 import com.gestion.eventos.Security.JwtUtil;
@@ -32,45 +34,55 @@ public class UsuarioServiceImp implements IUsuarioService {
     @Autowired TokenBlacklistService tokenBlacklistService;
    
     @Override
-    public UsuarioModel guardarUsuario(UsuarioModel usuarios) {
+    public MensajeResponse guardarUsuario(UsuarioRegistroRequest request) {
         // Validación de campos obligatorios
-         if(usuarios.getIdentificacion()==null || usuarios.getNombre()==null || usuarios.getApellido()==null ||
-        usuarios.getCorreoInstitucional()==null || usuarios.getContrasena()==null || usuarios.getRol()==null){
+         if(request.getIdentificacion()==null || request.getNombre()==null || request.getApellido()==null ||
+        request.getCorreoInstitucional()==null || request.getContrasena()==null || request.getRol()==null){
             throw new RuntimeException("Hay campos obligatorios vacíos");
         }
         //Validar correo institucional
-        if(!usuarios.getCorreoInstitucional().endsWith("@uao.edu.co")){
+        if(!request.getCorreoInstitucional().endsWith("@uao.edu.co")){
             throw new RuntimeException("Solo se permite el uso del correo institucional");
         }
         // Validación de usuario único
-        if(usuarioRepository.findByIdentificacion(usuarios.getIdentificacion()).isPresent()){
+        if(usuarioRepository.findByIdentificacion(request.getIdentificacion()).isPresent()){
             throw new RuntimeException("Ya existe un usuario con ese número de identificación");
         }
-        if(usuarioRepository.findByCorreoInstitucional(usuarios.getCorreoInstitucional()).isPresent()){
+        if(usuarioRepository.findByCorreoInstitucional(request.getCorreoInstitucional()).isPresent()){
             throw new RuntimeException("Ya existe un usuario registrado con ese correo");
         }
+
+        UsuarioModel usuario = new UsuarioModel();
+        usuario.setIdentificacion(request.getIdentificacion());
+        usuario.setNombre(request.getNombre());
+        usuario.setApellido(request.getApellido());
+        usuario.setCorreoInstitucional(request.getCorreoInstitucional());
+        usuario.setContrasena(request.getContrasena());
+        usuario.setRol(UsuarioModel.rol.valueOf(request.getRol())); // Enum
+
         //Campos opcionales según el rol
-        switch (usuarios.getRol()) {
+        switch (usuario.getRol()) {
             case estudiante -> {
-                if(usuarios.getCodigo()==null || usuarios.getCodigo_programa()==null){
+                if(request.getCodigo()==null || request.getCodigoPrograma()==null){
                     throw new RuntimeException("El estudiante debe llenar su código y código del programa");
                 }
             }
             case docente -> {
-                if(usuarios.getCodigo_unidad()==null){
+                if(request.getCodigoUnidad()==null){
                     throw new RuntimeException("El docente debe estar asociado a una unidad académica");
                 }
             }
             case secretaria_academica -> {
-                if(usuarios.getId_facultad()==null){
+                if(request.getIdFacultad()==null){
                     throw new RuntimeException("La secretaría debe tener una facultad asociada");
                 }
             }
             default -> {
             }
         }
-        return usuarioRepository.save(usuarios);    
-    }
+        usuarioRepository.save(usuario);
+        return new MensajeResponse("Usuario creado con éxito"); 
+}
  
 
     @Override

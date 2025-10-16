@@ -20,6 +20,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.gestion.eventos.DTO.LoginRequest;
 import com.gestion.eventos.DTO.LoginResponse;
+import com.gestion.eventos.DTO.MensajeResponse;
+import com.gestion.eventos.DTO.UsuarioRegistroRequest;
 import com.gestion.eventos.Model.UsuarioModel;
 import com.gestion.eventos.Service.IUsuarioService;
 
@@ -29,9 +31,10 @@ public class UsuarioController {
     @Autowired IUsuarioService usuarioService;
     
     @PostMapping ("/registrar")
-    public ResponseEntity<UsuarioModel> crearUsuario(@RequestBody UsuarioModel usuario){
-        return new ResponseEntity<>(usuarioService.guardarUsuario(usuario),HttpStatus.CREATED);
-    }
+    public ResponseEntity<MensajeResponse> crearUsuario(@RequestBody UsuarioRegistroRequest usuarioRequest){
+        MensajeResponse response = usuarioService.guardarUsuario(usuarioRequest);
+        return new ResponseEntity<>(response, HttpStatus.CREATED);
+    } 
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest request) {
         LoginResponse response = usuarioService.login(request);
