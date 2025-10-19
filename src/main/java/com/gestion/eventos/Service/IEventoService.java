@@ -1,10 +1,11 @@
 package com.gestion.eventos.Service;
 
-import java.util.List;
-
+import com.gestion.eventos.DTO.EventoRegistroCompleto;
 import com.gestion.eventos.Model.EventoModel;
+import java.util.List;
 
 public interface IEventoService {
     List<EventoModel> listarEventos();
-    EventoModel registrarEvento(EventoModel evento);
+    EventoModel registrarEventoCompleto(EventoRegistroCompleto request);
+
 }

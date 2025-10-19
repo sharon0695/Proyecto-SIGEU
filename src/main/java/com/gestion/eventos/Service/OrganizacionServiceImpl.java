@@ -1,19 +1,19 @@
 package com.gestion.eventos.Service;
 
+import com.gestion.eventos.Model.OrganizacionModel;
+import com.gestion.eventos.Repository.IEventoRepository;
+import com.gestion.eventos.Repository.IOrganizacionRepository;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-import com.gestion.eventos.Model.OrganizacionModel;
-import com.gestion.eventos.Repository.IOrganizacionRepository;
 
 @Service
 public class OrganizacionServiceImpl implements IOrganizacionService {
 
     @Autowired IOrganizacionRepository organizacionRepository;
+    @Autowired IEventoRepository eventoRepository;
 
     @Override
     public OrganizacionModel guardarOrganizacion(OrganizacionModel organizacion) {
@@ -100,4 +100,6 @@ public class OrganizacionServiceImpl implements IOrganizacionService {
     public Optional<OrganizacionModel> obtenerOrganizacionPorNit(String nit) {
         return organizacionRepository.findByNit(nit);
     }
+
+    
 }
