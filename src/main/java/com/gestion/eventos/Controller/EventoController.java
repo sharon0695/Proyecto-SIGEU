@@ -9,12 +9,16 @@ import java.sql.Date;
 import java.sql.Time;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -67,14 +71,20 @@ public class EventoController {
         if (fecha != null && !fecha.isBlank()) cambios.setFecha(Date.valueOf(LocalDate.parse(fecha)));
         if (horaInicio != null && !horaInicio.isBlank()) cambios.setHora_inicio(Time.valueOf(LocalTime.parse(horaInicio)));
         if (horaFin != null && !horaFin.isBlank()) cambios.setHora_fin(Time.valueOf(LocalTime.parse(horaFin)));
-        cambios.setCodigo_lugar(codigoLugar);
-        cambios.setNitOrganizacion(nitOrganizacion);
-
         eventoService.actualizarEvento(codigo, cambios);
         eventoService.reemplazarOrganizaciones(codigo, organizaciones, representanteAlternoOrganizacion, avalOrganizaciones);
         eventoService.reemplazarResponsables(codigo, responsables, avalResponsables);
 
         return ResponseEntity.ok(new MensajeResponse("Evento actualizado exitosamente"));
+    }
+    @GetMapping("/detalles/{codigo}")
+    public ResponseEntity<Map<String, Object>> obtenerAsociaciones(@PathVariable Integer codigo) {
+    eventoService.buscarPorCodigo(codigo).orElseThrow(() -> new RuntimeException("Evento no encontrado"));
+    var resp = new HashMap<String, Object>();
+    resp.put("organizaciones", eventoService.obtenerOrganizacionesEvento(codigo));
+    resp.put("responsables", eventoService.obtenerResponsablesEvento(codigo));
+    resp.put("reservaciones", eventoService.obtenerReservacionesEvento(codigo));
+    return ResponseEntity.ok(resp);
     }
 }   
 

@@ -43,7 +43,7 @@ public class UsuarioController {
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(@RequestHeader(value = "Authorization", required = false) String authHeader) {
         usuarioService.logout(authHeader);
-        return ResponseEntity.noContent().build(); // 204 sin contenido
+        return ResponseEntity.noContent().build();
     }
     
     @GetMapping ("/listar")
@@ -60,11 +60,12 @@ public class UsuarioController {
     @PutMapping(value = "/editarPerfil", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<UsuarioModel> editarPerfil(
             @RequestParam Integer identificacion,
-            @RequestParam(required = false) String contrasena,
+            @RequestParam(required = false) String contrasenaActual,
+            @RequestParam(required = false) String contrasenaNueva,
             @RequestParam(required = false) String celular,
             @RequestParam(required = false) MultipartFile fotoPerfil
     ) throws IOException {
-        UsuarioModel actualizado = usuarioService.actualizarPerfil(identificacion, contrasena, celular, fotoPerfil);
+        UsuarioModel actualizado = usuarioService.actualizarPerfil(identificacion, contrasenaActual, contrasenaNueva, celular, fotoPerfil);
         return ResponseEntity.ok(actualizado);
     }
 
