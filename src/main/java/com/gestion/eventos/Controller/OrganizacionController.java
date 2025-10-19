@@ -1,6 +1,7 @@
 package com.gestion.eventos.Controller;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,12 +52,17 @@ public class OrganizacionController {
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
-    @DeleteMapping("/eliminar/{nit}")
+   @DeleteMapping("/eliminar/{nit}")
     public ResponseEntity<String> eliminarOrganizacion(
         @PathVariable String nit,
-        @RequestParam Integer solicitanteId
-    ) {
-        organizacionService.eliminarOrganizacion(nit, solicitanteId);
-        return ResponseEntity.ok("Organización eliminada correctamente");
+        @RequestParam Integer idUsuarioEliminador) {
+    try {
+        String mensaje = organizacionService.eliminarOrganizacion(nit, idUsuarioEliminador);
+        return new ResponseEntity<>(mensaje, HttpStatus.OK);
+    } catch (RuntimeException e) {
+        return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
     }
 }
+
+}
+
