@@ -11,6 +11,4 @@ public interface IOrganizacionService {
     OrganizacionModel editarOrganizacion(String nit, Integer idUsuarioEditor, OrganizacionModel organizacionActualizada);
     Optional<OrganizacionModel> obtenerOrganizacionPorNit(String nit);
     void eliminarOrganizacion(String nit, Integer solicitanteId);
-    String eliminarOrganizacion(String nit, Integer idUsuarioEliminador);
-
 }

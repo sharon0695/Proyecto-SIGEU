@@ -1,13 +1,11 @@
 package com.gestion.eventos.Service;
 
-import java.util.List;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
 import com.gestion.eventos.Model.ReservacionModel;
 import com.gestion.eventos.Repository.IEventoRepository;
 import com.gestion.eventos.Repository.IReservacionRepository;
+import java.util.List;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 @Service
 public class ReservacionServiceImp implements IReservacionService{
     @Autowired IReservacionRepository reservacionRepository;
@@ -15,7 +13,7 @@ public class ReservacionServiceImp implements IReservacionService{
     @Autowired IEventoRepository eventoRepository;
 
     public ReservacionModel crearReservacion(ReservacionModel reservacion) {
-        if (reservacion.getCodigo_evento() == null) {
+        if (reservacion.getCodigoEvento() == null) {
             throw new IllegalArgumentException("Debe asociar la reservación a un evento existente.");
         }
 
@@ -31,7 +29,7 @@ public class ReservacionServiceImp implements IReservacionService{
             throw new IllegalArgumentException("Debe seleccionar una hora de fin para la reservación.");
         }
 
-        eventoRepository.findById(reservacion.getCodigo_evento().getCodigo())
+        eventoRepository.findById(reservacion.getCodigoEvento().getCodigo())
             .orElseThrow(() -> new IllegalArgumentException("El evento asociado no existe."));
 
         return reservacionRepository.save(reservacion);
