@@ -248,5 +248,92 @@ public class EventoServiceImp implements IEventoService {
         return eventoRepository.findById(codigo);
     }
 
-    
+    @Override
+    public EventoModel actualizarEvento(Integer codigo, EventoModel cambios) {
+        EventoModel existente = eventoRepository.findById(codigo)
+            .orElseThrow(() -> new RuntimeException("Evento no encontrado"));
+
+        // Solo Borrador o Rechazado
+        if (existente.getEstado() != null) {
+            String st = existente.getEstado().name();
+            if (!"borrador".equalsIgnoreCase(st) && !"rechazado".equalsIgnoreCase(st)) {
+                throw new RuntimeException("Solo se puede editar eventos en estado Borrador o Rechazado");
+            }
+        }
+
+        if (cambios.getNombre() != null) existente.setNombre(cambios.getNombre());
+        if (cambios.getDescripcion() != null) existente.setDescripcion(cambios.getDescripcion());
+        if (cambios.getTipo() != null) existente.setTipo(cambios.getTipo());
+        if (cambios.getFecha() != null) existente.setFecha(cambios.getFecha());
+        if (cambios.getHora_inicio() != null) existente.setHora_inicio(cambios.getHora_inicio());
+        if (cambios.getHora_fin() != null) existente.setHora_fin(cambios.getHora_fin());
+        if (cambios.getCodigo_lugar() != null) existente.setCodigo_lugar(cambios.getCodigo_lugar());
+        if (cambios.getNitOrganizacion() != null) existente.setNitOrganizacion(cambios.getNitOrganizacion());
+
+        return eventoRepository.save(existente);
+    }
+    private String guardarPdf(MultipartFile file, String nombreDestino) {
+        try {
+            Path dir = java.nio.file.Paths.get("src/main/resources/static/uploads/avales/");
+            Files.createDirectories(dir);
+            Path destino = dir.resolve(nombreDestino);
+            Files.copy(file.getInputStream(), destino, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            return "/uploads/avales/" + nombreDestino;
+        } catch (java.io.IOException e) {
+            throw new RuntimeException("No se pudo guardar el PDF: " + e.getMessage(), e);
+        }
+    }
+    @Override
+    public void reemplazarOrganizaciones(Integer codigo, List<String> organizaciones, List<String> alternos, List<MultipartFile> avales){
+        colaboracionRepository.deleteByCodigoEvento_Codigo(codigo);
+        if (organizaciones == null) return;
+        for (int i = 0; i < organizaciones.size(); i++) {
+            String nit = organizaciones.get(i);
+            String alterno = alternos != null && alternos.size() > i ? alternos.get(i) : null;
+            MultipartFile file = (avales != null && avales.size() > i) ? avales.get(i) : null;
+            String url = null;
+            if (file != null && !file.isEmpty()) {
+                if (!"application/pdf".equals(file.getContentType())) {
+                    throw new RuntimeException("El aval debe ser PDF");
+                }
+                String nombre = codigo + "_org_" + nit + ".pdf";
+                url = guardarPdf(file, nombre);
+            }
+
+            ColaboracionModel c = new ColaboracionModel();
+            c.setCodigoEvento(eventoRepository.findById(codigo).orElseThrow());
+            OrganizacionModel org = new OrganizacionModel(); 
+            org.setNit(nit); 
+            c.setNit_organizacion(org);
+            c.setRepresentante_alterno(alterno);
+            c.setCertificado_participacion(url);
+            colaboracionRepository.save(c);
+        }
+    }
+
+    @Override
+    public void reemplazarResponsables(Integer codigo, List<Integer> responsables, List<MultipartFile> avales){
+        responsableEventoRepository.deleteByCodigoEvento_Codigo(codigo);
+        if (responsables == null) return;
+        for (int i = 0; i < responsables.size(); i++) {
+            Integer id = responsables.get(i);
+            MultipartFile file = (avales != null && avales.size() > i) ? avales.get(i) : null;
+            String url = null;
+            if (file != null && !file.isEmpty()) {
+                if (!"application/pdf".equals(file.getContentType())) {
+                    throw new RuntimeException("El aval del responsable debe ser PDF");
+                }
+                String nombre = codigo + "_resp_" + id + ".pdf";
+                url = guardarPdf(file, nombre);
+            }
+
+            ResponsableEventoModel r = new ResponsableEventoModel();
+            r.setCodigoEvento(eventoRepository.findById(codigo).orElseThrow());
+            UsuarioModel u = new UsuarioModel(); 
+            u.setIdentificacion(id); 
+            r.setId_usuario(u);
+            r.setDocumentoAval(url);
+            responsableEventoRepository.save(r);
+        }
+    }
 }

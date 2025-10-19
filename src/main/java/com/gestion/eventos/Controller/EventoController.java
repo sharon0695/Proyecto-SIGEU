@@ -42,6 +42,39 @@ public class EventoController {
     public ResponseEntity<List<EventoModel>> listarEventos(){
         return new ResponseEntity<>(eventoService.listarEventos(), HttpStatus.OK);
     }
-    
+    @PutMapping(value = "/editar", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<MensajeResponse> editarEventoCompleto(
+        @RequestParam Integer codigo,
+        @RequestParam(required = false) String nombre,
+        @RequestParam(required = false) String descripcion,
+        @RequestParam(required = false) String tipo,
+        @RequestParam(required = false) String fecha,
+        @RequestParam(required = false) String horaInicio,
+        @RequestParam(required = false) String horaFin,
+        @RequestParam(required = false) String codigoLugar,
+        @RequestParam(required = false) String nitOrganizacion,
+        @RequestParam(required = false) List<String> espacios,
+        @RequestParam(required = false) List<Integer> responsables,
+        @RequestParam(required = false) List<String> organizaciones,
+        @RequestParam(required = false) List<MultipartFile> avalResponsables,
+        @RequestParam(required = false) List<MultipartFile> avalOrganizaciones,
+        @RequestParam(required = false) List<String> representanteAlternoOrganizacion
+        ) {
+        EventoModel cambios = new EventoModel();
+        cambios.setNombre(nombre);
+        cambios.setDescripcion(descripcion);
+        cambios.setTipo(tipo);
+        if (fecha != null && !fecha.isBlank()) cambios.setFecha(Date.valueOf(LocalDate.parse(fecha)));
+        if (horaInicio != null && !horaInicio.isBlank()) cambios.setHora_inicio(Time.valueOf(LocalTime.parse(horaInicio)));
+        if (horaFin != null && !horaFin.isBlank()) cambios.setHora_fin(Time.valueOf(LocalTime.parse(horaFin)));
+        cambios.setCodigo_lugar(codigoLugar);
+        cambios.setNitOrganizacion(nitOrganizacion);
+
+        eventoService.actualizarEvento(codigo, cambios);
+        eventoService.reemplazarOrganizaciones(codigo, organizaciones, representanteAlternoOrganizacion, avalOrganizaciones);
+        eventoService.reemplazarResponsables(codigo, responsables, avalResponsables);
+
+        return ResponseEntity.ok(new MensajeResponse("Evento actualizado exitosamente"));
+    }
 }   
 
