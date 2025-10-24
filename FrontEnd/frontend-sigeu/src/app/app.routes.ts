@@ -9,15 +9,16 @@ import { Eventos } from './eventos/eventos';
 import { AuthService } from './services/auth.service';
 import { inject } from '@angular/core';
 import { HomeS } from './home-s/home-s';
+import { RoleGuard } from './guards/role-guard';
 
 export const routes: Routes = [
   { path: '', component: Login},
   { path: 'crearCuenta', component: CrearCuenta },
   { path: 'login', component: Login},
-  { path: 'homeO', component: Home, canActivate: [() => !!inject(AuthService).isAuthenticated() ]},
-  { path: 'homeS', component: HomeS, canActivate: [() => !!inject(AuthService).isAuthenticated()]},
-  { path: 'eventos', component: Eventos, canActivate: [() => !!inject(AuthService).isAuthenticated() || (location.href = '/login', false)]},
-  { path: 'organizacionExt', component: Organizaciones, canActivate: [() => !!inject(AuthService).isAuthenticated() || (location.href = '/login', false)]},
+  { path: 'homeO', component: Home, canActivate: [RoleGuard], data: { roles: ['docente', 'estudiante'] }},
+  { path: 'homeS', component: HomeS, canActivate: [RoleGuard], data: { roles: ['secretaria_academica'] }},
+  { path: 'eventos', component: Eventos, canActivate: [RoleGuard], data: { roles: ['docente', 'estudiante'] }},
+  { path: 'organizacionExt', component: Organizaciones, canActivate: [RoleGuard], data: { roles: ['docente', 'estudiante'] }},
   { path: 'perfil', component: Perfil, canActivate: [() => !!inject(AuthService).isAuthenticated() || (location.href = '/login', false)]},
   { path: 'recuperar-contrasena', component: RecuperarContrasena},
   { path: '**', redirectTo: ''}

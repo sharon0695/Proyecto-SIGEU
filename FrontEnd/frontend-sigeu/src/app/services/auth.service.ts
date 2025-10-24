@@ -94,6 +94,12 @@ export class AuthService {
     }
   }
 
+  getUser() {
+    const userData = localStorage.getItem('auth_user');
+    return userData ? JSON.parse(userData) : null;
+  }
+
+
   isAuthenticated(): boolean {
     const token = this.getToken();
     if (!token) return false;
