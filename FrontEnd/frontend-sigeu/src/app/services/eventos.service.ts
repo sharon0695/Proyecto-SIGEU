@@ -63,12 +63,12 @@ export class EventosService {
     return this.http.get(`${this.baseUrl}/listar`);
   }
 
-  registrar(evento: EventoRegistroCompleto): Observable<any> {
-    return this.http.post(`${this.baseUrl}/registrar`, evento);
+  registrar(formData: FormData): Observable<any> {
+    return this.http.post(`${this.baseUrl}/registrar`, formData);
   }
 
-  editar(evento: EventoEdicionCompleto): Observable<any> {
-    return this.http.put(`${this.baseUrl}/editar`, evento);
+  editar(formData: FormData): Observable<any> {
+    return this.http.put(`${this.baseUrl}/editar`, formData);
   }
 
   obtenerDetalles(codigo: number): Observable<any> {
@@ -77,5 +77,47 @@ export class EventosService {
 
   obtenerParaEdicion(codigo: number): Observable<any> {
     return this.http.get(`${this.baseUrl}/edicion/${codigo}`);
+  }
+
+  getFileViewUrl(tipo: 'organizaciones' | 'responsables', filePath: string): string {
+    if (!filePath) {
+      console.error('filePath está vacío');
+      return '';
+    }
+    
+    // EXTRAER SOLO EL NOMBRE DEL ARCHIVO, NO LA RUTA COMPLETA
+    const partes = filePath.split('/');
+    const fileName = partes[partes.length - 1]; // Última parte
+    
+    console.log('Generando URL para ver:');
+    console.log('- Tipo:', tipo);
+    console.log('- FilePath original:', filePath);
+    console.log('- FileName extraído:', fileName);
+    
+    const url = `http://localhost:8080/archivos/ver?tipo=${tipo}&archivo=${fileName}`;
+    console.log('- URL generada:', url);
+    
+    return url;
+  }
+
+  getFileDownloadUrl(tipo: 'organizaciones' | 'responsables', filePath: string): string {
+    if (!filePath) {
+      console.error('filePath está vacío');
+      return '';
+    }
+    
+    // EXTRAER SOLO EL NOMBRE DEL ARCHIVO
+    const partes = filePath.split('/');
+    const fileName = partes[partes.length - 1];
+    
+    console.log('Generando URL para descargar:');
+    console.log('- Tipo:', tipo);
+    console.log('- FilePath original:', filePath);
+    console.log('- FileName extraído:', fileName);
+    
+    const url = `http://localhost:8080/archivos/descargar?tipo=${tipo}&archivo=${fileName}`;
+    console.log('- URL generada:', url);
+    
+    return url;
   }
 }

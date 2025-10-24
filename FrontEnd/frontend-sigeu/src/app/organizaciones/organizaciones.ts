@@ -40,6 +40,24 @@ export class Organizaciones {
   showViewModal = false;
   viewOrg: any;
 
+  paginaActual = 1;
+  elementosPorPagina = 10; // Número de eventos por página
+
+  get totalPaginas(): number {
+    return Math.ceil(this.organizaciones.length / this.elementosPorPagina);
+  }
+
+  paginaAnterior() {
+    if (this.paginaActual > 1) {
+      this.paginaActual--;
+    }
+  }
+
+  paginaSiguiente() {
+    if (this.paginaActual < this.totalPaginas) {
+      this.paginaActual++;
+    }
+  }
   ngOnInit() {
     this.listar();
   }
@@ -72,33 +90,56 @@ export class Organizaciones {
 
   onSubmitRegistrarOrg(event: Event) {
     event.preventDefault();
+
     const idUsuario = this.auth.getUserId();
-    if (!idUsuario) { 
-      this.showMessage('error', 'Error de Sesión', 'Debes iniciar sesión'); 
-      return; 
+    if (!idUsuario) {
+      this.showMessage('error', 'Error de Sesión', 'Debes iniciar sesión');
+      return;
     }
-    const existe = this.organizaciones.find(o => o.nit === this.newOrg.nit);
-    if (existe) {
+
+    const body = { ...this.newOrg, usuario: { identificacion: idUsuario } };
+
+    if (!body.nit?.trim() || !body.nombre?.trim() || !body.representante_legal?.trim() ||
+        !body.ubicacion?.trim() || !body.sector_economico?.trim() || !body.actividad_principal?.trim()) {
+      this.showMessage('error', 'Campos incompletos', 'Por favor completa todos los campos obligatorios.');
+      return;
+    }
+
+    if (!body.telefono || !/^\d+$/.test(body.telefono)) {
+      this.showMessage('error', 'Teléfono inválido', 'El teléfono debe contener solo números y no puede estar vacío.');
+      return;
+    }
+
+    if (this.editMode) {
       this.orgs.editar(this.originalNit!, idUsuario, this.newOrg).subscribe({
-        next: () => { 
-          this.showMessage('success', '¡Éxito!', 'Organización actualizada correctamente'); 
-          this.listar(); 
-          this.showModal = false; 
+        next: () => {
+          this.showMessage('success', '¡Éxito!', 'Organización actualizada correctamente');
+          this.listar();
+          this.showModal = false;
         },
-        error: (err) => { 
-          this.showMessage('error', 'Error al Actualizar', err?.error?.mensaje || 'No se pudo actualizar la organización'); 
+        error: (err) => {
+          this.showMessage('error', 'Error al Actualizar', err?.error?.mensaje || 'No se pudo actualizar la organización');
         }
       });
     } else {
-      const body = { ...this.newOrg, usuario: { identificacion: idUsuario } };
       this.orgs.registrar(body).subscribe({
-        next: () => { 
-          this.showMessage('success', '¡Éxito!', 'Organización registrada correctamente'); 
-          this.listar(); 
-          this.showModal = false; 
+        next: () => {
+          this.showMessage('success', '¡Éxito!', 'Organización registrada correctamente');
+          this.listar();
+          this.showModal = false;
         },
-        error: (err) => { 
-          this.showMessage('error', 'Error al Registrar', err?.error?.mensaje || 'No se pudo registrar la organización'); 
+        error: (err) => {
+          const mensajeError = err?.error?.mensaje;
+
+          if (mensajeError?.includes('Ya existe una organización con ese NIT')) {
+            this.showMessage('error', 'NIT duplicado', 'El NIT ingresado ya está registrado en el sistema.');
+          } else if (mensajeError?.includes('Hay campos obligatorios vacíos')) {
+            this.showMessage('error', 'Campos incompletos', 'Por favor completa todos los campos obligatorios.');
+          } else if (mensajeError?.includes('El teléfono solo debe contener números')) {
+            this.showMessage('error', 'Teléfono inválido', 'El teléfono debe contener solo números.');
+          } else {
+            this.showMessage('error', 'Error al Registrar', mensajeError || 'No se pudo registrar la organización');
+          }
         }
       });
     }
@@ -162,6 +203,7 @@ export class Organizaciones {
 
   onEditar(org: any) {
   const idUsuario = this.auth.getUserId();
+  this.editMode = true;
   if (!idUsuario) { 
     this.showMessage('error', 'Error de Sesión', 'Debes iniciar sesión'); 
     return; 
@@ -171,7 +213,7 @@ export class Organizaciones {
     return;
   }
   this.newOrg = JSON.parse(JSON.stringify(org));  
-  this.editMode = true;
+  
   this.originalNit = org.nit;
   this.showModal = true;
 }

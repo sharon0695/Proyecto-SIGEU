@@ -26,7 +26,7 @@ public class ResponsableEventoModel {
     
     @ManyToOne
     @JoinColumn(name = "id_usuario")
-    private UsuarioModel id_usuario;
+    private UsuarioModel idUsuario;
     
     @ManyToOne
     @JoinColumn(name = "codigo_evento")

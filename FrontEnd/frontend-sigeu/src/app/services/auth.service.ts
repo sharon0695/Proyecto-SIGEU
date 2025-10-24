@@ -56,7 +56,7 @@ export class AuthService {
     );
   }
 
-  logout(): void {
+  logout(showMessage: boolean = false): void {
     localStorage.removeItem(this.storageKey);
     localStorage.removeItem(this.expiryKey);
     if (this.expiryTimer) { clearTimeout(this.expiryTimer); this.expiryTimer = null; }
@@ -83,14 +83,26 @@ export class AuthService {
     const token = this.getToken();
     if (!token) return false;
     const exp = this.getExpiry();
-    if (exp && exp <= Date.now()) { this.logout(); return false; }
+    if (exp && exp <= Date.now()) { this.logout(true); return false; }
     return true;
   }
 
   private scheduleExpiryLogout(expiresAt: number) {
-    if (this.expiryTimer) clearTimeout(this.expiryTimer);
-    const delay = Math.max(0, expiresAt - Date.now());
-    if (delay === 0) { this.logout(); this.router.navigateByUrl('/login'); return; }
-    this.expiryTimer = setTimeout(() => { this.logout(); this.router.navigateByUrl('/login'); }, delay);
+  if (this.expiryTimer) clearTimeout(this.expiryTimer);
+
+  const delay = Math.max(0, expiresAt - Date.now());
+
+  if (delay === 0) {
+    this.logout();
+    alert('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.');
+    this.router.navigateByUrl('/login');
+    return;
   }
+
+  this.expiryTimer = setTimeout(() => {
+    this.logout();
+    alert('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.');
+    this.router.navigateByUrl('/login');
+  }, delay);
+}
 }

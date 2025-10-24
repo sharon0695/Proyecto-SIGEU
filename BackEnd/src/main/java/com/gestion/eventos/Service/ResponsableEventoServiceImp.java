@@ -17,7 +17,7 @@ public class ResponsableEventoServiceImp implements IResponsableEventoService{
             throw new IllegalArgumentException("Debe asociar el responsable a un evento.");
         }
 
-        if (responsable.getId_usuario() == null) {
+        if (responsable.getIdUsuario() == null) {
             throw new IllegalArgumentException("Debe ingresar el id del responsable.");
         }
 

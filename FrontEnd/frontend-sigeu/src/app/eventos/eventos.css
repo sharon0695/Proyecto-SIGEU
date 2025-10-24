@@ -460,3 +460,46 @@ input[type="file"]::file-selector-button:hover {
 .modal-content::-webkit-scrollbar-thumb:hover {
   background: #555;
 }
+.existing-file-info {
+  margin-top: 5px;
+  padding: 5px;
+  background-color: #e8f5e8;
+  border: 1px solid #4caf50;
+  border-radius: 4px;
+  color: #2e7d32;
+  font-size: 12px;
+}
+
+.new-file {
+  margin-top: 5px;
+  padding: 5px;
+  background-color: #e3f2fd;
+  border: 1px solid #2196f3;
+  border-radius: 4px;
+  color: #1565c0;
+  font-size: 12px;
+}
+
+.pagination {
+  margin-top: 15px;
+  text-align: center;
+}
+
+.pagination button {
+  background-color: #cd88df;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  margin: 0 5px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.pagination button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.pagination span {
+  font-weight: bold;
+}

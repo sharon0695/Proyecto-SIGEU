@@ -17,7 +17,10 @@ import com.gestion.eventos.Repository.IOrganizacionRepository;
 import com.gestion.eventos.Repository.IReservacionRepository;
 import com.gestion.eventos.Repository.IResponsableEventoRepository;
 import com.gestion.eventos.Repository.IUsuarioRepository;
+
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,6 +37,7 @@ public class EventoServiceImp implements IEventoService {
     @Autowired private IReservacionRepository reservacionRepository;
     @Autowired private IEspacioRepository espacioRepository;
     @Autowired private IUsuarioRepository usuarioRepository;
+    @Autowired private FileStorageService fileStorageService;
 
     @Override
     @Transactional
@@ -58,8 +62,8 @@ public class EventoServiceImp implements IEventoService {
         
         evento = eventoRepository.save(evento);
         
-        if (request.getOrganizaciones() != null && !request.getOrganizaciones().isEmpty()) {
-            procesarOrganizaciones(request.getOrganizaciones(), evento, request.getId_usuario_registra());
+        if (request.getColaboraciones() != null && !request.getColaboraciones().isEmpty()) {
+            procesarColaboraciones(request.getColaboraciones(), evento);
         }
         
         if (request.getResponsables() != null && !request.getResponsables().isEmpty()) {
@@ -120,129 +124,147 @@ public class EventoServiceImp implements IEventoService {
         }
     }
 
-    private void procesarOrganizaciones(List<EventoRegistroCompleto.OrganizacionDTO> organizacionesDTO, EventoModel evento, Integer idUsuarioRegistra) {
-        int contador = 0;
-        for (EventoRegistroCompleto.OrganizacionDTO orgDTO : organizacionesDTO) {
-            contador++;
-            final int numeroOrganizacion = contador;
+    private void procesarColaboraciones(
+        List<EventoRegistroCompleto.ColaboracionDTO> colaboracionesDTO, 
+        EventoModel evento) {
+    
+        for (int i = 0; i < colaboracionesDTO.size(); i++) {
+            EventoRegistroCompleto.ColaboracionDTO colabDTO = colaboracionesDTO.get(i);
             
-            if (orgDTO.getNit() == null || orgDTO.getNit().trim().isEmpty()) {
-                throw new IllegalArgumentException("El NIT de la organización " + numeroOrganizacion + " es obligatorio");
+            try {
+                System.out.println("Procesando colaboración registro " + (i + 1) + ": " + colabDTO.getNit());
+                
+                if (colabDTO.getNit() == null || colabDTO.getNit().trim().isEmpty()) {
+                    throw new IllegalArgumentException("El NIT de la colaboración " + (i + 1) + " es obligatorio");
+                }
+
+                // Buscar organización existente
+                OrganizacionModel organizacion = organizacionRepository.findByNit(colabDTO.getNit())
+                        .orElseThrow(() -> new IllegalArgumentException("La organización con NIT " + colabDTO.getNit() + " no existe"));
+
+                // Procesar archivo
+                String certificadoPath = procesarArchivoColaboracionRegistro(colabDTO, evento.getCodigo());
+
+                // Validar representante alterno
+                if (colabDTO.getRepresentante_alterno() != null && !colabDTO.getRepresentante_alterno().trim().isEmpty()) {
+                    if (colabDTO.getRepresentante_alterno().length() < 3) {
+                        throw new IllegalArgumentException("El nombre del representante alterno debe tener al menos 3 caracteres");
+                    }
+                }
+
+                // Crear colaboración
+                ColaboracionModel colaboracion = new ColaboracionModel();
+                colaboracion.setNitOrganizacion(organizacion);
+                colaboracion.setCodigoEvento(evento);
+                colaboracion.setCertificado_participacion(certificadoPath);
+                colaboracion.setRepresentante_alterno(colabDTO.getRepresentante_alterno());
+                
+                colaboracionRepository.save(colaboracion);
+                System.out.println("✓ Colaboración de registro creada: " + organizacion.getNit());
+                
+            } catch (Exception e) {
+                System.err.println("✗ Error procesando colaboración registro " + (i + 1) + ": " + e.getMessage());
+                throw new RuntimeException("Error en colaboración registro " + (i + 1) + ": " + e.getMessage(), e);
             }
+        }
+    }
+
+
+    private void procesarResponsables(
+        List<EventoRegistroCompleto.ResponsableDTO> responsablesDTO, 
+        EventoModel evento) {
+    
+        for (int i = 0; i < responsablesDTO.size(); i++) {
+            EventoRegistroCompleto.ResponsableDTO respDTO = responsablesDTO.get(i);
+            
+            try {
+                System.out.println("Procesando responsable registro " + (i + 1) + ": " + respDTO.getId_usuario());
+                
+                if (respDTO.getId_usuario() == null) {
+                    throw new IllegalArgumentException("El responsable " + (i + 1) + " no ha sido seleccionado");
+                }
+
+                UsuarioModel usuario = usuarioRepository.findById(respDTO.getId_usuario())
+                        .orElseThrow(() -> new IllegalArgumentException("El responsable no existe en el sistema"));
+
+                // Procesar archivo
+                String documentoAvalPath = procesarArchivoResponsableRegistro(respDTO, evento.getCodigo());
+
+                // Crear responsable
+                ResponsableEventoModel responsable = new ResponsableEventoModel();
+                responsable.setIdUsuario(usuario);
+                responsable.setCodigoEvento(evento);
+                responsable.setDocumentoAval(documentoAvalPath);
+                
+                ResponsableEventoModel.tipo_aval tipoAval = null;
+              
+                switch (usuario.getRol()) {
+                    case estudiante:
+                        tipoAval = ResponsableEventoModel.tipo_aval.director_programa;
+                        break;
+                    case docente:
+                        tipoAval = ResponsableEventoModel.tipo_aval.director_docencia;
+                        break;
+                    default:
+                        tipoAval = null; // si no aplica
+                        break;
+                }
+
+                if (tipoAval != null) {
+                    responsable.setTipoAval(tipoAval);
+                }
+
+                
+                responsableEventoRepository.save(responsable);
+                System.out.println("✓ Responsable de registro creado: " + usuario.getIdentificacion());
+                
+            } catch (Exception e) {
+                System.err.println("✗ Error procesando responsable registro " + (i + 1) + ": " + e.getMessage());
+                throw new RuntimeException("Error en responsable registro " + (i + 1) + ": " + e.getMessage(), e);
+            }
+        }
+    }
+    private String procesarArchivoColaboracionRegistro(EventoRegistroCompleto.ColaboracionDTO colabDTO, Integer codigoEvento) {
+        String certificadoPath = null;
         
-            Optional<OrganizacionModel> orgExistente = organizacionRepository.findByNit(orgDTO.getNit());
+        if (colabDTO.getCertificado_participacion() != null && 
+            !colabDTO.getCertificado_participacion().isEmpty()) {
             
-            OrganizacionModel organizacion;
-            
-            if (orgExistente.isPresent()) {
-                organizacion = orgExistente.get();
-            } else {
-                validarDatosOrganizacion(orgDTO, numeroOrganizacion);
-                
-                organizacion = new OrganizacionModel();
-                organizacion.setNit(orgDTO.getNit());
-                organizacion.setNombre(orgDTO.getNombre());
-                organizacion.setRepresentante_legal(orgDTO.getRepresentante_legal());
-                organizacion.setUbicacion(orgDTO.getUbicacion());
-                organizacion.setTelefono(orgDTO.getTelefono());
-                organizacion.setSector_economico(orgDTO.getSector_economico());
-                organizacion.setActividad_principal(orgDTO.getActividad_principal());
-                
-                UsuarioModel usuario = usuarioRepository.findById(idUsuarioRegistra)
-                    .orElseThrow(() -> new IllegalArgumentException("Usuario registrador no encontrado"));
-                organizacion.setUsuario(usuario);
-                
-                organizacion = organizacionRepository.save(organizacion);
+            // Validar y guardar nuevo archivo
+            if (!colabDTO.getCertificado_participacion().getContentType().equals("application/pdf")) {
+                throw new IllegalArgumentException("El certificado de participación debe ser un archivo PDF");
             }
             
-            if (orgDTO.getCertificado_participacion() != null && 
-                !orgDTO.getCertificado_participacion().trim().isEmpty() &&
-                !orgDTO.getCertificado_participacion().toLowerCase().endsWith(".pdf")) {
-                throw new IllegalArgumentException("El certificado de la organización " + numeroOrganizacion + " debe ser un archivo PDF");
-            }
-            
-            if (orgDTO.getRepresentante_alterno() != null && 
-                !orgDTO.getRepresentante_alterno().trim().isEmpty()) {
-                if (orgDTO.getRepresentante_alterno().length() < 3) {
-                    throw new IllegalArgumentException("El nombre del representante alterno de la organización " + numeroOrganizacion + " debe tener al menos 3 caracteres");
-                }
-            }
-            
-            ColaboracionModel colaboracion = new ColaboracionModel();
-            colaboracion.setNitOrganizacion(organizacion);
-            colaboracion.setCodigoEvento(evento);
-            colaboracion.setCertificado_participacion(orgDTO.getCertificado_participacion());
-            colaboracion.setRepresentante_alterno(orgDTO.getRepresentante_alterno());
-            
-            colaboracionRepository.save(colaboracion);
+            certificadoPath = fileStorageService.storeFile(
+                colabDTO.getCertificado_participacion(), 
+                "organizaciones/evento_" + codigoEvento
+            );
+            System.out.println("✓ Certificado de colaboración guardado: " + certificadoPath);
         }
+        
+        return certificadoPath;
     }
 
-    private void validarDatosOrganizacion(EventoRegistroCompleto.OrganizacionDTO orgDTO, int numeroOrg) {
-        if (orgDTO.getNit() == null || orgDTO.getNit().trim().isEmpty()) {
-            throw new IllegalArgumentException("El NIT de la organización " + numeroOrg + " es obligatorio");
+    private String procesarArchivoResponsableRegistro(EventoRegistroCompleto.ResponsableDTO respDTO, Integer codigoEvento) {
+        String documentoAvalPath = null;
+        
+        if (respDTO.getDocumentoAval() != null && 
+            !respDTO.getDocumentoAval().isEmpty()) {
+            
+            // Validar y guardar nuevo archivo
+            if (!respDTO.getDocumentoAval().getContentType().equals("application/pdf")) {
+                throw new IllegalArgumentException("El documento de aval del responsable debe ser un archivo PDF");
+            }
+            
+            documentoAvalPath = fileStorageService.storeFile(
+                respDTO.getDocumentoAval(), 
+                "responsables/evento_" + codigoEvento
+            );
+            System.out.println("✓ Documento de aval de responsable guardado: " + documentoAvalPath);
         }
-        if (orgDTO.getNombre() == null || orgDTO.getNombre().trim().isEmpty()) {
-            throw new IllegalArgumentException("El nombre de la organización " + numeroOrg + " es obligatorio");
-        }
-        if (orgDTO.getRepresentante_legal() == null || orgDTO.getRepresentante_legal().trim().isEmpty()) {
-            throw new IllegalArgumentException("El representante legal de la organización " + numeroOrg + " es obligatorio");
-        }
-        if (orgDTO.getUbicacion() == null || orgDTO.getUbicacion().trim().isEmpty()) {
-            throw new IllegalArgumentException("La ubicación de la organización " + numeroOrg + " es obligatoria");
-        }
-        if (orgDTO.getTelefono() == null || orgDTO.getTelefono().trim().isEmpty()) {
-            throw new IllegalArgumentException("El teléfono de la organización " + numeroOrg + " es obligatorio");
-        }
-        if (!orgDTO.getTelefono().matches("\\d+")) {
-            throw new IllegalArgumentException("El teléfono de la organización " + numeroOrg + " solo debe contener números");
-        }
-        if (orgDTO.getSector_economico() == null || orgDTO.getSector_economico().trim().isEmpty()) {
-            throw new IllegalArgumentException("El sector económico de la organización " + numeroOrg + " es obligatorio");
-        }
-        if (orgDTO.getActividad_principal() == null || orgDTO.getActividad_principal().trim().isEmpty()) {
-            throw new IllegalArgumentException("La actividad principal de la organización " + numeroOrg + " es obligatoria");
-        }
+        
+        return documentoAvalPath;
     }
-
-    private void procesarResponsables(List<EventoRegistroCompleto.ResponsableDTO> responsablesDTO, EventoModel evento) {
-        int contador = 0;
-        for (EventoRegistroCompleto.ResponsableDTO respDTO : responsablesDTO) {
-            contador++;
-            final int numeroResponsable = contador;
-            
-            if (respDTO.getId_usuario() == null) {
-                throw new IllegalArgumentException("El responsable " + numeroResponsable + " no ha sido seleccionado");
-            }
-            
-            UsuarioModel usuario = usuarioRepository.findById(respDTO.getId_usuario())
-                .orElseThrow(() -> new IllegalArgumentException("El responsable " + numeroResponsable + " no existe en el sistema"));
-            
-            if (respDTO.getDocumentoAval() != null && 
-                !respDTO.getDocumentoAval().trim().isEmpty() &&
-                !respDTO.getDocumentoAval().toLowerCase().endsWith(".pdf")) {
-                throw new IllegalArgumentException("El documento de aval del responsable " + numeroResponsable + " debe ser un archivo PDF");
-            }
-            
-            ResponsableEventoModel responsable = new ResponsableEventoModel();
-            responsable.setId_usuario(usuario);
-            responsable.setCodigoEvento(evento);
-            responsable.setDocumentoAval(respDTO.getDocumentoAval());
-            
-            // Solo asignar tipoAval si viene en el request y es válido
-            if (respDTO.getTipoAval() != null && !respDTO.getTipoAval().trim().isEmpty()) {
-                try {
-                    responsable.setTipoAval(
-                        ResponsableEventoModel.tipo_aval.valueOf(respDTO.getTipoAval().toLowerCase())
-                    );
-                } catch (IllegalArgumentException e) {
-                }
-            }
-            
-            responsableEventoRepository.save(responsable);
-        }
-    }
-
     private void procesarReservaciones(List<EventoRegistroCompleto.ReservacionDTO> reservacionesDTO, EventoModel evento) {
         int contador = 0;
         for (EventoRegistroCompleto.ReservacionDTO resDTO : reservacionesDTO) {
@@ -286,183 +308,306 @@ public class EventoServiceImp implements IEventoService {
     @Override
     @Transactional
     public EventoModel editarEventoCompleto(EventoEdicionCompleto request) {
-        // Validar que el evento existe
-        EventoModel eventoExistente = eventoRepository.findById(request.getCodigo())
-                .orElseThrow(() -> new IllegalArgumentException("El evento a editar no existe"));
+        try {
+            System.out.println("=== INICIANDO EDICIÓN DEL EVENTO " + request.getCodigo() + " ===");
+            
+            // Validar que el evento existe y es editable
+            EventoModel eventoExistente = eventoRepository.findById(request.getCodigo())
+                    .orElseThrow(() -> new IllegalArgumentException("El evento a editar no existe"));
 
-        // Validar que el evento esté en estado borrador o rechazado para permitir edición
-        if (!eventoExistente.getEstado().equals(EventoModel.estado.borrador) && 
-            !eventoExistente.getEstado().equals(EventoModel.estado.rechazado)) {
-            throw new IllegalArgumentException("Solo se pueden editar eventos en estado 'borrador' o 'rechazado'");
+            if (!eventoExistente.getEstado().equals(EventoModel.estado.borrador) && 
+                !eventoExistente.getEstado().equals(EventoModel.estado.rechazado)) {
+                throw new IllegalArgumentException("Solo se pueden editar eventos en estado 'borrador' o 'rechazado'");
+            }
+
+            // Validar campos básicos
+            validarCamposEventoEdicion(request);
+
+            // 🔴 PASO 1: Obtener archivos existentes ANTES de cualquier eliminación
+            System.out.println("Obteniendo archivos existentes...");
+            List<ColaboracionModel> colaboracionesExistentes = colaboracionRepository.findAllByCodigoEvento_Codigo(request.getCodigo());
+            List<ResponsableEventoModel> responsablesExistentes = responsableEventoRepository.findAllByCodigoEvento_Codigo(request.getCodigo());
+
+            Map<String, String> archivosColaboracionesExistentes = new HashMap<>();
+            for (ColaboracionModel colab : colaboracionesExistentes) {
+                if (colab.getCertificado_participacion() != null) {
+                    archivosColaboracionesExistentes.put(colab.getNitOrganizacion().getNit(), colab.getCertificado_participacion());
+                }
+            }
+
+            Map<Integer, String> archivosResponsablesExistentes = new HashMap<>();
+            for (ResponsableEventoModel resp : responsablesExistentes) {
+                if (resp.getDocumentoAval() != null) {
+                    archivosResponsablesExistentes.put(resp.getIdUsuario().getIdentificacion(), resp.getDocumentoAval());
+                }
+            }
+
+            // 🔴 PASO 2: Actualizar datos básicos del evento
+            System.out.println("Actualizando evento básico...");
+            eventoExistente.setNombre(request.getNombre());
+            eventoExistente.setDescripcion(request.getDescripcion());
+            eventoExistente.setTipo(request.getTipo());
+            eventoExistente.setFecha(request.getFecha());
+            eventoExistente.setHora_inicio(request.getHora_inicio());
+            eventoExistente.setHora_fin(request.getHora_fin());
+
+            EventoModel eventoActualizado = eventoRepository.save(eventoExistente);
+
+            // 🔴 PASO 3: Eliminar relaciones existentes usando queries nativas (MÁS SEGURO)
+            System.out.println("Eliminando relaciones existentes...");
+            eliminarRelacionesExistentes(request.getCodigo());
+
+            // 🔴 PASO 4: Pausa pequeña para asegurar que las eliminaciones se completen
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+
+            // 🔴 PASO 5: Crear nuevas relaciones
+            System.out.println("Creando nuevas relaciones...");
+            
+            if (request.getColaboraciones() != null && !request.getColaboraciones().isEmpty()) {
+                procesarColaboracionesEdicion(
+                    request.getColaboraciones(), 
+                    eventoActualizado, 
+                    archivosColaboracionesExistentes
+                );
+            }
+
+            if (request.getResponsables() != null && !request.getResponsables().isEmpty()) {
+                procesarResponsablesEdicion(
+                    request.getResponsables(), 
+                    eventoActualizado, 
+                    archivosResponsablesExistentes
+                );
+            }
+
+            if (request.getReservaciones() != null && !request.getReservaciones().isEmpty()) {
+                procesarReservacionesEdicion(request.getReservaciones(), eventoActualizado);
+            }
+
+            System.out.println("✓ Edición completada exitosamente");
+            return eventoActualizado;
+
+        } catch (Exception e) {
+            System.err.println("✗ Error en edición: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("Error al editar evento: " + e.getMessage(), e);
         }
+    }
 
-        // Validar campos del evento
-        validarCamposEventoEdicion(request);
 
-        // Validar usuario registrador
-        if (request.getId_usuario_registra() == null) {
-            throw new IllegalArgumentException("El ID del usuario que edita el evento es obligatorio");
+    private void procesarColaboracionesEdicion(
+        List<EventoEdicionCompleto.ColaboracionEdicionDTO> colaboracionesDTO, 
+        EventoModel evento,
+        Map<String, String> archivosExistentes) {
+        
+        for (int i = 0; i < colaboracionesDTO.size(); i++) {
+            EventoEdicionCompleto.ColaboracionEdicionDTO colabDTO = colaboracionesDTO.get(i);
+            
+            try {
+                System.out.println("Procesando colaboración " + (i + 1) + ": " + colabDTO.getNit());
+                
+                if (colabDTO.getNit() == null || colabDTO.getNit().trim().isEmpty()) {
+                    throw new IllegalArgumentException("El NIT de la colaboración " + (i + 1) + " es obligatorio");
+                }
+
+                // Buscar organización existente
+                OrganizacionModel organizacion = organizacionRepository.findByNit(colabDTO.getNit())
+                        .orElseThrow(() -> new IllegalArgumentException("La organización con NIT " + colabDTO.getNit() + " no existe"));
+
+                // 🔴 VERIFICAR que no existe ya esta colaboración (por si las moscas)
+                Optional<ColaboracionModel> colaboracionExistente = colaboracionRepository
+                    .findByNitOrganizacionAndCodigoEvento(organizacion, evento);
+                
+                if (colaboracionExistente.isPresent()) {
+                    System.out.println("⚠ Colaboración ya existe, eliminando...");
+                    colaboracionRepository.delete(colaboracionExistente.get());
+                    colaboracionRepository.flush();
+                }
+
+                // Procesar archivo
+                String certificadoPath = procesarArchivoColaboracion(colabDTO, organizacion.getNit(), archivosExistentes, evento.getCodigo());
+
+                // Validar representante alterno
+                if (colabDTO.getRepresentante_alterno() != null && !colabDTO.getRepresentante_alterno().trim().isEmpty()) {
+                    if (colabDTO.getRepresentante_alterno().length() < 3) {
+                        throw new IllegalArgumentException("El nombre del representante alterno debe tener al menos 3 caracteres");
+                    }
+                }
+
+                // Crear NUEVA colaboración
+                ColaboracionModel nuevaColaboracion = new ColaboracionModel();
+                nuevaColaboracion.setNitOrganizacion(organizacion);
+                nuevaColaboracion.setCodigoEvento(evento);
+                nuevaColaboracion.setCertificado_participacion(certificadoPath);
+                nuevaColaboracion.setRepresentante_alterno(colabDTO.getRepresentante_alterno());
+                
+                colaboracionRepository.save(nuevaColaboracion);
+                colaboracionRepository.flush(); // Forzar persistencia inmediata
+                
+                System.out.println("✓ Colaboración creada: " + organizacion.getNit());
+                
+            } catch (Exception e) {
+                System.err.println("✗ Error procesando colaboración " + (i + 1) + ": " + e.getMessage());
+                throw new RuntimeException("Error en colaboración " + (i + 1) + ": " + e.getMessage(), e);
+            }
         }
-        usuarioRepository.findById(request.getId_usuario_registra())
-                .orElseThrow(() -> new IllegalArgumentException("El usuario editor no existe en el sistema"));
+    }
 
-        // Validaciones específicas para relaciones obligatorias
-        if (request.getResponsables() == null || request.getResponsables().isEmpty()) {
-            throw new IllegalArgumentException("Debe asignar al menos un responsable al evento");
+    private String procesarArchivoColaboracion(EventoEdicionCompleto.ColaboracionEdicionDTO colabDTO, 
+                                         String nit, 
+                                         Map<String, String> archivosExistentes,
+                                         Integer codigoEvento) {
+        String certificadoPath = null;
+        
+        if (colabDTO.getCertificado_participacion() != null && 
+            !colabDTO.getCertificado_participacion().isEmpty()) {
+            
+            // ARCHIVO NUEVO: Eliminar el anterior si existe
+            String archivoAnterior = archivosExistentes.get(nit);
+            if (archivoAnterior != null) {
+                try {
+                    boolean eliminado = fileStorageService.deleteFile(archivoAnterior);
+                    System.out.println(eliminado ? "✓ Archivo anterior eliminado" : "ℹ️ Archivo anterior no existía");
+                } catch (Exception e) {
+                    System.out.println("⚠ No se pudo eliminar archivo anterior: " + e.getMessage());
+                }
+            }
+            
+            // Validar y guardar nuevo archivo
+            if (!colabDTO.getCertificado_participacion().getContentType().equals("application/pdf")) {
+                throw new IllegalArgumentException("El certificado debe ser un archivo PDF");
+            }
+            
+            certificadoPath = fileStorageService.storeFile(
+                colabDTO.getCertificado_participacion(), 
+                "organizaciones/evento_" + codigoEvento
+            );
+            System.out.println("✓ Nuevo archivo guardado: " + certificadoPath);
+            
+        } else if (colabDTO.getCertificado_existente() != null && 
+                !colabDTO.getCertificado_existente().trim().isEmpty()) {
+            // MANTENER ARCHIVO EXISTENTE
+            certificadoPath = colabDTO.getCertificado_existente();
+            System.out.println("✓ Manteniendo archivo existente: " + certificadoPath);
         }
         
-        if (request.getReservaciones() == null || request.getReservaciones().isEmpty()) {
-            throw new IllegalArgumentException("Debe seleccionar al menos un espacio para el evento");
-        }
-
-        // Actualizar datos básicos del evento
-        eventoExistente.setNombre(request.getNombre());
-        eventoExistente.setDescripcion(request.getDescripcion());
-        eventoExistente.setTipo(request.getTipo());
-        eventoExistente.setFecha(request.getFecha());
-        eventoExistente.setHora_inicio(request.getHora_inicio());
-        eventoExistente.setHora_fin(request.getHora_fin());
-
-        EventoModel eventoActualizado = eventoRepository.save(eventoExistente);
-
-        // Eliminar relaciones existentes
-        eliminarRelacionesExistentes(eventoExistente.getCodigo());
-
-        // Procesar nuevas relaciones - ahora sabemos que responsables y reservaciones no son null/vacíos
-        procesarOrganizacionesEdicion(request.getOrganizaciones(), eventoActualizado, request.getId_usuario_registra());
-        procesarResponsablesEdicion(request.getResponsables(), eventoActualizado);
-        procesarReservacionesEdicion(request.getReservaciones(), eventoActualizado);
-
-        return eventoActualizado;
+        return certificadoPath;
     }
 
-    private void procesarOrganizacionesEdicion(List<EventoEdicionCompleto.OrganizacionDTO> organizacionesDTO, 
-                                            EventoModel evento, Integer idUsuarioRegistra) {
-        // Organizaciones son opcionales - si es null o vacío, simplemente no se crean
-        if (organizacionesDTO == null || organizacionesDTO.isEmpty()) {
-            return;
-        }
 
-        // Procesar las organizaciones proporcionadas
-        int contador = 0;
-        for (EventoEdicionCompleto.OrganizacionDTO orgDTO : organizacionesDTO) {
-            contador++;
-            final int numeroOrganizacion = contador;
+    private void procesarResponsablesEdicion(
+        List<EventoEdicionCompleto.ResponsableDTO> responsablesDTO, 
+        EventoModel evento,
+        Map<Integer, String> archivosExistentes) {
+    
+        for (int i = 0; i < responsablesDTO.size(); i++) {
+            EventoEdicionCompleto.ResponsableDTO respDTO = responsablesDTO.get(i);
             
-            if (orgDTO.getNit() == null || orgDTO.getNit().trim().isEmpty()) {
-                throw new IllegalArgumentException("El NIT de la organización " + numeroOrganizacion + " es obligatorio");
-            }
-            
-            Optional<OrganizacionModel> orgExistente = organizacionRepository.findByNit(orgDTO.getNit());
-            OrganizacionModel organizacion;
-            
-            if (orgExistente.isPresent()) {
-                organizacion = orgExistente.get();
-            } else {
-                validarDatosOrganizacionE(orgDTO, numeroOrganizacion);
-                organizacion = new OrganizacionModel();
-                organizacion.setNit(orgDTO.getNit());
-                organizacion.setNombre(orgDTO.getNombre());
-                organizacion.setRepresentante_legal(orgDTO.getRepresentante_legal());
-                organizacion.setUbicacion(orgDTO.getUbicacion());
-                organizacion.setTelefono(orgDTO.getTelefono());
-                organizacion.setSector_economico(orgDTO.getSector_economico());
-                organizacion.setActividad_principal(orgDTO.getActividad_principal());
+            try {
+                System.out.println("Procesando responsable " + (i + 1) + ": " + respDTO.getId_usuario());
                 
-                UsuarioModel usuario = usuarioRepository.findById(idUsuarioRegistra)
-                        .orElseThrow(() -> new IllegalArgumentException("Usuario registrador no encontrado"));
-                organizacion.setUsuario(usuario);
-                organizacion = organizacionRepository.save(organizacion);
-            }
-
-            if (orgDTO.getCertificado_participacion() != null && 
-                !orgDTO.getCertificado_participacion().trim().isEmpty() && 
-                !orgDTO.getCertificado_participacion().toLowerCase().endsWith(".pdf")) {
-                throw new IllegalArgumentException("El certificado de la organización " + numeroOrganizacion + " debe ser un archivo PDF");
-            }
-
-            if (orgDTO.getRepresentante_alterno() != null && !orgDTO.getRepresentante_alterno().trim().isEmpty()) {
-                if (orgDTO.getRepresentante_alterno().length() < 3) {
-                    throw new IllegalArgumentException("El nombre del representante alterno de la organización " + numeroOrganizacion + " debe tener al menos 3 caracteres");
+                if (respDTO.getId_usuario() == null) {
+                    throw new IllegalArgumentException("El responsable " + (i + 1) + " no ha sido seleccionado");
                 }
-            }
 
-            ColaboracionModel colaboracion = new ColaboracionModel();
-            colaboracion.setNitOrganizacion(organizacion);
-            colaboracion.setCodigoEvento(evento);
-            colaboracion.setCertificado_participacion(orgDTO.getCertificado_participacion());
-            colaboracion.setRepresentante_alterno(orgDTO.getRepresentante_alterno());
-            colaboracionRepository.save(colaboracion);
+                UsuarioModel usuario = usuarioRepository.findById(respDTO.getId_usuario())
+                        .orElseThrow(() -> new IllegalArgumentException("El responsable no existe en el sistema"));
+
+                // 🔴 VERIFICAR que no existe ya este responsable
+                Optional<ResponsableEventoModel> responsableExistente = responsableEventoRepository
+                    .findByIdUsuarioAndCodigoEvento(usuario, evento);
+                
+                if (responsableExistente.isPresent()) {
+                    System.out.println("⚠ Responsable ya existe, eliminando...");
+                    responsableEventoRepository.delete(responsableExistente.get());
+                    responsableEventoRepository.flush();
+                }
+
+                // Procesar archivo
+                String documentoAvalPath = procesarArchivoResponsable(respDTO, usuario.getIdentificacion(), archivosExistentes, evento.getCodigo());
+
+                // Crear NUEVO responsable
+                ResponsableEventoModel nuevoResponsable = new ResponsableEventoModel();
+                nuevoResponsable.setIdUsuario(usuario);
+                nuevoResponsable.setCodigoEvento(evento);
+                nuevoResponsable.setDocumentoAval(documentoAvalPath);
+                
+                ResponsableEventoModel.tipo_aval tipoAval = null;
+              
+                switch (usuario.getRol()) {
+                    case estudiante:
+                        tipoAval = ResponsableEventoModel.tipo_aval.director_programa;
+                        break;
+                    case docente:
+                        tipoAval = ResponsableEventoModel.tipo_aval.director_docencia;
+                        break;
+                    default:
+                        tipoAval = null; // si no aplica
+                        break;
+                }
+
+                if (tipoAval != null) {
+                    nuevoResponsable.setTipoAval(tipoAval);
+                }
+
+                
+                responsableEventoRepository.save(nuevoResponsable);
+                responsableEventoRepository.flush();
+                
+                System.out.println("✓ Responsable creado: " + usuario.getIdentificacion());
+                
+            } catch (Exception e) {
+                System.err.println("✗ Error procesando responsable " + (i + 1) + ": " + e.getMessage());
+                throw new RuntimeException("Error en responsable " + (i + 1) + ": " + e.getMessage(), e);
+            }
         }
     }
-
-    private void procesarResponsablesEdicion(List<EventoEdicionCompleto.ResponsableDTO> responsablesDTO, EventoModel evento) {
-        // Responsables son obligatorios - ya validamos que no son null/vacíos, así que procesamos directamente
-        int contador = 0;
-        for (EventoEdicionCompleto.ResponsableDTO respDTO : responsablesDTO) {
-            contador++;
-            final int numeroResponsable = contador;
+    private String procesarArchivoResponsable(EventoEdicionCompleto.ResponsableDTO respDTO, 
+                                        Integer idUsuario, 
+                                        Map<Integer, String> archivosExistentes,
+                                        Integer codigoEvento) {
+        String documentoAvalPath = null;
+        
+        if (respDTO.getDocumentoAval() != null && 
+            !respDTO.getDocumentoAval().isEmpty()) {
             
-            if (respDTO.getId_usuario() == null) {
-                throw new IllegalArgumentException("El responsable " + numeroResponsable + " no ha sido seleccionado");
-            }
-            
-            UsuarioModel usuario = usuarioRepository.findById(respDTO.getId_usuario())
-                    .orElseThrow(() -> new IllegalArgumentException("El responsable " + numeroResponsable + " no existe en el sistema"));
-
-            if (respDTO.getDocumentoAval() != null && 
-                !respDTO.getDocumentoAval().trim().isEmpty() && 
-                !respDTO.getDocumentoAval().toLowerCase().endsWith(".pdf")) {
-                throw new IllegalArgumentException("El documento de aval del responsable " + numeroResponsable + " debe ser un archivo PDF");
-            }
-
-            ResponsableEventoModel responsable = new ResponsableEventoModel();
-            responsable.setId_usuario(usuario);
-            responsable.setCodigoEvento(evento);
-            responsable.setDocumentoAval(respDTO.getDocumentoAval());
-            
-            // Solo asignar tipoAval si viene en el request y es válido
-            if (respDTO.getTipoAval() != null && !respDTO.getTipoAval().trim().isEmpty()) {
+            // ARCHIVO NUEVO: Eliminar el anterior si existe
+            String archivoAnterior = archivosExistentes.get(idUsuario);
+            if (archivoAnterior != null) {
                 try {
-                    responsable.setTipoAval(
-                        ResponsableEventoModel.tipo_aval.valueOf(respDTO.getTipoAval().toLowerCase())
-                    );
-                } catch (IllegalArgumentException e) {
-                    // Si el tipo no es válido, se deja null
+                    boolean eliminado = fileStorageService.deleteFile(archivoAnterior);
+                    System.out.println(eliminado ? "✓ Archivo anterior de responsable eliminado: " + archivoAnterior 
+                                            : "ℹ️ Archivo anterior de responsable no existía: " + archivoAnterior);
+                } catch (Exception e) {
+                    System.out.println("⚠ No se pudo eliminar archivo anterior del responsable: " + e.getMessage());
                 }
             }
             
-            responsableEventoRepository.save(responsable);
+            // Validar y guardar nuevo archivo
+            if (!respDTO.getDocumentoAval().getContentType().equals("application/pdf")) {
+                throw new IllegalArgumentException("El documento de aval del responsable debe ser un archivo PDF");
+            }
+            
+            documentoAvalPath = fileStorageService.storeFile(
+                respDTO.getDocumentoAval(), 
+                "responsables/evento_" + codigoEvento
+            );
+            System.out.println("✓ Nuevo documento de responsable guardado: " + documentoAvalPath);
+            
+        } else if (respDTO.getDocumento_existente() != null && 
+                !respDTO.getDocumento_existente().trim().isEmpty()) {
+            // MANTENER ARCHIVO EXISTENTE
+            documentoAvalPath = respDTO.getDocumento_existente();
+            System.out.println("✓ Manteniendo documento existente del responsable: " + documentoAvalPath);
+        } else {
+            System.out.println("ℹ️ Sin documento para responsable: " + idUsuario);
         }
+        
+        return documentoAvalPath;
     }
-
-    private void validarDatosOrganizacionE(EventoEdicionCompleto.OrganizacionDTO orgDTO, int numeroOrg) {
-        if (orgDTO.getNit() == null || orgDTO.getNit().trim().isEmpty()) {
-            throw new IllegalArgumentException("El NIT de la organización " + numeroOrg + " es obligatorio");
-        }
-        if (orgDTO.getNombre() == null || orgDTO.getNombre().trim().isEmpty()) {
-            throw new IllegalArgumentException("El nombre de la organización " + numeroOrg + " es obligatorio");
-        }
-        if (orgDTO.getRepresentante_legal() == null || orgDTO.getRepresentante_legal().trim().isEmpty()) {
-            throw new IllegalArgumentException("El representante legal de la organización " + numeroOrg + " es obligatorio");
-        }
-        if (orgDTO.getUbicacion() == null || orgDTO.getUbicacion().trim().isEmpty()) {
-            throw new IllegalArgumentException("La ubicación de la organización " + numeroOrg + " es obligatoria");
-        }
-        if (orgDTO.getTelefono() == null || orgDTO.getTelefono().trim().isEmpty()) {
-            throw new IllegalArgumentException("El teléfono de la organización " + numeroOrg + " es obligatorio");
-        }
-        if (!orgDTO.getTelefono().matches("\\d+")) {
-            throw new IllegalArgumentException("El teléfono de la organización " + numeroOrg + " solo debe contener números");
-        }
-        if (orgDTO.getSector_economico() == null || orgDTO.getSector_economico().trim().isEmpty()) {
-            throw new IllegalArgumentException("El sector económico de la organización " + numeroOrg + " es obligatorio");
-        }
-        if (orgDTO.getActividad_principal() == null || orgDTO.getActividad_principal().trim().isEmpty()) {
-            throw new IllegalArgumentException("La actividad principal de la organización " + numeroOrg + " es obligatoria");
-        }
-    }
-
     private void procesarReservacionesEdicion(List<EventoEdicionCompleto.ReservacionDTO> reservacionesDTO, EventoModel evento) {
         // Reservaciones son obligatorias - ya validamos que no son null/vacíos, así que procesamos directamente
         int contador = 0;
@@ -552,25 +697,43 @@ public class EventoServiceImp implements IEventoService {
     }
 
     private void eliminarRelacionesExistentes(Integer codigoEvento) {
-        // Eliminar responsables existentes
-        List<ResponsableEventoModel> responsablesExistentes = 
-            responsableEventoRepository.findAllByCodigoEvento_Codigo(codigoEvento);
-        if (!responsablesExistentes.isEmpty()) {
-            responsableEventoRepository.deleteAll(responsablesExistentes);
-        }
+        try {
+            System.out.println("=== ELIMINANDO RELACIONES DEL EVENTO " + codigoEvento + " ===");
+            
+            // 🔴 ORDEN CORRECTO: Primero las tablas que NO tienen FKs a otras tablas de evento
+            // 1. Primero eliminar reservaciones (depende solo de evento y espacio)
+            List<ReservacionModel> reservacionesExistentes = 
+                reservacionRepository.findAllByCodigoEvento_Codigo(codigoEvento);
+            if (!reservacionesExistentes.isEmpty()) {
+                System.out.println("Eliminando " + reservacionesExistentes.size() + " reservaciones");
+                reservacionRepository.deleteAll(reservacionesExistentes);
+                reservacionRepository.flush(); // Forzar commit inmediato
+            }
 
-        // Eliminar colaboraciones existentes
-        List<ColaboracionModel> colaboracionesExistentes = 
-            colaboracionRepository.findAllByCodigoEvento_Codigo(codigoEvento);
-        if (!colaboracionesExistentes.isEmpty()) {
-            colaboracionRepository.deleteAll(colaboracionesExistentes);
-        }
+            // 2. Luego eliminar responsables (depende de evento y usuario)
+            List<ResponsableEventoModel> responsablesExistentes = 
+                responsableEventoRepository.findAllByCodigoEvento_Codigo(codigoEvento);
+            if (!responsablesExistentes.isEmpty()) {
+                System.out.println("Eliminando " + responsablesExistentes.size() + " responsables");
+                responsableEventoRepository.deleteAll(responsablesExistentes);
+                responsableEventoRepository.flush();
+            }
 
-        // Eliminar reservaciones existentes
-        List<ReservacionModel> reservacionesExistentes = 
-            reservacionRepository.findAllByCodigoEvento_Codigo(codigoEvento);
-        if (!reservacionesExistentes.isEmpty()) {
-            reservacionRepository.deleteAll(reservacionesExistentes);
+            // 3. Finalmente eliminar colaboraciones (depende de evento y organización)
+            List<ColaboracionModel> colaboracionesExistentes = 
+                colaboracionRepository.findAllByCodigoEvento_Codigo(codigoEvento);
+            if (!colaboracionesExistentes.isEmpty()) {
+                System.out.println("Eliminando " + colaboracionesExistentes.size() + " colaboraciones");
+                colaboracionRepository.deleteAll(colaboracionesExistentes);
+                colaboracionRepository.flush();
+            }
+
+            System.out.println("✓ Todas las relaciones eliminadas correctamente");
+            
+        } catch (Exception e) {
+            System.err.println("✗ Error eliminando relaciones: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("Error al eliminar relaciones existentes del evento", e);
         }
     }
 
@@ -621,11 +784,11 @@ public class EventoServiceImp implements IEventoService {
 
     private EventoCompletoResponse.ResponsableResponse convertirToResponsableResponse(ResponsableEventoModel responsable) {
         EventoCompletoResponse.ResponsableResponse respResponse = new EventoCompletoResponse.ResponsableResponse();
-        respResponse.setId_usuario(responsable.getId_usuario().getIdentificacion());
+        respResponse.setId_usuario(responsable.getIdUsuario().getIdentificacion());
         
         // Obtener nombre del usuario
-        String nombreCompleto = responsable.getId_usuario().getNombre() + " " + 
-                            responsable.getId_usuario().getApellido();
+        String nombreCompleto = responsable.getIdUsuario().getNombre() + " " + 
+                            responsable.getIdUsuario().getApellido();
         respResponse.setNombreUsuario(nombreCompleto.trim());
         
         respResponse.setDocumentoAval(responsable.getDocumentoAval());

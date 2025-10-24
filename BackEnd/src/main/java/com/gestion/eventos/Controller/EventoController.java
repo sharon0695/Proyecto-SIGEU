@@ -10,11 +10,12 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -24,32 +25,40 @@ import org.springframework.web.bind.annotation.RestController;
 public class EventoController {
     @Autowired IEventoService eventoService;
 
-    @PostMapping("/registrar")
-    public ResponseEntity<?> registrarEvento(@RequestBody EventoRegistroCompleto request) {
-        EventoModel eventoRegistrado = eventoService.registrarEventoCompleto(request);            
+    @PostMapping(value = "/registrar", consumes = "multipart/form-data")
+    public ResponseEntity<?> registrarEvento(@ModelAttribute EventoRegistroCompleto request) {
+            EventoModel eventoRegistrado = eventoService.registrarEventoCompleto(request);
             EventoRegistroResponse response = new EventoRegistroResponse(
                 "Registro de evento exitoso. El evento se encuentra en estado borrador",
                 eventoRegistrado.getCodigo()
-            );            
+            );
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
+
     @GetMapping ("/listar")
     public ResponseEntity<List<EventoModel>> listarEventos(){
         return new ResponseEntity<>(eventoService.listarEventos(), HttpStatus.OK);
     }
-    @PutMapping("/editar")
-    public ResponseEntity<?> editarEvento(@RequestBody EventoEdicionCompleto request) {
-        EventoModel eventoEditado = eventoService.editarEventoCompleto(request);
-        EventoRegistroResponse response = new EventoRegistroResponse(
-            "Edición de evento exitosa",
-            eventoEditado.getCodigo()
-        );
-        return ResponseEntity.ok(response);
+     @PutMapping(value = "/editar", consumes = "multipart/form-data")
+    public ResponseEntity<?> editarEvento(@ModelAttribute EventoEdicionCompleto request) {
+            EventoModel eventoEditado = eventoService.editarEventoCompleto(request);
+            EventoRegistroResponse response = new EventoRegistroResponse(
+                "Edición de evento exitosa",
+                eventoEditado.getCodigo()
+            );
+            return ResponseEntity.ok(response);
     }
+
     @GetMapping("/{codigo}")
     public ResponseEntity<EventoCompletoResponse> obtenerEventoCompleto(@PathVariable Integer codigo) {
         EventoCompletoResponse eventoCompleto = eventoService.obtenerEventoCompleto(codigo);
         return ResponseEntity.ok(eventoCompleto);
+    }
+
+    @DeleteMapping("/{codigo}")
+    public ResponseEntity<?> eliminarEvento(@PathVariable Integer codigo) {
+        eventoService.eliminarEvento(codigo);
+        return ResponseEntity.ok("Evento eliminado correctamente");
     }
 }   
 

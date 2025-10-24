@@ -1,9 +1,8 @@
 package com.gestion.eventos.DTO;
 
-import java.sql.Date;
-import java.sql.Time;
 import java.util.List;
 import lombok.Data;
+import org.springframework.web.multipart.MultipartFile;
 
 @Data
 public class EventoEdicionCompleto {
@@ -11,38 +10,34 @@ public class EventoEdicionCompleto {
     private String nombre;
     private String descripcion;
     private String tipo;
-    private Date fecha;
-    private Time hora_inicio;
-    private Time hora_fin;
+    private java.sql.Date fecha;
+    private java.sql.Time hora_inicio;
+    private java.sql.Time hora_fin;
     private Integer id_usuario_registra;
-    private List<OrganizacionDTO> organizaciones;
+    private List<ColaboracionEdicionDTO> colaboraciones;
     private List<ResponsableDTO> responsables;
     private List<ReservacionDTO> reservaciones;
 
     @Data
-    public static class OrganizacionDTO {
-        private String nit;
-        private String nombre;
-        private String representante_legal;
-        private String ubicacion;
-        private String telefono;
-        private String sector_economico;
-        private String actividad_principal;
-        private String certificado_participacion;
+    public static class ColaboracionEdicionDTO {
+        private String nit; 
+        private MultipartFile certificado_participacion; 
+        private String certificado_existente; 
         private String representante_alterno;
     }
 
     @Data
     public static class ResponsableDTO {
         private Integer id_usuario;
-        private String documentoAval;
+        private MultipartFile documentoAval; 
+        private String documento_existente; 
         private String tipoAval;
     }
 
     @Data
     public static class ReservacionDTO {
         private String codigo_espacio;
-        private Time hora_inicio;
-        private Time hora_fin;
+        private java.sql.Time hora_inicio;
+        private java.sql.Time hora_fin;
     }
 }

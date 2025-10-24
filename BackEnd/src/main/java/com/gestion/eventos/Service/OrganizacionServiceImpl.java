@@ -22,16 +22,16 @@ public class OrganizacionServiceImpl implements IOrganizacionService {
         //Campos obligatorios
         if(organizacion.getNit()==null || organizacion.getNombre()==null || organizacion.getRepresentante_legal()==null ||
         organizacion.getUbicacion()==null || organizacion.getSector_economico()==null || organizacion.getActividad_principal()==null){
-            throw new RuntimeException("Hay campos obligatorios vacíos");
+            throw new IllegalArgumentException("Hay campos obligatorios vacíos");
         }
         if (organizacion.getTelefono() == null || !organizacion.getTelefono().matches("\\d+")) {
             throw new IllegalArgumentException("El teléfono solo debe contener números y no puede estar vacío");
         }
         if(organizacionRepository.findByNit(organizacion.getNit()).isPresent()){
-            throw new RuntimeException("Ya existe una organización con ese NIT");
+            throw new IllegalArgumentException("Ya existe una organización con ese NIT");
         }
         return organizacionRepository.save(organizacion);
-    }
+    } 
 
     @Override
     public List<OrganizacionModel> listarOrganizaciones() {

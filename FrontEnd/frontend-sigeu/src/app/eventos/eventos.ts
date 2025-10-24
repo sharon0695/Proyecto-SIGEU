@@ -23,9 +23,7 @@ export class Eventos {
     tipo: '',
     fecha: '',
     hora_inicio: '',
-    hora_fin: '',
-    codigo_lugar: '',
-    nit_organizacion: ''
+    hora_fin: ''
   };
   showModal = false;
   editMode = false;
@@ -43,22 +41,19 @@ export class Eventos {
 
   selectedEspacios: string[] = [];
   selectedOrganizaciones: Array<{ 
-    nit: string; 
-    tipo: 'legal' | 'alterno'; 
-    alterno?: string; 
-    aval?: File | null;
-    nombre?: string;
-    representante_legal?: string;
-    ubicacion?: string;
-    telefono?: string;
-    sector_economico?: string;
-    actividad_principal?: string;
-  }> = [];
-  selectedResponsables: Array<{ 
-    id: number; 
-    aval?: File | null;
-    tipoAval?: string;
-  }> = [];
+  nit: string; 
+  tipo: 'legal' | 'alterno'; 
+  alterno?: string; 
+  avalNuevo?: File | null;
+  certificadoExistente?: string;    
+}> = [];
+
+selectedResponsables: Array<{ 
+  id: number; 
+  avalNuevo?: File | null;
+  documentoExistente?: string;       
+  tipoAval?: string;
+}> = [];
 
   constructor(
     private eventosService: EventosService,
@@ -69,6 +64,24 @@ export class Eventos {
     private router: Router
   ) {}
 
+  paginaActual = 1;
+  elementosPorPagina = 10; 
+
+  get totalPaginas(): number {
+    return Math.ceil(this.eventos.length / this.elementosPorPagina);
+  }
+
+  paginaAnterior() {
+    if (this.paginaActual > 1) {
+      this.paginaActual--;
+    }
+  }
+
+  paginaSiguiente() {
+    if (this.paginaActual < this.totalPaginas) {
+      this.paginaActual++;
+    }
+  }
   ngOnInit() {
     this.listar();
     this.cargarListas();
@@ -160,14 +173,14 @@ export class Eventos {
     // Validar archivos PDF
     for (let i = 0; i < this.selectedOrganizaciones.length; i++) {
       const org = this.selectedOrganizaciones[i];
-      if (org.aval && org.aval.type !== 'application/pdf') {
+      if (org.avalNuevo && org.avalNuevo.type !== 'application/pdf') {
         return `El aval de la organización ${i + 1} debe ser un archivo PDF`;
       }
     }
 
     for (let i = 0; i < this.selectedResponsables.length; i++) {
       const resp = this.selectedResponsables[i];
-      if (resp.aval && resp.aval.type !== 'application/pdf') {
+      if (resp.avalNuevo && resp.avalNuevo.type !== 'application/pdf') {
         return `El aval del responsable ${i + 1} debe ser un archivo PDF`;
       }
     }
@@ -189,53 +202,58 @@ export class Eventos {
       return;
     }
 
-    // Construir organizaciones
-    const organizaciones: OrganizacionDTO[] = this.selectedOrganizaciones
-      .filter(org => org.nit)
-      .map(org => ({
-        nit: org.nit,
-        nombre: org.nombre,
-        representante_legal: org.representante_legal,
-        ubicacion: org.ubicacion,
-        telefono: org.telefono,
-        sector_economico: org.sector_economico,
-        actividad_principal: org.actividad_principal,
-        representante_alterno: org.tipo === 'alterno' ? org.alterno : undefined,
-        certificado_participacion: org.aval ? org.aval.name : undefined
-      }));
+    // Crear FormData en lugar de JSON
+    const formData = new FormData();
 
-    // Construir responsables
-    const responsables: ResponsableDTO[] = this.selectedResponsables
+    // Agregar datos básicos del evento
+    formData.append('nombre', this.nuevoEvento.nombre);
+    formData.append('descripcion', this.nuevoEvento.descripcion || '');
+    formData.append('tipo', this.nuevoEvento.tipo || 'Academico');
+    formData.append('fecha', this.nuevoEvento.fecha);
+    formData.append('hora_inicio', this.nuevoEvento.hora_inicio + ':00');
+    formData.append('hora_fin', this.nuevoEvento.hora_fin + ':00');
+    formData.append('id_usuario_registra', userId.toString());
+
+    // Agregar organizaciones
+    this.selectedOrganizaciones
+    .filter(org => org.nit)
+    .forEach((org, index) => {
+      formData.append(`colaboraciones[${index}].nit`, org.nit);
+      formData.append(`colaboraciones[${index}].representante_alterno`, org.tipo === 'alterno' ? (org.alterno || '') : '');
+      
+      // Solo enviar archivo nuevo si se seleccionó
+      if (org.avalNuevo) {
+        formData.append(`colaboraciones[${index}].certificado_participacion`, org.avalNuevo, org.avalNuevo.name);
+      } else if (org.certificadoExistente) {
+        // Mantener archivo existente si no se sube uno nuevo
+        formData.append(`colaboraciones[${index}].certificado_existente`, org.certificadoExistente);
+      }
+    });
+
+
+    // Agregar responsables
+    this.selectedResponsables
       .filter(resp => resp.id > 0)
-      .map(resp => ({
-        id_usuario: resp.id,
-        documentoAval: resp.aval ? resp.aval.name : undefined,
-        tipoAval: resp.tipoAval
-      }));
+      .forEach((resp, index) => {
+        formData.append(`responsables[${index}].id_usuario`, resp.id.toString());
+        formData.append(`responsables[${index}].tipoAval`, resp.tipoAval || '');
+        
+        if (resp.avalNuevo) {
+          formData.append(`responsables[${index}].documentoAval`, resp.avalNuevo, resp.avalNuevo.name);
+        }
+      });
 
-    // Construir reservaciones
-    const reservaciones: ReservacionDTO[] = this.selectedEspacios
+    // Agregar reservaciones
+    this.selectedEspacios
       .filter(espacio => espacio)
-      .map(espacio => ({
-        codigo_espacio: espacio,
-        hora_inicio: this.nuevoEvento.hora_inicio + ':00',
-        hora_fin: this.nuevoEvento.hora_fin + ':00'
-      }));
+      .forEach((espacio, index) => {
+        formData.append(`reservaciones[${index}].codigo_espacio`, espacio);
+        formData.append(`reservaciones[${index}].hora_inicio`, this.nuevoEvento.hora_inicio + ':00');
+        formData.append(`reservaciones[${index}].hora_fin`, this.nuevoEvento.hora_fin + ':00');
+      });
 
-    const payload: EventoRegistroCompleto = {
-      nombre: this.nuevoEvento.nombre,
-      descripcion: this.nuevoEvento.descripcion || '',
-      tipo: this.nuevoEvento.tipo || 'Academico',
-      fecha: this.nuevoEvento.fecha,
-      hora_inicio: this.nuevoEvento.hora_inicio + ':00',
-      hora_fin: this.nuevoEvento.hora_fin + ':00',
-      id_usuario_registra: userId,
-      organizaciones,
-      responsables,
-      reservaciones
-    };
-
-    this.eventosService.registrar(payload).subscribe({
+    // Usar el nuevo método que acepta FormData
+    this.eventosService.registrar(formData).subscribe({
       next: (response) => {
         this.showMessage('success', '¡Registro Exitoso!', response?.mensaje || 'El evento ha sido registrado exitosamente');
         this.listar();
@@ -268,78 +286,63 @@ export class Eventos {
       return;
     }
 
-    // Construir organizaciones - manejar valores null
-    const organizaciones: OrganizacionDTO[] = this.selectedOrganizaciones
+    // Crear FormData para edición
+    const formData = new FormData();
+
+    // Agregar datos básicos del evento
+    formData.append('codigo', this.editCodigo.toString());
+    formData.append('nombre', this.nuevoEvento.nombre);
+    formData.append('descripcion', this.nuevoEvento.descripcion || '');
+    formData.append('tipo', this.nuevoEvento.tipo || 'Academico');
+    formData.append('fecha', this.nuevoEvento.fecha);
+    formData.append('hora_inicio', this.nuevoEvento.hora_inicio + ':00');
+    formData.append('hora_fin', this.nuevoEvento.hora_fin + ':00');
+    formData.append('id_usuario_registra', userId.toString());
+
+    // Agregar organizaciones
+    this.selectedOrganizaciones
       .filter(org => org.nit)
-      .map(org => {
-        const orgDTO: OrganizacionDTO = {
-          nit: org.nit,
-          nombre: org.nombre,
-          representante_legal: org.representante_legal,
-          ubicacion: org.ubicacion,
-          telefono: org.telefono,
-          sector_economico: org.sector_economico,
-          actividad_principal: org.actividad_principal,
-          representante_alterno: org.tipo === 'alterno' ? org.alterno : undefined,
-          certificado_participacion: org.aval ? org.aval.name : undefined
-        };
-
-        // Manejar certificado_participacion (convertir null a undefined)
-        if (org.aval) {
-          orgDTO.certificado_participacion = org.aval.name;
-        } else if (org.aval) {
-          orgDTO.certificado_participacion = org.aval;
+      .forEach((org, index) => {
+        formData.append(`colaboraciones[${index}].nit`, org.nit);
+        formData.append(`colaboraciones[${index}].representante_alterno`, org.tipo === 'alterno' ? (org.alterno || '') : '');
+        
+        // Solo enviar archivo nuevo si se seleccionó
+        if (org.avalNuevo) {
+          formData.append(`colaboraciones[${index}].certificado_participacion`, org.avalNuevo, org.avalNuevo.name);
+        } else if (org.certificadoExistente) {
+          // Mantener archivo existente si no se sube uno nuevo
+          formData.append(`colaboraciones[${index}].certificado_existente`, org.certificadoExistente);
         }
-        // Si no hay ninguno, queda como undefined
-
-        return orgDTO;
       });
 
-    // Construir responsables - manejar valores null
-    const responsables: ResponsableDTO[] = this.selectedResponsables
+
+    // Agregar responsables
+    this.selectedResponsables
       .filter(resp => resp.id > 0)
-      .map(resp => {
-        const respDTO: ResponsableDTO = {
-          id_usuario: resp.id,
-          documentoAval: resp.aval ? resp.aval.name : undefined,
-          tipoAval: resp.tipoAval
-        };
-
-        // Manejar documentoAval (convertir null a undefined)
-        if (resp.aval) {
-          respDTO.documentoAval = resp.aval.name;
-        } else if (resp.aval) {
-          respDTO.documentoAval = resp.aval;
+      .forEach((resp, index) => {
+        formData.append(`responsables[${index}].id_usuario`, resp.id.toString());
+        formData.append(`responsables[${index}].tipoAval`, resp.tipoAval || '');
+        
+        // Solo enviar archivo nuevo si se seleccionó
+        if (resp.avalNuevo) {
+          formData.append(`responsables[${index}].documentoAval`, resp.avalNuevo, resp.avalNuevo.name);
+        } else if (resp.documentoExistente) {
+          // Mantener archivo existente si no se sube uno nuevo
+          formData.append(`responsables[${index}].documento_existente`, resp.documentoExistente);
         }
-        // Si no hay ninguno, queda como undefined
-
-        return respDTO;
       });
 
-    // Construir reservaciones
-    const reservaciones: ReservacionDTO[] = this.selectedEspacios
+    // Agregar reservaciones
+    this.selectedEspacios
       .filter(espacio => espacio)
-      .map(espacio => ({
-        codigo_espacio: espacio,
-        hora_inicio: this.nuevoEvento.hora_inicio + ':00',
-        hora_fin: this.nuevoEvento.hora_fin + ':00'
-      }));
+      .forEach((espacio, index) => {
+        formData.append(`reservaciones[${index}].codigo_espacio`, espacio);
+        formData.append(`reservaciones[${index}].hora_inicio`, this.nuevoEvento.hora_inicio + ':00');
+        formData.append(`reservaciones[${index}].hora_fin`, this.nuevoEvento.hora_fin + ':00');
+      });
 
-    const payload: EventoEdicionCompleto = {
-      codigo: this.editCodigo,
-      nombre: this.nuevoEvento.nombre,
-      descripcion: this.nuevoEvento.descripcion || '',
-      tipo: this.nuevoEvento.tipo || 'Academico',
-      fecha: this.nuevoEvento.fecha,
-      hora_inicio: this.nuevoEvento.hora_inicio + ':00',
-      hora_fin: this.nuevoEvento.hora_fin + ':00',
-      id_usuario_registra: userId,
-      organizaciones,
-      responsables,
-      reservaciones
-    };
-
-    this.eventosService.editar(payload).subscribe({
+    // Usar el nuevo método que acepta FormData
+    this.eventosService.editar(formData).subscribe({
       next: (response) => {
         this.showMessage('success', '¡Edición Exitosa!', response?.mensaje || 'El evento ha sido actualizado exitosamente');
         this.listar();
@@ -352,6 +355,54 @@ export class Eventos {
       }
     });
   }
+
+  // Método para mostrar archivos existentes en el HTML
+  getFileName(filePath: string | undefined): string {
+    if (!filePath) return 'Ningún archivo seleccionado';
+    
+    // Extraer solo el nombre del archivo de la ruta completa
+    const parts = filePath.split('/');
+    return parts[parts.length - 1] || 'Archivo existente';
+  }
+
+  // Método para ver archivo existente
+  verArchivo(tipo: 'organizaciones' | 'responsables', filePath: string) {
+  if (!filePath) {
+    this.showMessage('error', 'Archivo no disponible', 'No hay archivo para mostrar');
+    return;
+  }
+
+  console.log('Intentando abrir archivo:');
+  console.log('- Tipo:', tipo);
+  console.log('- FilePath:', filePath);
+
+  const url = this.eventosService.getFileViewUrl(tipo, filePath);
+  console.log('- URL final:', url);
+  
+  window.open(url, '_blank');
+}
+
+// Método para descargar archivo existente
+descargarArchivo(tipo: 'organizaciones' | 'responsables', filePath: string) {
+  if (!filePath) {
+    this.showMessage('error', 'Archivo no disponible', 'No hay archivo para descargar');
+    return;
+  }
+
+  console.log('Intentando descargar archivo:');
+  console.log('- Tipo:', tipo);
+  console.log('- FilePath:', filePath);
+
+  const url = this.eventosService.getFileDownloadUrl(tipo, filePath);
+  console.log('- URL final:', url);
+  
+  window.open(url, '_blank');
+}
+  getNewFileName(file: File | null | undefined): string {
+    if (!file) return 'Ningún archivo seleccionado';
+    return file.name;
+  }
+
   onSubmitCrearEvento(event: Event) {
     event.preventDefault();
     
@@ -371,7 +422,7 @@ export class Eventos {
       // Agregar el usuario actual como responsable por defecto
       const userId = this.auth.getUserId();
       if (userId) {
-        this.selectedResponsables.push({ id: userId, aval: null });
+        this.selectedResponsables.push({ id: userId, avalNuevo: null });
       }
     }
   }
@@ -447,7 +498,7 @@ export class Eventos {
       nit: '', 
       tipo: 'legal', 
       alterno: '', 
-      aval: null 
+      avalNuevo: null 
     }); 
   }
 
@@ -464,7 +515,7 @@ export class Eventos {
       return;
     }
     
-    this.selectedResponsables.push({ id: 0, aval: null }); 
+    this.selectedResponsables.push({ id: 0, avalNuevo: null }); 
   }
 
   removeResponsable(i: number) { 
@@ -475,7 +526,15 @@ export class Eventos {
   orgInline: any = { nit: '', nombre: '', representante_legal: '', telefono: '', ubicacion: '', sector_economico: '', actividad_principal: '' };
 
   openOrgInlineModal() { 
-    this.orgInline = {}; 
+    this.orgInline = { 
+      nit: '', 
+      nombre: '', 
+      representante_legal: '', 
+      telefono: '', 
+      ubicacion: '', 
+      sector_economico: '', 
+      actividad_principal: '' 
+    }; 
     this.showOrgInline = true; 
   }
 
@@ -490,24 +549,37 @@ export class Eventos {
       this.showMessage('error', 'Error de Sesión', 'Debes iniciar sesión'); 
       return; 
     }
-    const body = { ...this.orgInline, usuario: { identificacion: idUsuario } };
+    
+    const body = { 
+      ...this.orgInline, 
+      usuario: { identificacion: idUsuario } 
+    };
+    
     this.organizacionesService.registrar(body).subscribe({
       next: () => { 
+        // Solo agregar el NIT a las colaboraciones, no toda la información
         this.selectedOrganizaciones.push({ 
           nit: this.orgInline.nit, 
           tipo: 'legal', 
           alterno: '', 
-          aval: null,
-          nombre: this.orgInline.nombre,
-          representante_legal: this.orgInline.representante_legal,
-          ubicacion: this.orgInline.ubicacion,
-          telefono: this.orgInline.telefono,
-          sector_economico: this.orgInline.sector_economico,
-          actividad_principal: this.orgInline.actividad_principal
+          avalNuevo: null
+          // Eliminamos todos los demás campos que no necesitamos
         }); 
+        
         this.showOrgInline = false; 
         this.showMessage('success', '¡Éxito!', 'Organización creada y agregada al evento');
         this.cargarListas(); // Recargar lista de organizaciones
+        
+        // Limpiar el formulario
+        this.orgInline = { 
+          nit: '', 
+          nombre: '', 
+          representante_legal: '', 
+          telefono: '', 
+          ubicacion: '', 
+          sector_economico: '', 
+          actividad_principal: '' 
+        };
       },
       error: (err) => { 
         const mensajeError = err?.error?.mensaje || err?.error?.message || 'No se pudo crear organización';
@@ -540,25 +612,21 @@ export class Eventos {
           // Cargar espacios
           this.selectedEspacios = (evento.reservaciones || []).map((r: any) => r.codigo_espacio);
 
-          // Cargar organizaciones
+          // Cargar organizaciones - solo información básica
           this.selectedOrganizaciones = (evento.organizaciones || []).map((org: any) => ({
             nit: org.nit,
-            nombre: org.nombre,
-            representante_legal: org.representante_legal,
-            ubicacion: org.ubicacion,
-            telefono: org.telefono,
-            sector_economico: org.sector_economico,
-            actividad_principal: org.actividad_principal,
             tipo: org.representante_alterno ? 'alterno' : 'legal',
             alterno: org.representante_alterno || '',
-            certificado_participacion: org.certificado_participacion
+            certificadoExistente: org.certificado_participacion, // Solo para referencia
+            avalNuevo: null
           }));
 
-          // Cargar responsables
+          // Cargar responsables - solo información básica
           this.selectedResponsables = (evento.responsables || []).map((resp: any) => ({
             id: resp.id_usuario,
-            tipoAval: resp.tipoAval,
-            documentoAval: resp.documentoAval
+            tipoAval: resp.tipoAval || undefined,
+            documentoExistente: resp.documentoAval, // Solo para referencia
+            avalNuevo: null
           }));
 
           this.openModal();
@@ -584,7 +652,7 @@ export class Eventos {
       (event.target as HTMLInputElement).value = '';
       return;
     }
-    this.selectedOrganizaciones[i].aval = file;
+    this.selectedOrganizaciones[i].avalNuevo = file;
   }
 
   onRespAvalChange(event: Event, i: number) {
@@ -594,6 +662,6 @@ export class Eventos {
       (event.target as HTMLInputElement).value = '';
       return;
     }
-    this.selectedResponsables[i].aval = file;
+    this.selectedResponsables[i].avalNuevo = file;
   }
 }

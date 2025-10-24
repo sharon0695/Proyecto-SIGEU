@@ -53,7 +53,7 @@
           <tr *ngIf="!organizaciones.length">
             <td colspan="5" class="org-empty">No hay organizaciones registradas</td>
           </tr>
-          <tr *ngFor="let org of organizaciones">
+          <tr *ngFor="let org of organizaciones | slice:(paginaActual - 1) * elementosPorPagina : paginaActual * elementosPorPagina">
             <td>{{ org.nit || '-' }}</td>
             <td>{{ org.nombre || '-' }}</td>
             <td>{{ org.representante_legal || '-' }}</td>
@@ -63,6 +63,11 @@
             <td><button class="small-btned" (click)="onEditar(org)">🖊Editar</button></td>
             <td><button class="small-btne" (click)="onEliminar(org)">🗑️Eliminar</button></td>
           </tr>
+          <div class="pagination">
+            <button (click)="paginaAnterior()" [disabled]="paginaActual === 1">Anterior</button>
+            <span>Página {{paginaActual}} de {{totalPaginas}}</span>
+            <button (click)="paginaSiguiente()" [disabled]="paginaActual === totalPaginas">Siguiente</button>
+          </div>                  
         </tbody>
       </table>
     </section>
