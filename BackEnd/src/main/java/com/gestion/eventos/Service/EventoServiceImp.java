@@ -842,35 +842,29 @@ public class EventoServiceImp implements IEventoService {
     @Override
     @Transactional
     public void eliminarEvento(Integer codigo) {
-    // Buscar el evento
-    EventoModel evento = eventoRepository.findById(codigo)
-            .orElseThrow(() -> new RuntimeException("Evento no encontrado"));
+        // Buscar el evento
+        EventoModel evento = eventoRepository.findById(codigo)
+                .orElseThrow(() -> new RuntimeException("Evento no encontrado"));
 
-    // Validar estado permitido para eliminar
-    String estado = evento.getEstado().name();
-    if (!estado.equalsIgnoreCase("borrador") && !estado.equalsIgnoreCase("rechazado")) {
-        throw new RuntimeException("Solo se pueden eliminar eventos en estado 'borrador' o 'rechazado'");
-    }
-    // 🔹 Eliminar responsables asociados al evento
-    List<ResponsableEventoModel> responsables = responsableEventoRepository.findAllByCodigoEvento_Codigo(codigo);
-    if (!responsables.isEmpty()) {
-    responsableEventoRepository.deleteAll(responsables);
-}
+        String estado = evento.getEstado().name();
+        if (!estado.equalsIgnoreCase("borrador") && !estado.equalsIgnoreCase("rechazado")) {
+            throw new RuntimeException("Solo se pueden eliminar eventos en estado 'borrador' o 'rechazado'");
+        }
+        List<ResponsableEventoModel> responsables = responsableEventoRepository.findAllByCodigoEvento_Codigo(codigo);
+        if (!responsables.isEmpty()) {
+        responsableEventoRepository.deleteAll(responsables);
+        }
+        List<ColaboracionModel> colaboraciones = colaboracionRepository.findAllByCodigoEvento_Codigo(codigo);
+        if (!colaboraciones.isEmpty()) {
+            colaboracionRepository.deleteAll(colaboraciones);
+        }
 
-    // 🔹 Eliminar colaboraciones asociadas al evento
-    List<ColaboracionModel> colaboraciones = colaboracionRepository.findAllByCodigoEvento_Codigo(codigo);
-    if (!colaboraciones.isEmpty()) {
-        colaboracionRepository.deleteAll(colaboraciones);
-    }
+        List<ReservacionModel> reservaciones = reservacionRepository.findAllByCodigoEvento_Codigo(codigo);
+        if (!reservaciones.isEmpty()) {
+            reservacionRepository.deleteAll(reservaciones);
+        }
 
-    // 🔹 Eliminar reservaciones asociadas al evento
-    List<ReservacionModel> reservaciones = reservacionRepository.findAllByCodigoEvento_Codigo(codigo);
-    if (!reservaciones.isEmpty()) {
-        reservacionRepository.deleteAll(reservaciones);
-    }
-
-    // 🔹 Finalmente eliminar el evento
-    eventoRepository.delete(evento);
+        eventoRepository.delete(evento);
     }
 
 }

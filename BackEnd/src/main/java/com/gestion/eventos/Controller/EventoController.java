@@ -6,7 +6,11 @@ import com.gestion.eventos.DTO.EventoRegistroCompleto;
 import com.gestion.eventos.DTO.EventoRegistroResponse;
 import com.gestion.eventos.Model.EventoModel;
 import com.gestion.eventos.Service.IEventoService;
+
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -58,7 +62,9 @@ public class EventoController {
     @DeleteMapping("/{codigo}")
     public ResponseEntity<?> eliminarEvento(@PathVariable Integer codigo) {
         eventoService.eliminarEvento(codigo);
-        return ResponseEntity.ok("Evento eliminado correctamente");
+        Map<String, String> response = new HashMap<>();
+        response.put("mensaje", "Evento eliminado correctamente");
+        return ResponseEntity.ok(response);
     }
 }   
 
