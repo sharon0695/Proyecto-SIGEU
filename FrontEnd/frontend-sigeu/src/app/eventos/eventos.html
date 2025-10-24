@@ -93,14 +93,15 @@
             <td>{{ e.estado }}</td>
             <td><button class="small-btned" type="button" (click)="openEdit(e)">🖊 Editar</button></td>
             <td><button class="small-btne" type="button" (click)="eliminarEvento(e.codigo)">🗑 Eliminar</button> </td>           
-          </tr>
-          <div class="pagination">
-            <button (click)="paginaAnterior()" [disabled]="paginaActual === 1">Anterior</button>
-            <span>Página {{paginaActual}} de {{totalPaginas}}</span>
-            <button (click)="paginaSiguiente()" [disabled]="paginaActual === totalPaginas">Siguiente</button>
-          </div>
+            <td><button class="small-btnen" type="button" (click)="eliminarEvento(e.codigo)">📤 Enviar Revisión</button> </td>           
+          </tr>          
         </tbody>
       </table>
+      <div class="pagination">
+        <button (click)="paginaAnterior()" [disabled]="paginaActual === 1">Anterior</button>
+        <span>Página {{paginaActual}} de {{totalPaginas}}</span>
+        <button (click)="paginaSiguiente()" [disabled]="paginaActual === totalPaginas">Siguiente</button>
+      </div>
     </section>
   </main>
 

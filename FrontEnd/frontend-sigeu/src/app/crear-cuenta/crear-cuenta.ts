@@ -64,6 +64,11 @@ export class CrearCuenta {
   registrar() {
     const pwd = this.usuario.contrasena;
     const strong = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[^\w\s]).{8,64}$/.test(pwd) && !/\s/.test(pwd);
+    if (!this.usuario.identificacion || !this.usuario.nombre?.trim() || !this.usuario.apellido?.trim() ||
+        !this.usuario.correo?.trim() || !this.usuario.rol?.trim()) {
+      this.mensaje = 'Hay campos obligatorios vacíos, llene todos antes de crear el usuario'; this.esError = true;
+      return;
+    }
     if (!strong) {
       this.mensaje = 'La contraseña debe tener 8-64 caracteres, incluir mayúscula, minúscula, número y caracter especial, y no tener espacios';
       this.esError = true;
@@ -81,15 +86,15 @@ export class CrearCuenta {
     // Reglas según rol
     const rol = this.mapRol(this.usuario.rol);
     if (rol === 'estudiante' && (!this.usuario.codigo || !this.usuario.codigoPrograma)) {
-      this.mensaje = 'Para estudiante, código e ID de programa son obligatorios'; this.esError = true;
+      this.mensaje = 'Para estudiante, código y programa son obligatorios'; this.esError = true;
       return;
     }
     if (rol === 'docente' && !this.usuario.codigoUnidad) {
-      this.mensaje = 'Para docente, el ID de unidad académica es obligatorio'; this.esError = true;
+      this.mensaje = 'Para docente, la unidad académica es obligatorio'; this.esError = true;
       return;
     }
     if (rol === 'secretaria_academica' && !this.usuario.idFacultad) {
-      this.mensaje = 'Para secretaría académica, el ID de facultad es obligatorio'; this.esError = true;
+      this.mensaje = 'Para secretaría académica, la facultad es obligatorio'; this.esError = true;
       return;
     }
 
@@ -104,9 +109,9 @@ export class CrearCuenta {
     contrasena: formValues.contrasena,
     rol: this.mapRol(formValues.rol),
     codigo: formValues.codigo ? Number(formValues.codigo) : undefined,
-    codigoPrograma: formValues.codigoPrograma || undefined, // string
-    codigoUnidad: formValues.codigoUnidad || undefined,     // string
-    idFacultad: formValues.idFacultad || undefined,         // string
+    codigoPrograma: formValues.codigoPrograma || undefined, 
+    codigoUnidad: formValues.codigoUnidad || undefined,    
+    idFacultad: formValues.idFacultad || undefined,       
   };
     this.apiService.registrarUsuario(payload).subscribe({
       next: () => {

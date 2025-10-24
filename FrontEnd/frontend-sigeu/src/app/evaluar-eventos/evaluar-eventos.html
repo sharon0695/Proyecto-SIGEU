@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Evaluar Eventos</title>
+  <link rel="stylesheet" href="evaluar-eventos.css">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+</head>
+<body>
+
+  <!-- ======= HEADER ======= -->
+  <header>
+    <nav class="navbar">
+      <div class="nav-left">
+        <a routerLink="/homeS">Inicio</a>
+        <a routerLink="/evaluar-eventos" class="active">Evaluar eventos</a>
+      </div>
+
+      <div class="nav-icons">
+        <span class="material-symbols-outlined icon" id="notificaciones">notifications</span>
+        <a routerLink="/perfil">
+          <span class="material-symbols-outlined profile-pic" id="perfil">account_circle</span>
+        </a>
+      </div>
+    </nav>
+  </header>
+
+  <!-- ======= CONTENIDO PRINCIPAL ======= -->
+  <main class="main-container">
+    <section class="event-container">
+      <div class="event-header">
+        <h2>Revisión de eventos</h2>
+      </div>
+
+      <table class="event-table">
+        <thead>
+          <tr>
+            <th>Código</th>
+            <th>Nombre</th>
+            <th>Descripción</th>
+            <th>Fecha</th>
+            <th>Organizador</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <!-- Mostrar mensaje si no hay eventos -->
+          <tr *ngIf="!eventosFiltrados().length">
+            <td colspan="6" class="event-empty">No hay eventos pendientes por evaluar</td>
+          </tr>
+
+          <!-- Iterar sobre eventos -->
+          <tr *ngFor="let evento of eventosFiltrados()">
+            <td>{{ evento.codigo }}</td>
+            <td>{{ evento.nombre }}</td>
+            <td>{{ evento.descripcion }}</td>
+            <td>{{ evento.fecha ? (evento.fecha | date:'shortDate') : '-' }}</td>
+            <td>{{ evento.organizador }}</td>
+            <td><button class="small-btn" (click)="verDetalles(evento)">👁 Ver más</button>
+            <button class="small-btn approve" (click)="abrirModalEvaluacion(evento)">📝 Evaluar evento</button></td>
+          </tr>       
+          <tr *ngIf="eventos.length === 0">
+          <td colspan="6" class="event-empty">No hay eventos pendientes por revisar.</td>
+        </tr>   
+        </tbody>        
+      </table>
+      <div class="pagination">
+        <button (click)="paginaAnterior()" [disabled]="paginaActual === 1">Anterior</button>
+        <span>Página {{paginaActual}} de {{totalPaginas}}</span>
+        <button (click)="paginaSiguiente()" [disabled]="paginaActual === totalPaginas">Siguiente</button>
+      </div>
+    </section>
+  </main>
+
+  <!-- ======= MODAL: VER MÁS ======= -->
+  <div class="modal" [style.display]="modalVerMasVisible ? 'flex' : 'none'">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Detalles del evento</h3>
+        <span class="close" (click)="cerrarModalVerMas()">&times;</span>
+      </div>
+
+      <div class="modal-body" *ngIf="eventoSeleccionado">
+        <p><strong>Código:</strong> {{ eventoSeleccionado.codigo }}</p>
+        <p><strong>Nombre:</strong> {{ eventoSeleccionado.nombre }}</p>
+        <p><strong>Descripción:</strong> {{ eventoSeleccionado.descripcion }}</p>
+        <p><strong>Fecha:</strong> {{ eventoSeleccionado.fecha ? (eventoSeleccionado.fecha | date:'longDate') : '-' }}</p>
+        <p><strong>Organizador:</strong> {{ eventoSeleccionado.organizador }}</p>
+      </div>
+
+      <div class="modal-footer">
+        <button class="small-btn" (click)="cerrarModalVerMas()">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======= MODAL: EVALUAR EVENTO ======= -->
+  <div class="modal" [style.display]="modalEvaluarVisible ? 'flex' : 'none'">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Evaluar evento</h3>
+        <span class="close" (click)="cerrarModalEvaluacion()">&times;</span>
+      </div>
+
+      <div class="modal-body">
+        <p><strong>Código:</strong> {{ eventoSeleccionado?.codigo }}</p>
+        <p><strong>Nombre:</strong> {{ eventoSeleccionado?.nombre }}</p>
+
+        <div class="form-group full-width">
+          <label for="decision">Decisión</label>
+          <select id="decision" [(ngModel)]="decision" name="decision" class="select-decision">
+            <option value="">-- Seleccione una opción --</option>
+            <option value="aprobado">Aprobar evento</option>
+            <option value="rechazado">Rechazar evento</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="small-btn cancel" (click)="cerrarModalEvaluacion()">Cancelar</button>
+        <button class="save-btn" (click)="confirmarEvaluacion()">Confirmar</button>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>
