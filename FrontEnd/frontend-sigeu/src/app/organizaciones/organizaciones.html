@@ -96,7 +96,7 @@
   <div id="orgModal" class="modal" [style.display]="showModal ? 'flex' : 'none'">
     <div class="modal-content">
       <div class="modal-header">
-        <h3>Registrar nueva organización</h3>
+        <h3>{{ editMode ? 'Edición de organización' : 'Registrar nueva organización' }}</h3>
         <span class="close" id="closeModal" (click)="closeModal()">&times;</span>
       </div>
       
