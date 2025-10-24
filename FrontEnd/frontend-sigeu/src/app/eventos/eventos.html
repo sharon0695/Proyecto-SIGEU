@@ -12,7 +12,7 @@
   <header>
     <nav class="navbar">
       <div class="nav-left">
-        <a routerLink="/home">Inicio</a>
+        <a routerLink="/homeO">Inicio</a>
         <a routerLink="/eventos" class="active">Eventos</a>
         <a routerLink="/organizacionExt">Organizaciones</a>
       </div>
@@ -50,9 +50,22 @@
   <main class="main-container">
     <section class="event-container">
       <div class="event-header">
-        <h2>Eventos</h2>
-        <div class="search-container">
-          <input type="text" placeholder="Buscar evento..." id="searchInput">
+        <h2>Eventos</h2><div class="filter-container">
+          <div class="filter-select">
+            <span class="material-symbols-outlined">filter_alt</span>
+            <select [(ngModel)]="filtroTipo" (change)="filtrarEventos()">
+              <option value="nombre">Nombre</option>
+              <option value="fecha">Fecha</option>
+              <option value="estado">Estado</option>
+            </select>
+          </div>
+
+          <input 
+            type="text" 
+            placeholder="Valor a buscar" 
+            [(ngModel)]="valorFiltro" 
+            (input)="filtrarEventos()" 
+          >
           <button class="add-btn" id="addEventBtn" (click)="openModal()">+</button>
         </div>
       </div>
@@ -78,7 +91,8 @@
             <td>{{ e.tipo }}</td>
             <td>{{ e.fecha }}</td>
             <td>{{ e.estado }}</td>
-            <td><button class="small-btn" type="button" (click)="openEdit(e)">🖊 Editar</button></td>
+            <td><button class="small-btned" type="button" (click)="openEdit(e)">🖊 Editar</button></td>
+            <td><button class="small-btne" type="button" (click)="eliminarEvento(e.codigo)">🗑 Eliminar</button> </td>           
           </tr>
           <div class="pagination">
             <button (click)="paginaAnterior()" [disabled]="paginaActual === 1">Anterior</button>

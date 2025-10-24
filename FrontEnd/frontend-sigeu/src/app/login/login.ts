@@ -16,19 +16,22 @@ export class Login {
   esError = false;
 
   constructor(private auth: AuthService, private router: Router) {}
-
+ 
   onSubmit(event: Event) {
     event.preventDefault();
     this.auth.login(this.form).subscribe({
-      next: () => {
-        this.esError = false;
-        this.mensaje = 'Inicio de sesión exitoso';
-        this.router.navigateByUrl('/home');
+      next: (response) => {
+        const rol = (response?.rol || '').trim().toLowerCase();
+
+        if (rol === 'secretaria_academica') {
+          this.router.navigateByUrl('/homeS');
+        } else if(rol === 'estudiante' || 'docente'){
+          this.router.navigateByUrl('/homeO');
+        }
       },
       error: () => {
         this.esError = true;
         this.mensaje = 'Credenciales inválidas';
-        this.form = { correoInstitucional: '', contrasena: '' };
       },
     });
   }

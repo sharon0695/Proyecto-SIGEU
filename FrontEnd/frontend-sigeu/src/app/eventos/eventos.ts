@@ -41,19 +41,19 @@ export class Eventos {
 
   selectedEspacios: string[] = [];
   selectedOrganizaciones: Array<{ 
-  nit: string; 
-  tipo: 'legal' | 'alterno'; 
-  alterno?: string; 
-  avalNuevo?: File | null;
-  certificadoExistente?: string;    
-}> = [];
+    nit: string; 
+    tipo: 'legal' | 'alterno'; 
+    alterno?: string; 
+    avalNuevo?: File | null;
+    certificadoExistente?: string;    
+  }> = [];
 
-selectedResponsables: Array<{ 
-  id: number; 
-  avalNuevo?: File | null;
-  documentoExistente?: string;       
-  tipoAval?: string;
-}> = [];
+  selectedResponsables: Array<{ 
+    id: number; 
+    avalNuevo?: File | null;
+    documentoExistente?: string;       
+    tipoAval?: string;
+  }> = [];
 
   constructor(
     private eventosService: EventosService,
@@ -63,6 +63,10 @@ selectedResponsables: Array<{
     private auth: AuthService,
     private router: Router
   ) {}
+
+  filtroTipo: string = 'nombre';
+  valorFiltro: string = '';
+  eventosFiltrados: any[] = [];
 
   paginaActual = 1;
   elementosPorPagina = 10; 
@@ -367,37 +371,37 @@ selectedResponsables: Array<{
 
   // Método para ver archivo existente
   verArchivo(tipo: 'organizaciones' | 'responsables', filePath: string) {
-  if (!filePath) {
-    this.showMessage('error', 'Archivo no disponible', 'No hay archivo para mostrar');
-    return;
+    if (!filePath) {
+      this.showMessage('error', 'Archivo no disponible', 'No hay archivo para mostrar');
+      return;
+    }
+
+    console.log('Intentando abrir archivo:');
+    console.log('- Tipo:', tipo);
+    console.log('- FilePath:', filePath);
+
+    const url = this.eventosService.getFileViewUrl(tipo, filePath);
+    console.log('- URL final:', url);
+    
+    window.open(url, '_blank');
   }
 
-  console.log('Intentando abrir archivo:');
-  console.log('- Tipo:', tipo);
-  console.log('- FilePath:', filePath);
+  // Método para descargar archivo existente
+  descargarArchivo(tipo: 'organizaciones' | 'responsables', filePath: string) {
+    if (!filePath) {
+      this.showMessage('error', 'Archivo no disponible', 'No hay archivo para descargar');
+      return;
+    }
 
-  const url = this.eventosService.getFileViewUrl(tipo, filePath);
-  console.log('- URL final:', url);
-  
-  window.open(url, '_blank');
-}
+    console.log('Intentando descargar archivo:');
+    console.log('- Tipo:', tipo);
+    console.log('- FilePath:', filePath);
 
-// Método para descargar archivo existente
-descargarArchivo(tipo: 'organizaciones' | 'responsables', filePath: string) {
-  if (!filePath) {
-    this.showMessage('error', 'Archivo no disponible', 'No hay archivo para descargar');
-    return;
+    const url = this.eventosService.getFileDownloadUrl(tipo, filePath);
+    console.log('- URL final:', url);
+    
+    window.open(url, '_blank');
   }
-
-  console.log('Intentando descargar archivo:');
-  console.log('- Tipo:', tipo);
-  console.log('- FilePath:', filePath);
-
-  const url = this.eventosService.getFileDownloadUrl(tipo, filePath);
-  console.log('- URL final:', url);
-  
-  window.open(url, '_blank');
-}
   getNewFileName(file: File | null | undefined): string {
     if (!file) return 'Ningún archivo seleccionado';
     return file.name;
@@ -461,7 +465,7 @@ descargarArchivo(tipo: 'organizaciones' | 'responsables', filePath: string) {
     // Auto cerrar después de 5 segundos
     setTimeout(() => {
       this.closeMessageModal();
-    }, 5000);
+    }, 8000);
   }
 
   closeMessageModal() {
@@ -631,8 +635,7 @@ descargarArchivo(tipo: 'organizaciones' | 'responsables', filePath: string) {
 
           this.openModal();
         },
-        error: (err) => {
-          console.error('Error al cargar evento para edición:', err);
+        error: (err) => {          
           this.showMessage('error', 'Error', 'No se pudo cargar los datos del evento para editar');
         }
       });
@@ -663,5 +666,42 @@ descargarArchivo(tipo: 'organizaciones' | 'responsables', filePath: string) {
       return;
     }
     this.selectedResponsables[i].avalNuevo = file;
+  }
+
+  eliminarEvento(codigo: number) {
+    const confirmacion = confirm('¿Estás seguro de que deseas eliminar este evento?');
+
+    if (!confirmacion) return;
+
+    this.eventosService.eliminarEvento(codigo).subscribe({
+      next: () => {
+        this.showMessage('success', '¡Éxito!', 'Evento eliminado correctamente');
+        this.listar(); 
+      },
+      error: (err) => {
+        const mensajeError =
+          err?.error?.message ||
+          err?.error ||
+          'No se pudo eliminar el evento. Verifica el estado.';
+
+        this.showMessage('error', 'Error al eliminar', mensajeError);
+      }
+    });
+  }
+
+  filtrarEventos() {
+    const valor = this.valorFiltro.toLowerCase().trim();
+
+    if (!valor) {
+      this.eventosFiltrados = [...this.eventos];
+      return;
+    }
+
+    this.eventosFiltrados = this.eventos.filter(e => {
+      if (this.filtroTipo === 'nombre') return e.nombre.toLowerCase().includes(valor);
+      if (this.filtroTipo === 'fecha') return e.fecha.toLowerCase().includes(valor);
+      if (this.filtroTipo === 'estado') return e.estado.toLowerCase().includes(valor);
+      return false;
+    });
   }
 }

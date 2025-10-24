@@ -84,19 +84,9 @@ export class EventosService {
       console.error('filePath está vacío');
       return '';
     }
-    
-    // EXTRAER SOLO EL NOMBRE DEL ARCHIVO, NO LA RUTA COMPLETA
     const partes = filePath.split('/');
-    const fileName = partes[partes.length - 1]; // Última parte
-    
-    console.log('Generando URL para ver:');
-    console.log('- Tipo:', tipo);
-    console.log('- FilePath original:', filePath);
-    console.log('- FileName extraído:', fileName);
-    
+    const fileName = partes[partes.length - 1]; 
     const url = `http://localhost:8080/archivos/ver?tipo=${tipo}&archivo=${fileName}`;
-    console.log('- URL generada:', url);
-    
     return url;
   }
 
@@ -109,15 +99,11 @@ export class EventosService {
     // EXTRAER SOLO EL NOMBRE DEL ARCHIVO
     const partes = filePath.split('/');
     const fileName = partes[partes.length - 1];
-    
-    console.log('Generando URL para descargar:');
-    console.log('- Tipo:', tipo);
-    console.log('- FilePath original:', filePath);
-    console.log('- FileName extraído:', fileName);
-    
     const url = `http://localhost:8080/archivos/descargar?tipo=${tipo}&archivo=${fileName}`;
-    console.log('- URL generada:', url);
-    
     return url;
+  }
+
+  eliminarEvento(codigo: number): Observable<any> {
+    return this.http.delete(`${this.baseUrl}/${codigo}`);
   }
 }

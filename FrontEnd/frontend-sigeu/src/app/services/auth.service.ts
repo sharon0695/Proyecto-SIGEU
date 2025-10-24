@@ -31,6 +31,21 @@ export class AuthService {
     const exp = this.getExpiry();
     if (exp) this.scheduleExpiryLogout(exp);
   }
+  getUserRaw(): any | null {
+    try {
+      const raw = localStorage.getItem('auth_user');
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  }
+
+  getUserRole(): string | null {
+    const u = this.getUserRaw();
+    if (!u) return null;
+    return (u.rol ?? '').toString().trim();
+  }
+
   private getExpiry(): number | null {
     const raw = localStorage.getItem(this.expiryKey);
     if (!raw) return null;

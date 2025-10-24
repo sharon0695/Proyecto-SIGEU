@@ -19,9 +19,10 @@ export class Perfil {
   edit = { celular: '', contrasenaActual: '', nuevaContrasena: '' };
 
   constructor(private auth: AuthService, private router: Router, private api: Api, private perfil: PerfilService) {}
-
+  rol: string = '';
   ngOnInit() {
     this.cargarPerfil();
+    this.rol = (this.auth.getUserRole() || '').toLowerCase();
   }
 
   private cargarPerfil() {

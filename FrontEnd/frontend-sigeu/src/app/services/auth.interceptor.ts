@@ -12,7 +12,6 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   }
   return next(req).pipe(
     tap((event: HttpEvent<any>) => {
-      // Aquí puedes hacer algo con la respuesta si quieres
     }),
     catchError((err: HttpErrorResponse) => {
       if (err.status === 401 || err.status === 403) {

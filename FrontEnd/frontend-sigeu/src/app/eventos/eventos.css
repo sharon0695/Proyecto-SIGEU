@@ -503,3 +503,71 @@ input[type="file"]::file-selector-button:hover {
 .pagination span {
   font-weight: bold;
 }
+
+.small-btne {
+  background-color: rgb(31, 49, 49);
+  color:#e3f2f7;
+}
+.small-btne:hover {
+  transform: translateY(-3px);
+  background: linear-gradient(180deg, #526a8a, rgb(31, 49, 49));
+}
+
+.small-btned{
+  background-color:rgb(6, 151, 161);
+  border-color: cadetblue;
+  color: #e3f2f7;
+}
+.small-btned:hover {
+  transform: translateY(-3px);
+  background: linear-gradient(180deg, #b4c0c2, rgb(6, 151, 161));
+}
+
+.filter-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #f8f8ff;
+  padding: 8px 12px;
+  border-radius: 8px;
+  box-shadow: 0 0 5px rgba(0,0,0,0.1);
+}
+
+.filter-select {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.filter-select select {
+  border: none;
+  background: transparent;
+  font-size: 14px;
+  outline: none;
+  cursor: pointer;
+}
+
+.filter-container input {
+  flex: 1;
+  border: none;
+  border-bottom: 1px solid #ccc;
+  background: transparent;
+  padding: 6px;
+  font-size: 14px;
+  outline: none;
+}
+
+.add-btn {
+  background: #2a6df4;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  font-size: 22px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
