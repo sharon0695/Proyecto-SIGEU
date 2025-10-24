@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Eventos</title>
+  <link rel="stylesheet" href="eventos.css">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+</head>
+<body>
+
+  <header>
+    <nav class="navbar">
+      <div class="nav-left">
+        <a routerLink="/home">Inicio</a>
+        <a routerLink="/eventos" class="active">Eventos</a>
+        <a routerLink="/organizacionExt">Organizaciones</a>
+      </div>
+
+      <div class="nav-icons">
+        <span class="material-symbols-outlined icon" id="notificaciones">notifications</span>
+        <a routerLink="/perfil">
+        <span class="material-symbols-outlined profile-pic" id="perfil">account_circle</span></a>
+      </div>
+    </nav>
+  </header>
+
+  <!-- ======= CONTENIDO PRINCIPAL ======= -->
+  <main class="main-container">
+    <!-- Mensaje de estado -->
+    <div *ngIf="mensaje" class="mensaje-estado" [class.error]="mensaje.includes('Error') || mensaje.includes('No se pudo')">
+      {{ mensaje }}
+    </div>
+    
+    <section class="event-container">
+      <div class="event-header">
+        <h2>Eventos</h2>
+        <div class="search-container">
+          <input type="text" placeholder="Buscar evento..." id="searchInput">
+          <button class="add-btn" id="addEventBtn" (click)="openModal()">+</button>
+        </div>
+      </div>
+
+      <table class="event-table">
+        <thead>
+          <tr>
+            <th>Código</th>
+            <th>Nombre</th>
+            <th>Tipo</th>
+            <th>Fecha</th>
+            <th>Estado</th>
+            <th></th>
+            <th></th>
+            <th></th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="eventTableBody">
+          <tr *ngIf="!eventos.length">
+            <td colspan="9" class="event-empty">No hay eventos registrados</td>
+          </tr>
+          <tr *ngFor="let e of eventos">
+            <td>{{ e.codigo }}</td>
+            <td>{{ e.nombre }}</td>
+            <td>{{ e.tipo }}</td>
+            <td>{{ e.fecha }}</td>
+            <td>{{ e.estado }}</td>
+            <td><button class="small-btn" type="button" (click)="openEdit(e)">🖊Editar</button></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+  </main>
+
+  <!-- ======= MODAL DE REGISTRO ======= -->
+  <div id="eventModal" class="modal" [style.display]="showModal ? 'flex' : 'none'">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>{{ editMode ? 'Editar evento' : 'Registrar nuevo evento' }}</h3>
+        <span class="close" id="closeModal" (click)="closeModal()">&times;</span>
+      </div>
+
+      <form id="eventForm" (submit)="onSubmitCrearEvento($event)">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Código</label>
+              <input class="input100" type="text" [value]="editMode ? editCodigo : 'Se asigna automáticamente'" readonly>
+            </div>
+            
+            <div class="form-group">
+              <label>Nombre del evento</label>
+              <input type="text" required [(ngModel)]="nuevoEvento.nombre" name="nombre">
+            </div>
+
+            <div class="form-group">
+              <label>Fecha</label>
+              <input type="date" required [(ngModel)]="nuevoEvento.fecha" name="fecha">
+            </div>
+
+            <div class="form-group">
+              <label>Hora inicio</label>
+              <input type="time" required [(ngModel)]="nuevoEvento.hora_inicio" name="hora_inicio">
+            </div>
+
+            <div class="form-group">
+              <label>Hora fin</label>
+              <input type="time" required [(ngModel)]="nuevoEvento.hora_fin" name="hora_fin">
+            </div>
+            
+            <!-- Espacios -->
+            <div class="form-group full-width">
+              <label>Espacios</label>
+              <div id="spaceContainer">
+                <div class="dynamic-group" *ngFor="let s of selectedEspacios; let i = index">
+                  <select class="input100" [(ngModel)]="selectedEspacios[i]" name="espacio_{{i}}">
+                    <option [ngValue]="''">Seleccione un espacio</option>
+                    <option *ngFor="let e of espaciosListado" [ngValue]="e.codigo">{{ e.nombre || e.codigo }}</option>
+                  </select>
+                  <button type="button" class="remove-btn" (click)="removeEspacio(i)">x</button>
+                </div>
+              </div>
+              <button type="button" class="small-btn" (click)="addEspacio()">+ Añadir espacio</button>
+            </div>
+
+            <div>
+              <label>Descripción</label>
+              <textarea name="descripcion" rows="4" [(ngModel)]="nuevoEvento.descripcion"></textarea>
+            </div>
+
+            <div class="form-group">
+              <label>Tipo de evento</label>
+              <select [(ngModel)]="nuevoEvento.tipo" name="tipo">
+                <option value="Academico">Académico</option>
+                <option value="Ludico">Lúdico</option>
+              </select>
+            </div>
+                            
+
+            <!-- Organizaciones -->
+            <div class="form-group full-width">
+              <label>Organizaciones externas</label>
+              <div id="orgContainer">
+                <div class="dynamic-group" *ngFor="let org of selectedOrganizaciones; let i = index">
+                  <select class="input100" [(ngModel)]="selectedOrganizaciones[i].nit" name="org_{{i}}">
+                    <option [ngValue]="''">Seleccione una organización</option>
+                    <option *ngFor="let o of organizacionesListado" [ngValue]="o.nit">{{ o.nombre || o.nit }}</option>
+                  </select>
+                  <select class="input100 org-type" [(ngModel)]="selectedOrganizaciones[i].tipo" name="org_tipo_{{i}}" (change)="onOrgTipoChange(i)">
+                    <option [ngValue]="'legal'">Representante legal</option>
+                    <option [ngValue]="'alterno'">Responsable alterno</option>
+                  </select>
+                  <input *ngIf="selectedOrganizaciones[i].tipo === 'alterno'" class="input100 alt-name" type="text" placeholder="Nombre del alterno" [(ngModel)]="selectedOrganizaciones[i].alterno" name="org_alterno_{{i}}">
+                  <input type="file" accept="application/pdf" title="Aval en PDF" (change)="onOrgAvalChange($event, i)">
+                  <button type="button" class="remove-btn" (click)="removeOrganizacion(i)">x</button>
+                </div>
+              </div>
+              <div style="display:flex; gap:8px;">
+                <button type="button" class="small-btn" (click)="addOrganizacion()">+ Añadir organización</button>
+                <button type="button" class="small-btn" (click)="openOrgInlineModal()">+ Nueva organización</button>
+              </div>
+            </div>
+
+            <!-- Responsables -->
+            <div class="form-group full-width">
+              <label>Responsables</label>
+              <div id="respContainer">
+                <div class="dynamic-group" *ngFor="let r of selectedResponsables; let i = index">
+                  <select class="input100" [(ngModel)]="selectedResponsables[i].id" name="resp_{{i}}">
+                    <option [ngValue]="0">Seleccione un responsable</option>
+                    <option *ngFor="let u of usuariosListado" [ngValue]="u.identificacion">{{ u.nombre }} {{ u.apellido }}</option>
+                  </select>
+                  <input type="file" accept="application/pdf" title="Documento de aval" (change)="onRespAvalChange($event, i)">
+                  <button type="button" class="remove-btn" (click)="removeResponsable(i)">x</button>
+                </div>
+              </div>
+              <button type="button" class="small-btn" (click)="addResponsable()">+ Añadir responsable</button>
+            </div>
+          </div>
+          <div *ngIf="mensaje" class="mensaje-registro" [ngStyle]="{ color: '#dc2626', margin: '8px 0' }">{{ mensaje }}</div>
+          <button type="submit" class="save-btn">Guardar</button>
+          <div class="modal" [style.display]="showOrgInline ? 'flex' : 'none'">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h3>Registrar organización (para este evento)</h3>
+                <span class="close" (click)="closeOrgInlineModal()">&times;</span>
+              </div>
+              <form (submit)="onSubmitOrgInline($event)">
+                <div class="form-grid">
+                  <!-- campos NIT, Nombre, Representante, Teléfono, Ubicación, Sector, Actividad -->
+                </div>
+                <div class="home-actions" style="margin-top:12px; justify-content:flex-end;">
+                  <button class="btn btn-secondary" type="button" (click)="closeOrgInlineModal()">Cancelar</button>
+                  <button class="btn btn-primary" type="submit">Guardar</button>
+                </div>
+              </form>
+            </div>
+          </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ======= SCRIPT ======= -->
+  <script>
+    const addEventBtn = document.getElementById("addEventBtn");
+    const eventModal = document.getElementById("eventModal");
+    const closeModal = document.getElementById("closeModal");
+    const addOrgBtn = document.getElementById("addOrgBtn");
+    const addRespBtn = document.getElementById("addRespBtn");
+    const addSpaceBtn = document.getElementById("addSpaceBtn");
+    const orgContainer = document.getElementById("orgContainer");
+    const respContainer = document.getElementById("respContainer");
+    const spaceContainer = document.getElementById("spaceContainer");
+
+    addEventBtn.onclick = () => eventModal.style.display = "flex";
+    closeModal.onclick = () => eventModal.style.display = "none";
+    window.onclick = (e) => { if (e.target === eventModal) eventModal.style.display = "none"; };
+
+    // Añadir espacios
+    addSpaceBtn.onclick = () => {
+      const div = document.createElement("div");
+      div.classList.add("dynamic-group");
+      div.innerHTML = `
+        <input type="text" placeholder="Nombre del espacio (Ej: Auditorio)">
+        <input type="time" title="Hora inicio del espacio">
+        <input type="time" title="Hora fin del espacio">
+        <button type="button" class="remove-btn">x</button>
+      `;
+      spaceContainer.appendChild(div);
+      div.querySelector(".remove-btn").onclick = () => div.remove();
+    };
+
+    // Añadir organización
+    addOrgBtn.onclick = () => {
+      const div = document.createElement("div");
+      div.classList.add("dynamic-group");
+      div.innerHTML = `
+        <input type="text" placeholder="Nombre de organización" required>
+        <select class="org-type">
+          <option value="legal">Representante legal</option>
+          <option value="alterno">Responsable alterno</option>
+        </select>
+        <input type="text" class="alt-name" placeholder="Nombre del alterno" style="display:none;">
+        <input type="file" accept=".pdf" title="Aval en PDF">
+        <button type="button" class="remove-btn">x</button>
+      `;
+      orgContainer.appendChild(div);
+
+      const select = div.querySelector(".org-type");
+      const altField = div.querySelector(".alt-name");
+      select.addEventListener("change", () => {
+        altField.style.display = select.value === "alterno" ? "block" : "none";
+      });
+
+      div.querySelector(".remove-btn").onclick = () => div.remove();
+    };
+
+    // Añadir responsable
+    addRespBtn.onclick = () => {
+      const div = document.createElement("div");
+      div.classList.add("dynamic-group");
+      div.innerHTML = `
+        <input type="text" placeholder="Nombre del responsable" required>
+        <input type="file" accept=".pdf" title="Documento de aval">
+        <button type="button" class="remove-btn">x</button>
+      `;
+      respContainer.appendChild(div);
+      div.querySelector(".remove-btn").onclick = () => div.remove();
+    };
+  </script>
+</body>
+</html>

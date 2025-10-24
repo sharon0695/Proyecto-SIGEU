@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Organizaciones</title>
+  <link rel="stylesheet" href="organizaciones.css">
+  <!-- Fuente de iconos de Google -->
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+</head>
+<body>
+
+  <header>
+    <nav class="navbar">
+      <div class="nav-left">
+        <a routerLink="/home">Inicio</a>
+        <a routerLink="/eventos">Eventos</a>
+        <a routerLink="/organizacionExt" class="active">Organizaciones</a>
+      </div>
+
+      <div class="nav-icons">
+        <span class="material-symbols-outlined icon" id="notificaciones">notifications</span>
+        <a routerLink="/perfil">
+        <span class="material-symbols-outlined profile-pic" id="perfil">account_circle</span></a>
+      </div>
+    </nav>
+  </header>
+
+  <!-- ======= CONTENIDO PRINCIPAL ======= -->
+  <main class="main-container">
+    <section class="org-container">
+      <div class="org-header">
+        <h2>Organizaciones</h2>
+        <div class="search-container">
+          <input type="text" placeholder="Nombre a buscar" id="searchInput" name="nombreBusqueda" [(ngModel)]="nombreBusqueda">
+          <button class="add-btn" type="button" (click)="buscar()">Buscar</button>
+          <button class="add-btn" id="addOrgBtn" type="button" (click)="openModal()">+</button>          
+        </div>
+      </div>
+
+      <table class="org-table">
+        <thead>
+          <tr>
+            <th>NIT</th>
+            <th>Nombre</th>
+            <th>Representante</th>
+            <th>Ubicación</th>
+            <th>Sector</th>
+            <th colspan="3" style="width:280px">Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="orgTableBody">
+          <tr *ngIf="!organizaciones.length">
+            <td colspan="5" class="org-empty">No hay organizaciones registradas</td>
+          </tr>
+          <tr *ngFor="let org of organizaciones">
+            <td>{{ org.nit || '-' }}</td>
+            <td>{{ org.nombre || '-' }}</td>
+            <td>{{ org.representante_legal || '-' }}</td>
+            <td>{{ org.ubicacion || '-' }}</td>
+            <td>{{ org.sector_economico || '-' }}</td>
+            <td><button class="small-btnv" (click)="onVisualizar(org)">🔎Visualizar</button></td>
+            <td><button class="small-btned" (click)="onEditar(org)">🖊Editar</button></td>
+            <td><button class="small-btne" (click)="onEliminar(org)">🗑️Eliminar</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+  </main>
+  <div class="modal" [style.display]="showViewModal ? 'flex' : 'none'">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Detalle de organización</h3>
+        <span class="close" (click)="closeViewModal()">&times;</span>
+      </div>
+      <div class="org-detail">
+        <p><strong>NIT:</strong> {{ viewOrg?.nit || '-' }}</p>
+        <p><strong>Nombre:</strong> {{ viewOrg?.nombre || '-' }}</p>
+        <p><strong>Representante legal:</strong> {{ viewOrg?.representante_legal || '-' }}</p>
+        <p><strong>Teléfono:</strong> {{ viewOrg?.telefono || '-' }}</p>
+        <p><strong>Ubicación:</strong> {{ viewOrg?.ubicacion || '-' }}</p>
+        <p><strong>Sector económico:</strong> {{ viewOrg?.sector_economico || '-' }}</p>
+        <p><strong>Actividad principal:</strong> {{ viewOrg?.actividad_principal || '-' }}</p>
+      </div>
+      <div class="home-actions" style="margin-top:12px; justify-content:flex-end;">
+        <button class="btn btn-secondary" type="button" (click)="closeViewModal()">Cerrar</button>
+      </div>
+    </div>
+  </div>
+  <!-- ======= MODAL DE REGISTRO ======= -->
+  <div id="orgModal" class="modal" [style.display]="showModal ? 'flex' : 'none'">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Registrar nueva organización</h3>
+        <span class="close" id="closeModal" (click)="closeModal()">&times;</span>
+      </div>
+      
+      <form id="orgForm" (submit)="onSubmitRegistrarOrg($event)">
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="nit">NIT</label>
+            <input type="text" [(ngModel)]="newOrg.nit" [readonly]="editMode" name="nit">
+          </div>
+
+          <div class="form-group">
+            <label for="nombre">Nombre</label>
+            <input type="text" id="nombre" required [(ngModel)]="newOrg.nombre" name="nombre">
+          </div>
+
+          <div class="form-group">
+            <label for="sector">Sector económico</label>
+            <input type="text" id="sector" [(ngModel)]="newOrg.sector_economico" name="sector_economico">
+          </div>
+
+          <div class="form-group">
+            <label for="representante">Representante legal</label>
+            <input type="text" id="representante" [(ngModel)]="newOrg.representante_legal" name="representante_legal">
+          </div>
+
+          <div class="form-group">
+            <label for="telefono">Teléfono</label>
+            <input type="text" id="telefono" [(ngModel)]="newOrg.telefono" name="telefono">
+          </div>
+
+          <div class="form-group">
+            <label for="ubicacion">Ubicación</label>
+            <input type="text" id="ubicacion" [(ngModel)]="newOrg.ubicacion" name="ubicacion">
+          </div>
+
+          <div class="form-group textarea-group">
+            <label for="actividad">Actividad principal</label>
+            <textarea id="actividad" [(ngModel)]="newOrg.actividad_principal" name="actividad_principal"></textarea>
+          </div>
+        </div>
+          <div class="container-orgForm-btn">
+						<button class="orgForm-btn">
+							Guardar
+						</button>            
+					</div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ======= JAVASCRIPT ======= -->
+  <script>
+    const addOrgBtn = document.getElementById("addOrgBtn");
+    const orgModal = document.getElementById("orgModal");
+    const closeModal = document.getElementById("closeModal");
+
+    addOrgBtn.onclick = () => orgModal.style.display = "flex";
+    closeModal.onclick = () => orgModal.style.display = "none";
+
+    window.onclick = (e) => {
+      if (e.target === orgModal) orgModal.style.display = "none";
+    };
+  </script>
+   <!-- ======= MODAL DE MENSAJES ======= -->
+  <div class="message-modal" [style.display]="showMessageModal ? 'flex' : 'none'">
+    <div class="message-modal-content" [class.success]="messageType === 'success'" [class.error]="messageType === 'error'">
+      <div class="message-icon">
+        <span *ngIf="messageType === 'success'" class="material-symbols-outlined">check_circle</span>
+        <span *ngIf="messageType === 'error'" class="material-symbols-outlined">error</span>
+      </div>
+      <div class="message-content">
+        <h3 class="message-title">{{ messageTitle }}</h3>
+        <p class="message-text">{{ messageText }}</p>
+      </div>
+      <button class="message-close-btn" (click)="closeMessageModal()">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+  </div>
+</body>
+</html>
