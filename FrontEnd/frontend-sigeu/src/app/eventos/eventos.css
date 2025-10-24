@@ -77,35 +77,6 @@ header {
   margin-top: 60px;
 }
 
-/* ===== MENSAJE DE ESTADO ===== */
-.mensaje-estado {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  padding: 12px 20px;
-  border-radius: 6px;
-  color: white;
-  font-weight: 500;
-  z-index: 1001;
-  background-color: #4caf50;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-  animation: slideIn 0.3s ease-out;
-}
-
-.mensaje-estado.error {
-  background-color: #f44336;
-}
-
-@keyframes slideIn {
-  from {
-    transform: translateX(100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
-}
 .event-container {
   background-color: #f1f1ff;
   border-radius: 10px;
@@ -197,9 +168,24 @@ header {
   top: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.4);
+  background-color: rgba(0, 0, 0, 0.5);
   justify-content: center;
   align-items: center;
+  animation: fadeIn 0.3s ease;
+}
+
+/* Modal de mensajes debe estar por encima de todo */
+.modal.mensaje-modal {
+  z-index: 2000;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .modal-content {
@@ -208,8 +194,22 @@ header {
   border-radius: 10px;
   width: 70%;
   max-width: 700px;
+  max-height: 90vh;
+  overflow-y: auto;
   border: 1px solid #ccc;
-  box-shadow: 0 0 12px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(-50px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 .modal-header {
@@ -217,17 +217,26 @@ header {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #ddd;
 }
 
 .modal-header h3 {
-  font-size: 1.2rem;
+  font-size: 1.3rem;
   font-weight: 600;
+  margin: 0;
 }
 
 .close {
   cursor: pointer;
-  font-size: 1.4rem;
+  font-size: 1.8rem;
   color: #444;
+  transition: color 0.2s;
+  line-height: 1;
+}
+
+.close:hover {
+  color: #f44336;
 }
 
 /* ===== FORMULARIO ===== */
@@ -245,15 +254,31 @@ header {
 .form-group label {
   font-size: 0.85rem;
   margin-bottom: 5px;
+  font-weight: 500;
 }
 
 .form-group input,
-.form-group select {
+.form-group select,
+.form-group textarea {
   padding: 8px;
   border-radius: 6px;
   border: 1px solid #ccc;
   background-color: #edf3f7;
   font-size: 0.9rem;
+  font-family: inherit;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: #6c63ff;
+  background-color: #fff;
+}
+
+.form-group textarea {
+  resize: vertical;
+  min-height: 80px;
 }
 
 .full-width {
@@ -262,7 +287,7 @@ header {
 
 /* ===== BOTONES ===== */
 .small-btn {
-  padding: 5px 8px;
+  padding: 5px 12px;
   font-size: 0.85rem;
   border: none;
   border-radius: 5px;
@@ -270,6 +295,7 @@ header {
   color: #333;
   cursor: pointer;
   margin-top: 5px;
+  transition: background-color 0.2s;
 }
 
 .small-btn:hover {
@@ -285,7 +311,8 @@ header {
   width: 24px;
   height: 24px;
   cursor: pointer;
-  transition: 0.2s;
+  transition: background-color 0.2s;
+  flex-shrink: 0;
 }
 
 .remove-btn:hover {
@@ -294,32 +321,29 @@ header {
 
 .dynamic-group {
   display: flex;
-  flex-wrap: wrap;          /* Permite que los elementos salten de línea */
+  flex-wrap: wrap;
   gap: 8px;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
   align-items: center;
-  width: 100%;              /* Ocupa todo el ancho disponible */
+  width: 100%;
 }
 
 .dynamic-group input[type="text"],
 .dynamic-group select {
-  flex: 1 1 45%;            /* El campo de texto ocupa espacio flexible */
+  flex: 1 1 45%;
   min-width: 200px;
 }
 
 .dynamic-group input[type="file"] {
-  flex: 1 1 45%;            /* El input file también se adapta */
+  flex: 1 1 45%;
   min-width: 200px;
+  font-size: 0.85rem;
+  padding: 6px;
 }
 
 .dynamic-group .remove-btn {
-  flex: 0 0 auto;           /* El botón “x” mantiene su tamaño */
+  flex: 0 0 auto;
   align-self: center;
-}
-
-
-.dynamic-group input[type="text"] {
-  flex: 1;
 }
 
 .save-btn {
@@ -330,15 +354,109 @@ header {
   border: none;
   border-radius: 6px;
   cursor: pointer;
-  float: right;
   font-size: 0.9rem;
+  font-weight: 500;
+  transition: background-color 0.2s;
 }
 
 .save-btn:hover {
   background-color: #e45a5a;
 }
 
-.modal-content {
-  max-height: 90vh;         /* Evita que se salga de la pantalla */
-  overflow-y: auto;         /* Permite hacer scroll si es necesario */
+/* ===== ESTILOS PARA MENSAJES DE VALIDACIÓN ===== */
+.mensaje-registro {
+  padding: 10px;
+  border-radius: 6px;
+  margin: 10px 0;
+  font-size: 0.9rem;
+}
+
+/* ===== MODAL DE MENSAJES MEJORADO ===== */
+.modal-content.message-modal {
+  max-width: 500px;
+  background: linear-gradient(135deg, #ffffff 0%, #f5f7ff 100%);
+}
+
+/* ===== ANIMACIONES ADICIONALES ===== */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+  20%, 40%, 60%, 80% { transform: translateX(5px); }
+}
+
+.form-group input:invalid:focus,
+.form-group select:invalid:focus {
+  border-color: #f44336;
+  animation: shake 0.3s;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .full-width {
+    grid-column: span 1;
+  }
+  
+  .modal-content {
+    width: 90%;
+    padding: 20px;
+  }
+  
+  .event-container {
+    width: 95%;
+    padding: 20px;
+  }
+  
+  .dynamic-group {
+    flex-direction: column;
+  }
+  
+  .dynamic-group input[type="text"],
+  .dynamic-group select,
+  .dynamic-group input[type="file"] {
+    width: 100%;
+    min-width: 100%;
+  }
+}
+
+/* ===== MEJORAS VISUALES ===== */
+input[type="file"] {
+  cursor: pointer;
+}
+
+input[type="file"]::file-selector-button {
+  padding: 6px 12px;
+  background-color: #6c63ff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: background-color 0.2s;
+}
+
+input[type="file"]::file-selector-button:hover {
+  background-color: #5349e6;
+}
+
+/* ===== SCROLL PERSONALIZADO ===== */
+.modal-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.modal-content::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.modal-content::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 10px;
+}
+
+.modal-content::-webkit-scrollbar-thumb:hover {
+  background: #555;
 }
