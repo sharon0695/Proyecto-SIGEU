@@ -16,6 +16,20 @@ export interface EventoRegistroCompleto {
   reservaciones: ReservacionDTO[];
 }
 
+export interface EventoEdicionCompleto {
+  codigo: number;
+  nombre: string;
+  descripcion?: string;
+  tipo: string;
+  fecha: string;
+  hora_inicio: string;
+  hora_fin: string;
+  id_usuario_registra: number;
+  organizaciones: OrganizacionDTO[];
+  responsables: ResponsableDTO[];
+  reservaciones: ReservacionDTO[];
+}
+
 export interface OrganizacionDTO {
   nit: string;
   nombre?: string;
@@ -53,11 +67,15 @@ export class EventosService {
     return this.http.post(`${this.baseUrl}/registrar`, evento);
   }
 
-  editar(form: FormData): Observable<any> {
-    return this.http.put(`${this.baseUrl}/`, form);
+  editar(evento: EventoEdicionCompleto): Observable<any> {
+    return this.http.put(`${this.baseUrl}/editar`, evento);
   }
 
-  obtenerDetalles(codigo: number): Observable<{ organizaciones: { nit: string; representanteAlterno: string; certificadoUrl: string }[], responsables: { idUsuario: number; documentoAvalUrl: string }[], reservaciones: {codigoEspacio: string; horaInicio: string; horaFin:string}[]}> {
-    return this.http.get<{ organizaciones:{ nit: string; representanteAlterno: string; certificadoUrl: string }[], responsables: { idUsuario: number; documentoAvalUrl: string }[], reservaciones: {codigoEspacio: string; horaInicio: string; horaFin:string}[] }>(`${this.baseUrl}/detalles/${codigo}`);
+  obtenerDetalles(codigo: number): Observable<any> {
+    return this.http.get(`${this.baseUrl}/${codigo}`);
+  }
+
+  obtenerParaEdicion(codigo: number): Observable<any> {
+    return this.http.get(`${this.baseUrl}/edicion/${codigo}`);
   }
 }

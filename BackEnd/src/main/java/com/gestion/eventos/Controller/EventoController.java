@@ -1,5 +1,6 @@
 package com.gestion.eventos.Controller;
 
+import com.gestion.eventos.DTO.EventoCompletoResponse;
 import com.gestion.eventos.DTO.EventoEdicionCompleto;
 import com.gestion.eventos.DTO.EventoRegistroCompleto;
 import com.gestion.eventos.DTO.EventoRegistroResponse;
@@ -10,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -43,6 +45,11 @@ public class EventoController {
             eventoEditado.getCodigo()
         );
         return ResponseEntity.ok(response);
+    }
+    @GetMapping("/{codigo}")
+    public ResponseEntity<EventoCompletoResponse> obtenerEventoCompleto(@PathVariable Integer codigo) {
+        EventoCompletoResponse eventoCompleto = eventoService.obtenerEventoCompleto(codigo);
+        return ResponseEntity.ok(eventoCompleto);
     }
 }   
 

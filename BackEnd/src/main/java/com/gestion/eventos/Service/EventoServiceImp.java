@@ -1,5 +1,6 @@
 package com.gestion.eventos.Service;
 
+import com.gestion.eventos.DTO.EventoCompletoResponse;
 import com.gestion.eventos.DTO.EventoEdicionCompleto;
 import com.gestion.eventos.DTO.EventoRegistroCompleto;
 import com.gestion.eventos.Model.ColaboracionModel;
@@ -571,6 +572,98 @@ public class EventoServiceImp implements IEventoService {
         if (!reservacionesExistentes.isEmpty()) {
             reservacionRepository.deleteAll(reservacionesExistentes);
         }
+    }
+
+    @Override
+    public EventoCompletoResponse obtenerEventoCompleto(Integer codigo) {
+        // Buscar el evento principal
+        EventoModel evento = eventoRepository.findById(codigo)
+                .orElseThrow(() -> new IllegalArgumentException("Evento no encontrado con código: " + codigo));
+
+        // Obtener organizaciones colaboradoras
+        List<ColaboracionModel> colaboraciones = colaboracionRepository.findAllByCodigoEvento_Codigo(codigo);
+        List<EventoCompletoResponse.OrganizacionResponse> organizaciones = colaboraciones.stream()
+                .map(this::convertirToOrganizacionResponse)
+                .toList();
+
+        // Obtener responsables
+        List<ResponsableEventoModel> responsables = responsableEventoRepository.findAllByCodigoEvento_Codigo(codigo);
+        List<EventoCompletoResponse.ResponsableResponse> responsablesResponse = responsables.stream()
+                .map(this::convertirToResponsableResponse)
+                .toList();
+
+        // Obtener reservaciones
+        List<ReservacionModel> reservaciones = reservacionRepository.findAllByCodigoEvento_Codigo(codigo);
+        List<EventoCompletoResponse.ReservacionResponse> reservacionesResponse = reservaciones.stream()
+                .map(this::convertirToReservacionResponse)
+                .toList();
+
+        // Construir respuesta completa
+        return construirEventoCompletoResponse(evento, organizaciones, responsablesResponse, reservacionesResponse);
+    }
+
+    private EventoCompletoResponse.OrganizacionResponse convertirToOrganizacionResponse(ColaboracionModel colaboracion) {
+        OrganizacionModel organizacion = colaboracion.getNitOrganizacion();
+        
+        EventoCompletoResponse.OrganizacionResponse orgResponse = new EventoCompletoResponse.OrganizacionResponse();
+        orgResponse.setNit(organizacion.getNit());
+        orgResponse.setNombre(organizacion.getNombre());
+        orgResponse.setRepresentante_legal(organizacion.getRepresentante_legal());
+        orgResponse.setUbicacion(organizacion.getUbicacion());
+        orgResponse.setTelefono(organizacion.getTelefono());
+        orgResponse.setSector_economico(organizacion.getSector_economico());
+        orgResponse.setActividad_principal(organizacion.getActividad_principal());
+        orgResponse.setCertificado_participacion(colaboracion.getCertificado_participacion());
+        orgResponse.setRepresentante_alterno(colaboracion.getRepresentante_alterno());
+        
+        return orgResponse;
+    }
+
+    private EventoCompletoResponse.ResponsableResponse convertirToResponsableResponse(ResponsableEventoModel responsable) {
+        EventoCompletoResponse.ResponsableResponse respResponse = new EventoCompletoResponse.ResponsableResponse();
+        respResponse.setId_usuario(responsable.getId_usuario().getIdentificacion());
+        
+        // Obtener nombre del usuario
+        String nombreCompleto = responsable.getId_usuario().getNombre() + " " + 
+                            responsable.getId_usuario().getApellido();
+        respResponse.setNombreUsuario(nombreCompleto.trim());
+        
+        respResponse.setDocumentoAval(responsable.getDocumentoAval());
+        respResponse.setTipoAval(responsable.getTipoAval() != null ? responsable.getTipoAval().name() : null);
+        
+        return respResponse;
+    }
+
+    private EventoCompletoResponse.ReservacionResponse convertirToReservacionResponse(ReservacionModel reservacion) {
+        EventoCompletoResponse.ReservacionResponse resResponse = new EventoCompletoResponse.ReservacionResponse();
+        resResponse.setCodigo_espacio(reservacion.getCodigo_espacio().getCodigo());
+        resResponse.setNombreEspacio(reservacion.getCodigo_espacio().getNombre());
+        resResponse.setHora_inicio(reservacion.getHora_inicio());
+        resResponse.setHora_fin(reservacion.getHora_fin());
+        
+        return resResponse;
+    }
+
+    private EventoCompletoResponse construirEventoCompletoResponse(
+            EventoModel evento,
+            List<EventoCompletoResponse.OrganizacionResponse> organizaciones,
+            List<EventoCompletoResponse.ResponsableResponse> responsables,
+            List<EventoCompletoResponse.ReservacionResponse> reservaciones) {
+        
+        EventoCompletoResponse response = new EventoCompletoResponse();
+        response.setCodigo(evento.getCodigo());
+        response.setNombre(evento.getNombre());
+        response.setDescripcion(evento.getDescripcion());
+        response.setTipo(evento.getTipo());
+        response.setFecha(evento.getFecha());
+        response.setHora_inicio(evento.getHora_inicio());
+        response.setHora_fin(evento.getHora_fin());
+        response.setEstado(evento.getEstado().name());
+        response.setOrganizaciones(organizaciones);
+        response.setResponsables(responsables);
+        response.setReservaciones(reservaciones);
+        
+        return response;
     }
 
     @Override

@@ -2,7 +2,7 @@ import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { EventosService, EventoRegistroCompleto, OrganizacionDTO, ResponsableDTO, ReservacionDTO } from '../services/eventos.service';
+import { EventosService, EventoRegistroCompleto, EventoEdicionCompleto, OrganizacionDTO, ResponsableDTO, ReservacionDTO } from '../services/eventos.service';
 import { EspacioService } from '../services/espacio.service';
 import { OrganizacionesService } from '../services/organizaciones.service';
 import { Api } from '../services/usuarios.service';
@@ -42,8 +42,23 @@ export class Eventos {
   usuariosListado: Array<{ identificacion: number; nombre?: string; apellido?: string }> = [];
 
   selectedEspacios: string[] = [];
-  selectedOrganizaciones: Array<{ nit: string; tipo: 'legal' | 'alterno'; alterno?: string; aval?: File | null }> = [];
-  selectedResponsables: Array<{ id: number; aval?: File | null }> = [];
+  selectedOrganizaciones: Array<{ 
+    nit: string; 
+    tipo: 'legal' | 'alterno'; 
+    alterno?: string; 
+    aval?: File | null;
+    nombre?: string;
+    representante_legal?: string;
+    ubicacion?: string;
+    telefono?: string;
+    sector_economico?: string;
+    actividad_principal?: string;
+  }> = [];
+  selectedResponsables: Array<{ 
+    id: number; 
+    aval?: File | null;
+    tipoAval?: string;
+  }> = [];
 
   constructor(
     private eventosService: EventosService,
@@ -179,6 +194,12 @@ export class Eventos {
       .filter(org => org.nit)
       .map(org => ({
         nit: org.nit,
+        nombre: org.nombre,
+        representante_legal: org.representante_legal,
+        ubicacion: org.ubicacion,
+        telefono: org.telefono,
+        sector_economico: org.sector_economico,
+        actividad_principal: org.actividad_principal,
         representante_alterno: org.tipo === 'alterno' ? org.alterno : undefined,
         certificado_participacion: org.aval ? org.aval.name : undefined
       }));
@@ -188,8 +209,8 @@ export class Eventos {
       .filter(resp => resp.id > 0)
       .map(resp => ({
         id_usuario: resp.id,
-        documentoAval: resp.aval ? resp.aval.name : undefined
-        // NO enviar tipoAval si no es necesario
+        documentoAval: resp.aval ? resp.aval.name : undefined,
+        tipoAval: resp.tipoAval
       }));
 
     // Construir reservaciones
@@ -197,17 +218,17 @@ export class Eventos {
       .filter(espacio => espacio)
       .map(espacio => ({
         codigo_espacio: espacio,
-        hora_inicio: this.nuevoEvento.hora_inicio + ':00', // Añadir segundos
-        hora_fin: this.nuevoEvento.hora_fin + ':00' // Añadir segundos
+        hora_inicio: this.nuevoEvento.hora_inicio + ':00',
+        hora_fin: this.nuevoEvento.hora_fin + ':00'
       }));
 
     const payload: EventoRegistroCompleto = {
       nombre: this.nuevoEvento.nombre,
       descripcion: this.nuevoEvento.descripcion || '',
       tipo: this.nuevoEvento.tipo || 'Academico',
-      fecha: this.nuevoEvento.fecha, // Formato: "YYYY-MM-DD"
-      hora_inicio: this.nuevoEvento.hora_inicio + ':00', // Añadir segundos: "HH:mm:ss"
-      hora_fin: this.nuevoEvento.hora_fin + ':00', // Añadir segundos: "HH:mm:ss"
+      fecha: this.nuevoEvento.fecha,
+      hora_inicio: this.nuevoEvento.hora_inicio + ':00',
+      hora_fin: this.nuevoEvento.hora_fin + ':00',
       id_usuario_registra: userId,
       organizaciones,
       responsables,
@@ -228,49 +249,114 @@ export class Eventos {
     });
   }
 
+  editar() {
+    // Validar formulario
+    const errorValidacion = this.validarFormulario();
+    if (errorValidacion) {
+      this.showMessage('error', 'Error de Validación', errorValidacion);
+      return;
+    }
+
+    const userId = this.auth.getUserId();
+    if (!userId) {
+      this.showMessage('error', 'Error de Sesión', 'Debes iniciar sesión para editar eventos');
+      return;
+    }
+
+    if (!this.editCodigo) {
+      this.showMessage('error', 'Error', 'No se puede editar el evento sin código');
+      return;
+    }
+
+    // Construir organizaciones - manejar valores null
+    const organizaciones: OrganizacionDTO[] = this.selectedOrganizaciones
+      .filter(org => org.nit)
+      .map(org => {
+        const orgDTO: OrganizacionDTO = {
+          nit: org.nit,
+          nombre: org.nombre,
+          representante_legal: org.representante_legal,
+          ubicacion: org.ubicacion,
+          telefono: org.telefono,
+          sector_economico: org.sector_economico,
+          actividad_principal: org.actividad_principal,
+          representante_alterno: org.tipo === 'alterno' ? org.alterno : undefined,
+          certificado_participacion: org.aval ? org.aval.name : undefined
+        };
+
+        // Manejar certificado_participacion (convertir null a undefined)
+        if (org.aval) {
+          orgDTO.certificado_participacion = org.aval.name;
+        } else if (org.aval) {
+          orgDTO.certificado_participacion = org.aval;
+        }
+        // Si no hay ninguno, queda como undefined
+
+        return orgDTO;
+      });
+
+    // Construir responsables - manejar valores null
+    const responsables: ResponsableDTO[] = this.selectedResponsables
+      .filter(resp => resp.id > 0)
+      .map(resp => {
+        const respDTO: ResponsableDTO = {
+          id_usuario: resp.id,
+          documentoAval: resp.aval ? resp.aval.name : undefined,
+          tipoAval: resp.tipoAval
+        };
+
+        // Manejar documentoAval (convertir null a undefined)
+        if (resp.aval) {
+          respDTO.documentoAval = resp.aval.name;
+        } else if (resp.aval) {
+          respDTO.documentoAval = resp.aval;
+        }
+        // Si no hay ninguno, queda como undefined
+
+        return respDTO;
+      });
+
+    // Construir reservaciones
+    const reservaciones: ReservacionDTO[] = this.selectedEspacios
+      .filter(espacio => espacio)
+      .map(espacio => ({
+        codigo_espacio: espacio,
+        hora_inicio: this.nuevoEvento.hora_inicio + ':00',
+        hora_fin: this.nuevoEvento.hora_fin + ':00'
+      }));
+
+    const payload: EventoEdicionCompleto = {
+      codigo: this.editCodigo,
+      nombre: this.nuevoEvento.nombre,
+      descripcion: this.nuevoEvento.descripcion || '',
+      tipo: this.nuevoEvento.tipo || 'Academico',
+      fecha: this.nuevoEvento.fecha,
+      hora_inicio: this.nuevoEvento.hora_inicio + ':00',
+      hora_fin: this.nuevoEvento.hora_fin + ':00',
+      id_usuario_registra: userId,
+      organizaciones,
+      responsables,
+      reservaciones
+    };
+
+    this.eventosService.editar(payload).subscribe({
+      next: (response) => {
+        this.showMessage('success', '¡Edición Exitosa!', response?.mensaje || 'El evento ha sido actualizado exitosamente');
+        this.listar();
+        this.closeModal();
+      },
+      error: (err) => {
+        console.error('Error al editar evento:', err);
+        const mensajeError = err?.error?.mensaje || err?.error?.message || 'No fue posible actualizar el evento';
+        this.showMessage('error', 'Error al Editar', mensajeError);
+      }
+    });
+  }
   onSubmitCrearEvento(event: Event) {
     event.preventDefault();
     
     if (this.editMode && this.editCodigo != null) {
-      // Validar formulario antes de editar
-      const errorValidacion = this.validarFormulario();
-      if (errorValidacion) {
-        this.showMessage('error', 'Error de Validación', errorValidacion);
-        return;
-      }
-
-      const form = new FormData();
-      form.append('codigo', String(this.editCodigo));
-      form.append('nombre', this.nuevoEvento.nombre || '');
-      form.append('descripcion', this.nuevoEvento.descripcion || '');
-      form.append('tipo', this.nuevoEvento.tipo || '');
-      form.append('fecha', this.nuevoEvento.fecha || '');
-      form.append('horaInicio', this.nuevoEvento.hora_inicio || '');
-      form.append('horaFin', this.nuevoEvento.hora_fin || '');
-      
-      this.selectedEspacios.forEach(v => { if (v) form.append('espacios', v); });
-      this.selectedResponsables.forEach(r => { 
-        if (r.id) form.append('responsables', String(r.id)); 
-        if (r.aval) form.append('avalResponsables', r.aval); 
-      });
-      this.selectedOrganizaciones.forEach(o => {
-        if (o.nit) form.append('organizaciones', o.nit);
-        form.append('representanteAlternoOrganizacion', o.tipo === 'alterno' ? (o.alterno || '') : '');
-        if (o.aval) form.append('avalOrganizaciones', o.aval);
-      });
-      
-      this.eventosService.editar(form).subscribe({
-        next: () => {
-          this.showMessage('success', '¡Actualización Exitosa!', 'El evento ha sido actualizado exitosamente');
-          this.listar();
-          this.closeModal();
-        },
-        error: (err) => {
-          console.error('Error al actualizar evento:', err);
-          const mensajeError = err?.error?.mensaje || err?.error?.message || 'No fue posible actualizar el evento';
-          this.showMessage('error', 'Error al Actualizar', mensajeError);
-        }
-      });
+      this.editar();
     } else {
       this.crear();
     }
@@ -280,20 +366,7 @@ export class Eventos {
     this.showModal = true;
     this.mensaje = '';
     if (!this.editMode) {
-      // Limpiar formulario para nuevo evento
-      this.nuevoEvento = {
-        nombre: '',
-        descripcion: '',
-        tipo: 'Academico',
-        fecha: '',
-        hora_inicio: '',
-        hora_fin: '',
-        codigo_lugar: '',
-        nit_organizacion: ''
-      };
-      this.selectedEspacios = [];
-      this.selectedOrganizaciones = [];
-      this.selectedResponsables = [];
+      this.limpiarFormulario();
       
       // Agregar el usuario actual como responsable por defecto
       const userId = this.auth.getUserId();
@@ -308,7 +381,10 @@ export class Eventos {
     this.editMode = false; 
     this.editCodigo = null; 
     this.mensaje = '';
-    // Limpiar formulario
+    this.limpiarFormulario();
+  }
+
+  private limpiarFormulario() {
     this.nuevoEvento = {
       nombre: '',
       descripcion: '',
@@ -367,7 +443,12 @@ export class Eventos {
       return;
     }
     
-    this.selectedOrganizaciones.push({ nit: '', tipo: 'legal', alterno: '', aval: null }); 
+    this.selectedOrganizaciones.push({ 
+      nit: '', 
+      tipo: 'legal', 
+      alterno: '', 
+      aval: null 
+    }); 
   }
 
   removeOrganizacion(i: number) { 
@@ -412,7 +493,18 @@ export class Eventos {
     const body = { ...this.orgInline, usuario: { identificacion: idUsuario } };
     this.organizacionesService.registrar(body).subscribe({
       next: () => { 
-        this.selectedOrganizaciones.push({ nit: this.orgInline.nit, tipo: 'legal', alterno: '', aval: null }); 
+        this.selectedOrganizaciones.push({ 
+          nit: this.orgInline.nit, 
+          tipo: 'legal', 
+          alterno: '', 
+          aval: null,
+          nombre: this.orgInline.nombre,
+          representante_legal: this.orgInline.representante_legal,
+          ubicacion: this.orgInline.ubicacion,
+          telefono: this.orgInline.telefono,
+          sector_economico: this.orgInline.sector_economico,
+          actividad_principal: this.orgInline.actividad_principal
+        }); 
         this.showOrgInline = false; 
         this.showMessage('success', '¡Éxito!', 'Organización creada y agregada al evento');
         this.cargarListas(); // Recargar lista de organizaciones
@@ -431,36 +523,51 @@ export class Eventos {
   openEdit(e: any) {
     this.editMode = true;
     this.editCodigo = e?.codigo ?? null;
-    this.selectedEspacios = [];
-    this.selectedOrganizaciones = [];
-    this.selectedResponsables = [];
-    this.nuevoEvento = {
-      nombre: e?.nombre || '',
-      descripcion: e?.descripcion || '',
-      tipo: e?.tipo || '',
-      fecha: e?.fecha || '',
-      hora_inicio: e?.horaInicio || e?.hora_inicio || '',
-      hora_fin: e?.horaFin || e?.hora_fin || '',
-      codigo_lugar: e?.codigo_lugar || '',
-      nit_organizacion: e?.nit_organizacion || ''
-    };
+    
     if (this.editCodigo != null) {
       this.eventosService.obtenerDetalles(this.editCodigo).subscribe({
-        next: (det) => {
-          this.selectedOrganizaciones = (det.organizaciones || []).map(o => ({ 
-            nit: o.nit, 
-            tipo: o.representanteAlterno ? 'alterno' : 'legal', 
-            alterno: o.representanteAlterno || '', 
-            aval: null 
+        next: (evento) => {
+          // Cargar datos básicos del evento
+          this.nuevoEvento = {
+            nombre: evento.nombre || '',
+            descripcion: evento.descripcion || '',
+            tipo: evento.tipo || '',
+            fecha: evento.fecha || '',
+            hora_inicio: evento.hora_inicio ? evento.hora_inicio.substring(0, 5) : '',
+            hora_fin: evento.hora_fin ? evento.hora_fin.substring(0, 5) : ''
+          };
+
+          // Cargar espacios
+          this.selectedEspacios = (evento.reservaciones || []).map((r: any) => r.codigo_espacio);
+
+          // Cargar organizaciones
+          this.selectedOrganizaciones = (evento.organizaciones || []).map((org: any) => ({
+            nit: org.nit,
+            nombre: org.nombre,
+            representante_legal: org.representante_legal,
+            ubicacion: org.ubicacion,
+            telefono: org.telefono,
+            sector_economico: org.sector_economico,
+            actividad_principal: org.actividad_principal,
+            tipo: org.representante_alterno ? 'alterno' : 'legal',
+            alterno: org.representante_alterno || '',
+            certificado_participacion: org.certificado_participacion
           }));
-          this.selectedResponsables = (det.responsables || []).map(r => ({ id: r.idUsuario, aval: null }));
-          this.selectedEspacios = (det.reservaciones || []).map((rv: any) => rv.codigoEspacio).filter(Boolean);
+
+          // Cargar responsables
+          this.selectedResponsables = (evento.responsables || []).map((resp: any) => ({
+            id: resp.id_usuario,
+            tipoAval: resp.tipoAval,
+            documentoAval: resp.documentoAval
+          }));
+
           this.openModal();
         },
-        error: () => { this.openModal(); }
+        error: (err) => {
+          console.error('Error al cargar evento para edición:', err);
+          this.showMessage('error', 'Error', 'No se pudo cargar los datos del evento para editar');
+        }
       });
-    } else {
-      this.openModal();
     }
   }
 

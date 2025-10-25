@@ -1,5 +1,6 @@
 package com.gestion.eventos.Service;
 
+import com.gestion.eventos.DTO.EventoCompletoResponse;
 import com.gestion.eventos.DTO.EventoEdicionCompleto;
 import com.gestion.eventos.DTO.EventoRegistroCompleto;
 import com.gestion.eventos.Model.EventoModel;
@@ -13,6 +14,7 @@ public interface IEventoService {
     Optional<EventoModel> buscarPorCodigo(Integer codigo);
     void eliminarEvento(Integer codigo);
     EventoModel editarEventoCompleto(EventoEdicionCompleto request);
+    EventoCompletoResponse obtenerEventoCompleto(Integer codigo);
     
     
 }
