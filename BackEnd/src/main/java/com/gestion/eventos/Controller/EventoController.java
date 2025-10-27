@@ -91,5 +91,23 @@ public class EventoController {
         List<EventoModel> eventos = eventoService.filtrarPorFecha(fecha);
         return new ResponseEntity<>(eventos, HttpStatus.OK);
     }
+
+    //Coso del envio
+    @PutMapping("/enviar/{codigo}")
+    public ResponseEntity<?> enviarEvento(@PathVariable Integer codigo,
+        @org.springframework.web.bind.annotation.RequestParam String usuario) {
+        try {
+            EventoModel evento = eventoService.enviarEventoAValidacion(codigo, usuario);
+            Map<String, String> response = new HashMap<>();
+            response.put("mensaje", "Evento enviado correctamente a Secretaría Académica");
+            response.put("nuevoEstado", evento.getEstado().toString());
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            Map<String, String> error = new HashMap<>();
+            error.put("error", e.getMessage());
+            return ResponseEntity.badRequest().body(error);
+    }
+}
+
 }   
 

@@ -6,6 +6,7 @@ import com.gestion.eventos.DTO.EventoRegistroCompleto;
 import com.gestion.eventos.Model.ColaboracionModel;
 import com.gestion.eventos.Model.EspacioModel;
 import com.gestion.eventos.Model.EventoModel;
+import com.gestion.eventos.Model.NotificacionModel;
 import com.gestion.eventos.Model.OrganizacionModel;
 import com.gestion.eventos.Model.ReservacionModel;
 import com.gestion.eventos.Model.ResponsableEventoModel;
@@ -17,6 +18,7 @@ import com.gestion.eventos.Repository.IOrganizacionRepository;
 import com.gestion.eventos.Repository.IReservacionRepository;
 import com.gestion.eventos.Repository.IResponsableEventoRepository;
 import com.gestion.eventos.Repository.IUsuarioRepository;
+import com.gestion.eventos.Repository.INotificacionRepository;
 
 import java.util.HashMap;
 import java.util.List;
@@ -39,6 +41,8 @@ public class EventoServiceImp implements IEventoService {
     @Autowired private IEspacioRepository espacioRepository;
     @Autowired private IUsuarioRepository usuarioRepository;
     @Autowired private FileStorageService fileStorageService;
+    @Autowired private INotificacionRepository notificacionRepository;
+
 
     @Override
     @Transactional
@@ -737,6 +741,57 @@ public class EventoServiceImp implements IEventoService {
             throw new RuntimeException("Error al eliminar relaciones existentes del evento", e);
         }
     }
+
+    @Override
+    public void enviarEventoAValidacion(Integer codigoEvento) {
+        // Buscar el evento por su código
+        EventoModel evento = eventoRepository.findById(codigoEvento)
+                .orElseThrow(() -> new RuntimeException("Evento no encontrado"));
+    
+        // Verificar si el evento tiene los campos obligatorios completos
+        if (evento.getNombre() == null || evento.getDescripcion() == null || evento.getFecha() == null) {
+            throw new RuntimeException("No se puede enviar el evento. Faltan campos obligatorios.");
+        }
+    
+        // Buscar el responsable asociado al evento
+        ResponsableEventoModel responsable = responsableEventoRepository.findAllByCodigoEvento_Codigo(evento);
+        if (responsable == null) {
+            throw new RuntimeException("No se encontró responsable asociado al evento.");
+        }
+    
+        // Verificar si el documento de aval está cargado
+        if (responsable.getDocumentoAval() == null || responsable.getDocumentoAval().isEmpty()) {
+            throw new RuntimeException("Debe adjuntar el documento de aval antes de enviar.");
+        }
+    
+        // Verificar que el evento no esté ya enviado, aprobado o publicado
+        if (evento.getEstado() == EventoModel.estado.enviado ||
+            evento.getEstado() == EventoModel.estado.aprobado ||
+            evento.getEstado() == EventoModel.estado.publicado) {
+            throw new RuntimeException("El evento ya fue enviado o aprobado, no se puede reenviar.");
+        }
+    
+        // Cambiar el estado del evento a "enviado"
+        evento.setEstado(EventoModel.estado.enviado);
+        eventoRepository.save(evento);
+    
+        // Crear la notificación para la Secretaría Académica
+        NotificacionModel notificacion = new NotificacionModel();
+        notificacion.setRemitente(responsable.getIdUsuario().getIdentificacion());
+        notificacion.setDetalles("Nuevo evento enviado a validación: " + evento.getNombre());
+        notificacion.setFecha(new java.sql.Date(System.currentTimeMillis()));
+        notificacion.setHora(new java.sql.Time(System.currentTimeMillis()));
+    
+        // Crear usuario destinatario (secretaría académica)
+        UsuarioModel destinatario = new UsuarioModel();
+        destinatario.setIdentificacion(3); // Cambia este valor al ID real del usuario secretaria
+        notificacion.setDestinatario(destinatario);
+    
+        notificacionRepository.save(notificacion);
+    
+        System.out.println("Evento " + evento.getCodigo() + " enviado correctamente a validación.");
+    }
+    
 
     @Override
     public EventoCompletoResponse obtenerEventoCompleto(Integer codigo) {
