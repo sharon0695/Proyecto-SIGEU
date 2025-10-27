@@ -92,7 +92,7 @@
             <td>{{ e.fecha }}</td>
             <td>{{ e.estado }}</td>
             <td><button class="small-btned" type="button" (click)="openEdit(e)">🖊 Editar</button></td>
-            <td><button class="small-btne" type="button" (click)="eliminarEvento(e.codigo)">🗑 Eliminar</button> </td>           
+            <td><button class="small-btn danger-btn" type="button" (click)="confirmarEliminar(e.codigo)">🗑 Eliminar</button> </td>            
           </tr>
           <div class="pagination">
             <button (click)="paginaAnterior()" [disabled]="paginaActual === 1">Anterior</button>
@@ -103,6 +103,18 @@
       </table>
     </section>
   </main>
+  <!-- Modal de confirmación -->
+  <div class="modal-overlay" *ngIf="showConfirmModal">
+    <div class="modal-content">
+      <h3>Confirmar eliminación</h3>
+      <p>¿Seguro que deseas eliminar el evento "<strong>{{ eventoSeleccionado?.nombre }}</strong>"?</p>
+      <p class="warning">Esta acción también eliminará las reservaciones, colaboradores y responsables asociados.</p>
+      <div class="modal-actions">
+        <button class="small-btn danger-btn" (click)="eliminarEvento()">Sí, eliminar</button>
+        <button class="small-btn" (click)="cerrarConfirmacion()">Cancelar</button>
+      </div>
+    </div>
+  </div>
 
   <!-- ======= MODAL DE REGISTRO/EDICIÓN ======= -->
   <div id="eventModal" class="modal" [style.display]="showModal ? 'flex' : 'none'">
