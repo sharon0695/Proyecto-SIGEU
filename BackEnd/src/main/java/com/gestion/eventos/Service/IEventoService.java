@@ -14,7 +14,7 @@ public interface IEventoService {
     Optional<EventoModel> buscarPorCodigo(Integer codigo);
     void eliminarEvento(Integer codigo);
     EventoModel editarEventoCompleto(EventoEdicionCompleto request);
-    EventoModel enviarEventoAValidacion(Integer codigo, String usuario)
     EventoCompletoResponse obtenerEventoCompleto(Integer codigo);
     List<EventoModel> listarPorUsuario(Integer idUsuario);
+    EventoModel enviarEventoAValidacion(Integer codigoEvento);
 }

@@ -733,27 +733,15 @@ public class EventoServiceImp implements IEventoService {
     }
 
     @Override
-    public void enviarEventoAValidacion(Integer codigoEvento) {
+    public EventoModel enviarEventoAValidacion(Integer codigoEvento) {
         // Buscar el evento por su código
         EventoModel evento = eventoRepository.findById(codigoEvento)
                 .orElseThrow(() -> new RuntimeException("Evento no encontrado"));
     
-        // Verificar si el evento tiene los campos obligatorios completos
         if (evento.getNombre() == null || evento.getDescripcion() == null || evento.getFecha() == null) {
             throw new RuntimeException("No se puede enviar el evento. Faltan campos obligatorios.");
         }
-    
-        // Buscar el responsable asociado al evento
-        ResponsableEventoModel responsable = responsableEventoRepository.findAllByCodigoEvento_Codigo(evento);
-        if (responsable == null) {
-            throw new RuntimeException("No se encontró responsable asociado al evento.");
-        }
-    
-        // Verificar si el documento de aval está cargado
-        if (responsable.getDocumentoAval() == null || responsable.getDocumentoAval().isEmpty()) {
-            throw new RuntimeException("Debe adjuntar el documento de aval antes de enviar.");
-        }
-    
+
         // Verificar que el evento no esté ya enviado, aprobado o publicado
         if (evento.getEstado() == EventoModel.estado.enviado ||
             evento.getEstado() == EventoModel.estado.aprobado ||
@@ -767,19 +755,19 @@ public class EventoServiceImp implements IEventoService {
     
         // Crear la notificación para la Secretaría Académica
         NotificacionModel notificacion = new NotificacionModel();
-        notificacion.setRemitente(responsable.getIdUsuario().getIdentificacion());
+        notificacion.setRemitente(evento.getIdUsuarioRegistra());
         notificacion.setDetalles("Nuevo evento enviado a validación: " + evento.getNombre());
         notificacion.setFecha(new java.sql.Date(System.currentTimeMillis()));
         notificacion.setHora(new java.sql.Time(System.currentTimeMillis()));
     
         // Crear usuario destinatario (secretaría académica)
         UsuarioModel destinatario = new UsuarioModel();
-        destinatario.setIdentificacion(3); // Cambia este valor al ID real del usuario secretaria
+        destinatario.setIdentificacion(2789548); 
         notificacion.setDestinatario(destinatario);
     
         notificacionRepository.save(notificacion);
     
-        System.out.println("Evento " + evento.getCodigo() + " enviado correctamente a validación.");
+        return evento;
     }
     
 

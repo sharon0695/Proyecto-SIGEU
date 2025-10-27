@@ -69,47 +69,15 @@ public class EventoController {
         return ResponseEntity.ok(response);
     }
 
-    //Filtrar por nombre 
-    @GetMapping("/filtrar/nombre/{nombre}")
-    public ResponseEntity<List<EventoModel>> filtrarPorNombre(@PathVariable String nombre){
-        List<EventoModel> eventos = eventoService.filtrarPorNombre(nombre);
-        return new ResponseEntity<>(eventos, HttpStatus.OK);
-    }
-
-    //Filtrar por estado
-    @GetMapping("/filtrar/estado/{estado}")
-    public ResponseEntity<List<EventoModel>> filtrarPorEstado(@PathVariable EventoModel.estado estado){
-        List<EventoModel> eventos = eventoService.filtrarPorEstado(estado);
-        return new ResponseEntity<>(eventos, HttpStatus.OK);
-    }
-
-    //Filtrar por fecha
-    @GetMapping("/filtrar/fecha/{fecha}")
-    public ResponseEntity<List<EventoModel>> filtrarPorFecha(
-        @PathVariable 
-        @org.springframework.format.annotation.DateTimeFormat(pattern = "yyyy-MM-dd")
-        java.util.Date fecha
-        ){
-        List<EventoModel> eventos = eventoService.filtrarPorFecha(fecha);
-        return new ResponseEntity<>(eventos, HttpStatus.OK);
-    }
-
-    //Coso del envio
     @PutMapping("/enviar/{codigo}")
-    public ResponseEntity<?> enviarEvento(@PathVariable Integer codigo,
-        @org.springframework.web.bind.annotation.RequestParam String usuario) {
-        try {
-            EventoModel evento = eventoService.enviarEventoAValidacion(codigo, usuario);
+    public ResponseEntity<?> enviarEvento(@PathVariable Integer codigo) {
+      
+            EventoModel evento = eventoService.enviarEventoAValidacion(codigo);
             Map<String, String> response = new HashMap<>();
             response.put("mensaje", "Evento enviado correctamente a Secretaría Académica");
             response.put("nuevoEstado", evento.getEstado().toString());
-            return ResponseEntity.ok(response);
-        } catch (RuntimeException e) {
-            Map<String, String> error = new HashMap<>();
-            error.put("error", e.getMessage());
-            return ResponseEntity.badRequest().body(error);
+            return ResponseEntity.ok(response);       
     }
 }
 
-}   
 
