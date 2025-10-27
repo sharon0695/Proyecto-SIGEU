@@ -60,7 +60,7 @@
             </select>
           </div>
 
-          <input 
+          <input  
             type="text" 
             placeholder="Valor a buscar" 
             [(ngModel)]="valorFiltro" 
@@ -93,17 +93,17 @@
             <td>{{ e.estado }}</td>
             <td><button class="small-btned" type="button" (click)="openEdit(e)">🖊 Editar</button></td>
             <td><button class="small-btne" type="button" (click)="eliminarEvento(e.codigo)">🗑 Eliminar</button> </td>           
-            <td><button class="small-btnen" type="button" (click)="eliminarEvento(e.codigo)">📤 Enviar Revisión</button> </td>           
-          </tr>          
+          </tr>
+          <div class="pagination">
+            <button (click)="paginaAnterior()" [disabled]="paginaActual === 1">Anterior</button>
+            <span>Página {{paginaActual}} de {{totalPaginas}}</span>
+            <button (click)="paginaSiguiente()" [disabled]="paginaActual === totalPaginas">Siguiente</button>
+          </div>
         </tbody>
       </table>
-      <div class="pagination">
-        <button (click)="paginaAnterior()" [disabled]="paginaActual === 1">Anterior</button>
-        <span>Página {{paginaActual}} de {{totalPaginas}}</span>
-        <button (click)="paginaSiguiente()" [disabled]="paginaActual === totalPaginas">Siguiente</button>
-      </div>
     </section>
   </main>
+ 
 
   <!-- ======= MODAL DE REGISTRO/EDICIÓN ======= -->
   <div id="eventModal" class="modal" [style.display]="showModal ? 'flex' : 'none'">
