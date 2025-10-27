@@ -38,8 +38,7 @@
     
 
     <section class="profile-card">
-      <div class="profile-header">
-        <img [src]="usuario?.fotoPerfil ? '/api/usuarios/foto/' + usuario.identificacion : 'img/perfil.png'" alt="Avatar" class="profile-avatar">
+      <div class="profile-header">        
         <h2>{{ usuario?.nombre }} {{ usuario?.apellido }}</h2>
       </div>
       <div></div>
@@ -47,7 +46,7 @@
       <div class="profile-info">
         <h3>Información del perfil</h3>
         <p><strong>Correo electrónico:</strong> {{ usuario?.correoInstitucional }}</p>
-        <p><strong>Número de teléfono:</strong> {{ usuario?.celular }}</p>
+        <p><strong>Número de teléfono:</strong> {{ celular }}</p>
         <a href="#" (click)="$event.preventDefault(); openEdit()" class="edit-link">Editar perfil</a>
       </div>
     </section>
@@ -67,13 +66,7 @@
       </div>
 
       <form class="edit-form">
-        <div class="form-group">
-          <label for="new-avatar">Foto de perfil</label>
-          <div class="avatar-upload">
-            <img id="preview-avatar" [src]="usuario?.fotoPerfil ? '/api/usuarios/foto/' + usuario.identificacion : 'img/perfil.png'" alt="Vista previa">
-            <input type="file" id="new-avatar" accept="image/jpeg,image/jpg,image/png">
-          </div>
-        </div>
+        
 
         <div class="form-group">
           <label for="new-phone">Número de teléfono</label>

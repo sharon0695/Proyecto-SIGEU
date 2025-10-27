@@ -35,4 +35,10 @@ export class Login {
       },
     });
   }
+  mostrarContrasena = false;
+
+  toggleContrasena(): void {
+    this.mostrarContrasena = !this.mostrarContrasena;
+  }
+
 }

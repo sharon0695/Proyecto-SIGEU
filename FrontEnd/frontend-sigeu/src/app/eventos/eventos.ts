@@ -23,7 +23,8 @@ export class Eventos {
     tipo: '',
     fecha: '',
     hora_inicio: '',
-    hora_fin: ''
+    hora_fin: '',
+    idUsuarioRegistra: ''
   };
   showModal = false;
   editMode = false;
@@ -71,6 +72,7 @@ export class Eventos {
   paginaActual = 1;
   elementosPorPagina = 8; 
 
+
   get totalPaginas(): number {
     return Math.ceil(this.eventos.length / this.elementosPorPagina);
   }
@@ -92,9 +94,18 @@ export class Eventos {
   }
 
   listar() {
-    this.eventosService.listar().subscribe({
-      next: (data) => (this.eventos = data || []),
-      error: () => this.showMessage('error', 'Error de Carga', 'No fue posible cargar eventos'),
+    const idUsuarioActivo = this.auth.getUserId();
+    if (idUsuarioActivo === null) {
+      this.showMessage('error', 'Sesión no válida', 'No se encontró un usuario activo');
+      return;
+    }
+    this.eventosService.listar(idUsuarioActivo).subscribe({
+      next: (data) => {
+        this.eventos = data || [];
+        this.eventosFiltrados = [...this.eventos];
+      },
+      error: () =>
+        this.showMessage('error', 'Error de Carga', 'No fue posible cargar eventos'),
     });
   }
 
@@ -376,12 +387,7 @@ export class Eventos {
       return;
     }
 
-    console.log('Intentando abrir archivo:');
-    console.log('- Tipo:', tipo);
-    console.log('- FilePath:', filePath);
-
     const url = this.eventosService.getFileViewUrl(tipo, filePath);
-    console.log('- URL final:', url);
     
     window.open(url, '_blank');
   }
@@ -393,12 +399,7 @@ export class Eventos {
       return;
     }
 
-    console.log('Intentando descargar archivo:');
-    console.log('- Tipo:', tipo);
-    console.log('- FilePath:', filePath);
-
     const url = this.eventosService.getFileDownloadUrl(tipo, filePath);
-    console.log('- URL final:', url);
     
     window.open(url, '_blank');
   }
@@ -598,8 +599,7 @@ export class Eventos {
 
   openEdit(e: any) {
     this.editMode = true;
-    this.editCodigo = e?.codigo ?? null;
-    
+    this.editCodigo = e?.codigo ?? null;   
     if (this.editCodigo != null) {
       this.eventosService.obtenerDetalles(this.editCodigo).subscribe({
         next: (evento) => {
@@ -636,9 +636,9 @@ export class Eventos {
           this.openModal();
         },
         error: (err) => {          
-          this.showMessage('error', 'Error', 'No se pudo cargar los datos del evento para editar');
-        }
-      });
+          const mensajeError = err?.error?.mensaje || err?.error?.message || 'No fue posible registrar el evento';
+          this.showMessage('error', 'Error al Registrar', mensajeError);
+     } });
     }
   }
 
@@ -679,8 +679,8 @@ export class Eventos {
         this.listar(); 
       },
       error: (err) => {
-        const mensajeError = err?.error?.mensaje || err?.error?.message || 'No se pudo crear organización';
-        this.showMessage('error', 'Error al Eliminar Organización', mensajeError); 
+        const mensajeError = err?.error?.mensaje || err?.error?.message || 'No se pudo eliminar el evento';
+        this.showMessage('error', 'Error al Eliminar Evento', mensajeError); 
       }
     });
   }
@@ -694,10 +694,22 @@ export class Eventos {
     }
 
     this.eventosFiltrados = this.eventos.filter(e => {
-      if (this.filtroTipo === 'nombre') return e.nombre.toLowerCase().includes(valor);
-      if (this.filtroTipo === 'fecha') return e.fecha.toLowerCase().includes(valor);
-      if (this.filtroTipo === 'estado') return e.estado.toLowerCase().includes(valor);
+      const nombre = e.nombre?.toLowerCase() || '';
+      const fecha = e.fecha?.toString().toLowerCase() || '';
+      const estado = e.estado?.toLowerCase() || '';
+
+      if (this.filtroTipo === 'nombre') return nombre.includes(valor);
+      if (this.filtroTipo === 'fecha') return fecha.includes(valor);
+      if (this.filtroTipo === 'estado') return estado.includes(valor);
       return false;
     });
   }
+
+  
+  limpiarFiltro(): void {
+    this.valorFiltro = '';
+    this.listar();
+  }
+
+
 }

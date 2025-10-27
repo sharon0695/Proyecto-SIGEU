@@ -22,7 +22,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Date;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -60,6 +59,7 @@ public class EventoServiceImp implements IEventoService {
         evento.setHora_inicio(request.getHora_inicio());
         evento.setHora_fin(request.getHora_fin());
         evento.setEstado(EventoModel.estado.borrador);
+        evento.setIdUsuarioRegistra(request.getId_usuario_registra());
         
         evento = eventoRepository.save(evento);
         
@@ -310,7 +310,6 @@ public class EventoServiceImp implements IEventoService {
     @Transactional
     public EventoModel editarEventoCompleto(EventoEdicionCompleto request) {
         try {
-            System.out.println("=== INICIANDO EDICIÓN DEL EVENTO " + request.getCodigo() + " ===");
             
             // Validar que el evento existe y es editable
             EventoModel eventoExistente = eventoRepository.findById(request.getCodigo())
@@ -324,7 +323,6 @@ public class EventoServiceImp implements IEventoService {
             // Validar campos básicos
             validarCamposEventoEdicion(request);
 
-            // 🔴 PASO 1: Obtener archivos existentes ANTES de cualquier eliminación
             System.out.println("Obteniendo archivos existentes...");
             List<ColaboracionModel> colaboracionesExistentes = colaboracionRepository.findAllByCodigoEvento_Codigo(request.getCodigo());
             List<ResponsableEventoModel> responsablesExistentes = responsableEventoRepository.findAllByCodigoEvento_Codigo(request.getCodigo());
@@ -343,7 +341,6 @@ public class EventoServiceImp implements IEventoService {
                 }
             }
 
-            // 🔴 PASO 2: Actualizar datos básicos del evento
             System.out.println("Actualizando evento básico...");
             eventoExistente.setNombre(request.getNombre());
             eventoExistente.setDescripcion(request.getDescripcion());
@@ -354,18 +351,15 @@ public class EventoServiceImp implements IEventoService {
 
             EventoModel eventoActualizado = eventoRepository.save(eventoExistente);
 
-            // 🔴 PASO 3: Eliminar relaciones existentes usando queries nativas (MÁS SEGURO)
             System.out.println("Eliminando relaciones existentes...");
             eliminarRelacionesExistentes(request.getCodigo());
 
-            // 🔴 PASO 4: Pausa pequeña para asegurar que las eliminaciones se completen
             try {
                 Thread.sleep(100);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
 
-            // 🔴 PASO 5: Crear nuevas relaciones
             System.out.println("Creando nuevas relaciones...");
             
             if (request.getColaboraciones() != null && !request.getColaboraciones().isEmpty()) {
@@ -418,7 +412,7 @@ public class EventoServiceImp implements IEventoService {
                 OrganizacionModel organizacion = organizacionRepository.findByNit(colabDTO.getNit())
                         .orElseThrow(() -> new IllegalArgumentException("La organización con NIT " + colabDTO.getNit() + " no existe"));
 
-                // 🔴 VERIFICAR que no existe ya esta colaboración (por si las moscas)
+               
                 Optional<ColaboracionModel> colaboracionExistente = colaboracionRepository
                     .findByNitOrganizacionAndCodigoEvento(organizacion, evento);
                 
@@ -517,7 +511,6 @@ public class EventoServiceImp implements IEventoService {
                 UsuarioModel usuario = usuarioRepository.findById(respDTO.getId_usuario())
                         .orElseThrow(() -> new IllegalArgumentException("El responsable no existe en el sistema"));
 
-                // 🔴 VERIFICAR que no existe ya este responsable
                 Optional<ResponsableEventoModel> responsableExistente = responsableEventoRepository
                     .findByIdUsuarioAndCodigoEvento(usuario, evento);
                 
@@ -698,11 +691,8 @@ public class EventoServiceImp implements IEventoService {
     }
 
     private void eliminarRelacionesExistentes(Integer codigoEvento) {
-        try {
-            System.out.println("=== ELIMINANDO RELACIONES DEL EVENTO " + codigoEvento + " ===");
-            
-            // 🔴 ORDEN CORRECTO: Primero las tablas que NO tienen FKs a otras tablas de evento
-            // 1. Primero eliminar reservaciones (depende solo de evento y espacio)
+        try {           
+     
             List<ReservacionModel> reservacionesExistentes = 
                 reservacionRepository.findAllByCodigoEvento_Codigo(codigoEvento);
             if (!reservacionesExistentes.isEmpty()) {
@@ -711,7 +701,7 @@ public class EventoServiceImp implements IEventoService {
                 reservacionRepository.flush(); // Forzar commit inmediato
             }
 
-            // 2. Luego eliminar responsables (depende de evento y usuario)
+         
             List<ResponsableEventoModel> responsablesExistentes = 
                 responsableEventoRepository.findAllByCodigoEvento_Codigo(codigoEvento);
             if (!responsablesExistentes.isEmpty()) {
@@ -720,7 +710,7 @@ public class EventoServiceImp implements IEventoService {
                 responsableEventoRepository.flush();
             }
 
-            // 3. Finalmente eliminar colaboraciones (depende de evento y organización)
+            
             List<ColaboracionModel> colaboracionesExistentes = 
                 colaboracionRepository.findAllByCodigoEvento_Codigo(codigoEvento);
             if (!colaboracionesExistentes.isEmpty()) {
@@ -833,22 +823,13 @@ public class EventoServiceImp implements IEventoService {
     @Override
     public List<EventoModel> listarEventos() {
         return eventoRepository.findAll();
-    }
+    }    
 
     @Override
-    public List<EventoModel> filtrarPorNombre(String nombre) {
-        return eventoRepository.findByNombreContainingIgnoreCase(nombre);
+    public List<EventoModel> listarPorUsuario(Integer idUsuario) {
+        return eventoRepository.findByIdUsuarioRegistra(idUsuario);
     }
 
-    @Override
-    public List<EventoModel> filtrarPorEstado(EventoModel.estado estado) {
-        return eventoRepository.findByEstado(estado);
-    }
-
-    @Override
-    public List<EventoModel> filtrarPorFecha(Date fecha) {
-        return eventoRepository.findByFecha(fecha);
-    }
 
     @Override
     public Optional<EventoModel> buscarPorCodigo(Integer codigo) {

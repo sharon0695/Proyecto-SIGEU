@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.gestion.eventos.DTO.EventoCompletoResponse;
@@ -40,8 +41,9 @@ public class EventoController {
     }
 
     @GetMapping ("/listar")
-    public ResponseEntity<List<EventoModel>> listarEventos(){
-        return new ResponseEntity<>(eventoService.listarEventos(), HttpStatus.OK);
+    public ResponseEntity<List<EventoModel>> listarEventosPorUsuario(@RequestParam Integer idUsuario) {
+        List<EventoModel> eventos = eventoService.listarPorUsuario(idUsuario);
+        return ResponseEntity.ok(eventos);
     }
     @PutMapping(value = "/editar", consumes = "multipart/form-data")
     public ResponseEntity<?> editarEvento(@ModelAttribute EventoEdicionCompleto request) {
@@ -67,29 +69,5 @@ public class EventoController {
         return ResponseEntity.ok(response);
     }
 
-    //Filtrar por nombre 
-    @GetMapping("/filtrar/nombre/{nombre}")
-    public ResponseEntity<List<EventoModel>> filtrarPorNombre(@PathVariable String nombre){
-        List<EventoModel> eventos = eventoService.filtrarPorNombre(nombre);
-        return new ResponseEntity<>(eventos, HttpStatus.OK);
-    }
-
-    //Filtrar por estado
-    @GetMapping("/filtrar/estado/{estado}")
-    public ResponseEntity<List<EventoModel>> filtrarPorEstado(@PathVariable EventoModel.estado estado){
-        List<EventoModel> eventos = eventoService.filtrarPorEstado(estado);
-        return new ResponseEntity<>(eventos, HttpStatus.OK);
-    }
-
-    //Filtrar por fecha
-    @GetMapping("/filtrar/fecha/{fecha}")
-    public ResponseEntity<List<EventoModel>> filtrarPorFecha(
-        @PathVariable 
-        @org.springframework.format.annotation.DateTimeFormat(pattern = "yyyy-MM-dd")
-        java.util.Date fecha
-        ){
-        List<EventoModel> eventos = eventoService.filtrarPorFecha(fecha);
-        return new ResponseEntity<>(eventos, HttpStatus.OK);
-    }
 }   
 

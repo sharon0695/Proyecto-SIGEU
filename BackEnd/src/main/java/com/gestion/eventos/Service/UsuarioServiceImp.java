@@ -134,13 +134,13 @@ public class UsuarioServiceImp implements IUsuarioService {
                 "</body>" +
                 "</html>";
 
-            helper.setText(contenidoHtml, true); // true = HTML habilitado
+            helper.setText(contenidoHtml, true); 
 
             mailSender.send(mimeMessage);
-            System.out.println("✅ Correo de registro enviado a " + usuario.getCorreoInstitucional());
+           
         } catch (MessagingException e) {
             e.printStackTrace();
-            System.err.println("❌ Error al enviar el correo: " + e.getMessage());
+    
         }
         return new MensajeResponse("Usuario creado con éxito");         
 
@@ -236,7 +236,7 @@ public class UsuarioServiceImp implements IUsuarioService {
         // Validar y actualizar celular (solo números y 10 dígitos)
         if (celular != null && !celular.trim().isEmpty()) {
             if (!celular.matches("\\d{10}")) {
-                throw new RuntimeException("El número de celular debe contener exactamente 10 dígitos");
+                throw new RuntimeException("El número de celular debe contener solo número y tener exactamente 10 dígitos");
             }
             usuario.setCelular(celular);
         }

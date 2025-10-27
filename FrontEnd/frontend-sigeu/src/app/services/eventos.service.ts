@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { API_PATHS, buildApiUrl } from '../config/config';
 
@@ -59,8 +59,8 @@ export class EventosService {
   private baseUrl = buildApiUrl(API_PATHS.eventos);
   constructor(private http: HttpClient) {}
 
-  listar(): Observable<any> {
-    return this.http.get(`${this.baseUrl}/listar`);
+  listar(idUsuario: number): Observable<any> {
+    return this.http.get(`${this.baseUrl}/listar`, { params: { idUsuario }});
   }
 
   registrar(formData: FormData): Observable<any> {
@@ -96,7 +96,6 @@ export class EventosService {
       return '';
     }
     
-    // EXTRAER SOLO EL NOMBRE DEL ARCHIVO
     const partes = filePath.split('/');
     const fileName = partes[partes.length - 1];
     const url = `http://localhost:8080/archivos/descargar?tipo=${tipo}&archivo=${fileName}`;
@@ -106,4 +105,5 @@ export class EventosService {
   eliminarEvento(codigo: number): Observable<any> {
     return this.http.delete(`${this.baseUrl}/${codigo}`);
   }
+
 }
