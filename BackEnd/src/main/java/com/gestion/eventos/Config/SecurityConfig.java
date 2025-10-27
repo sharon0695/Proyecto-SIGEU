@@ -1,7 +1,5 @@
 package com.gestion.eventos.Config;
 
-import com.gestion.eventos.Repository.IUsuarioRepository;
-import com.gestion.eventos.Security.JwtAuthenticationFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -19,6 +17,9 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+import com.gestion.eventos.Repository.IUsuarioRepository;
+import com.gestion.eventos.Security.JwtAuthenticationFilter;
 
 @Configuration
 @EnableMethodSecurity
@@ -38,7 +39,9 @@ public class SecurityConfig {
                     "/usuarios/login",
                     "/usuarios/registrar",
                     "/usuarios/recuperar",
+                    "/eventos/listar",
                     "/programas/**",
+                    "/eventos/**",
                     "/facultad/**",
                     "/unidad/**",
                     "/espacio/registrar",

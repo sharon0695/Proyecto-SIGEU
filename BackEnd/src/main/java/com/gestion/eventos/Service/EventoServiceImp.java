@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Date;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -832,6 +833,21 @@ public class EventoServiceImp implements IEventoService {
     @Override
     public List<EventoModel> listarEventos() {
         return eventoRepository.findAll();
+    }
+
+    @Override
+    public List<EventoModel> filtrarPorNombre(String nombre) {
+        return eventoRepository.findByNombreContainingIgnoreCase(nombre);
+    }
+
+    @Override
+    public List<EventoModel> filtrarPorEstado(EventoModel.estado estado) {
+        return eventoRepository.findByEstado(estado);
+    }
+
+    @Override
+    public List<EventoModel> filtrarPorFecha(Date fecha) {
+        return eventoRepository.findByFecha(fecha);
     }
 
     @Override

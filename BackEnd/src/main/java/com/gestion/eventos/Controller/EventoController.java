@@ -1,12 +1,5 @@
 package com.gestion.eventos.Controller;
 
-import com.gestion.eventos.DTO.EventoCompletoResponse;
-import com.gestion.eventos.DTO.EventoEdicionCompleto;
-import com.gestion.eventos.DTO.EventoRegistroCompleto;
-import com.gestion.eventos.DTO.EventoRegistroResponse;
-import com.gestion.eventos.Model.EventoModel;
-import com.gestion.eventos.Service.IEventoService;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,6 +15,13 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import com.gestion.eventos.DTO.EventoCompletoResponse;
+import com.gestion.eventos.DTO.EventoEdicionCompleto;
+import com.gestion.eventos.DTO.EventoRegistroCompleto;
+import com.gestion.eventos.DTO.EventoRegistroResponse;
+import com.gestion.eventos.Model.EventoModel;
+import com.gestion.eventos.Service.IEventoService;
 
 
 @RestController
@@ -43,7 +43,7 @@ public class EventoController {
     public ResponseEntity<List<EventoModel>> listarEventos(){
         return new ResponseEntity<>(eventoService.listarEventos(), HttpStatus.OK);
     }
-     @PutMapping(value = "/editar", consumes = "multipart/form-data")
+    @PutMapping(value = "/editar", consumes = "multipart/form-data")
     public ResponseEntity<?> editarEvento(@ModelAttribute EventoEdicionCompleto request) {
             EventoModel eventoEditado = eventoService.editarEventoCompleto(request);
             EventoRegistroResponse response = new EventoRegistroResponse(
@@ -65,6 +65,31 @@ public class EventoController {
         Map<String, String> response = new HashMap<>();
         response.put("mensaje", "Evento eliminado correctamente");
         return ResponseEntity.ok(response);
+    }
+
+    //Filtrar por nombre 
+    @GetMapping("/filtrar/nombre/{nombre}")
+    public ResponseEntity<List<EventoModel>> filtrarPorNombre(@PathVariable String nombre){
+        List<EventoModel> eventos = eventoService.filtrarPorNombre(nombre);
+        return new ResponseEntity<>(eventos, HttpStatus.OK);
+    }
+
+    //Filtrar por estado
+    @GetMapping("/filtrar/estado/{estado}")
+    public ResponseEntity<List<EventoModel>> filtrarPorEstado(@PathVariable EventoModel.estado estado){
+        List<EventoModel> eventos = eventoService.filtrarPorEstado(estado);
+        return new ResponseEntity<>(eventos, HttpStatus.OK);
+    }
+
+    //Filtrar por fecha
+    @GetMapping("/filtrar/fecha/{fecha}")
+    public ResponseEntity<List<EventoModel>> filtrarPorFecha(
+        @PathVariable 
+        @org.springframework.format.annotation.DateTimeFormat(pattern = "yyyy-MM-dd")
+        java.util.Date fecha
+        ){
+        List<EventoModel> eventos = eventoService.filtrarPorFecha(fecha);
+        return new ResponseEntity<>(eventos, HttpStatus.OK);
     }
 }   
 
