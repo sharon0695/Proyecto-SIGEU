@@ -102,7 +102,7 @@
             <td>{{ e.estado }}</td>
             <td><button class="small-btned" type="button" (click)="openEdit(e)">🖊 Editar</button></td>
             <td><button class="small-btne" type="button" (click)="eliminarEvento(e.codigo)">🗑 Eliminar</button> </td>           
-            <td><button class="small-btnen" type="button" (click)="enviarEvento()">📤 Enviar Revisión</button> </td>           
+            <td><button class="small-btnen" type="button" (click)="enviarEvento(e.codigo)">📤 Enviar Revisión</button> </td>                  
           </tr>          
         </tbody>
       </table>
