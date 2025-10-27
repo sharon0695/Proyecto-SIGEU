@@ -41,7 +41,7 @@ export class Organizaciones {
   viewOrg: any;
 
   paginaActual = 1;
-  elementosPorPagina = 10; // Número de eventos por página
+  elementosPorPagina = 8; 
 
   get totalPaginas(): number {
     return Math.ceil(this.organizaciones.length / this.elementosPorPagina);
@@ -58,6 +58,7 @@ export class Organizaciones {
       this.paginaActual++;
     }
   }
+
   ngOnInit() {
     this.listar();
   }

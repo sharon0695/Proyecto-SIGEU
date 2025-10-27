@@ -522,6 +522,15 @@ input[type="file"]::file-selector-button:hover {
   transform: translateY(-3px);
   background: linear-gradient(180deg, #b4c0c2, rgb(6, 151, 161));
 }
+.small-btnen{
+  background-color:rgb(216, 81, 81);
+  border-color: rgb(196, 116, 116);
+  color: #e3f2f7;
+}
+.small-btnen:hover {
+  transform: translateY(-3px);
+  background: linear-gradient(180deg, #c2b4b4,rgb(216, 81, 81));
+}
 
 .filter-container {
   display: flex;

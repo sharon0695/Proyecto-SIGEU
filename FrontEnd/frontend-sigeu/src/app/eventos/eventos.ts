@@ -69,7 +69,7 @@ export class Eventos {
   eventosFiltrados: any[] = [];
 
   paginaActual = 1;
-  elementosPorPagina = 10; 
+  elementosPorPagina = 8; 
 
   get totalPaginas(): number {
     return Math.ceil(this.eventos.length / this.elementosPorPagina);
@@ -679,12 +679,8 @@ export class Eventos {
         this.listar(); 
       },
       error: (err) => {
-        const mensajeError =
-          err?.error?.message ||
-          err?.error ||
-          'No se pudo eliminar el evento. Verifica el estado.';
-
-        this.showMessage('error', 'Error al eliminar', mensajeError);
+        const mensajeError = err?.error?.mensaje || err?.error?.message || 'No se pudo crear organización';
+        this.showMessage('error', 'Error al Eliminar Organización', mensajeError); 
       }
     });
   }

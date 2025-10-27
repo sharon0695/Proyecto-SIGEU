@@ -12,6 +12,10 @@ import com.gestion.eventos.Repository.IUsuarioRepository;
 import com.gestion.eventos.Security.JwtUtil;
 import com.gestion.eventos.Security.PasswordPolicy;
 import com.gestion.eventos.Security.TokenBlacklistService;
+
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -24,6 +28,7 @@ import org.springframework.core.io.UrlResource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -101,11 +106,42 @@ public class UsuarioServiceImp implements IUsuarioService {
         }
         usuarioRepository.save(usuario);
         
-        SimpleMailMessage mensaje = new SimpleMailMessage();
-        mensaje.setTo(usuario.getCorreoInstitucional());
-        mensaje.setSubject("Nuevo registro de cuenta");
-        mensaje.setText("Hola " + usuario.getNombre() + 
-                        ",\n\nHas creado una cuenta en el Sistema de Gestión de Eventos Universitarios y este es tu correo registrado");
+        try {
+            MimeMessage mimeMessage = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
+
+            helper.setTo(usuario.getCorreoInstitucional());
+            helper.setSubject("Nuevo registro de cuenta");
+
+            // 🔗 URL donde se inicia sesión (ajusta según tu entorno)
+            String urlLogin = "http://localhost:4200/login";
+
+            // 💌 Cuerpo del mensaje con HTML y botón
+            String contenidoHtml =
+                "<html>" +
+                "<body style='font-family: Arial, sans-serif; color: #333;'>" +
+                "<h2>¡Hola, " + usuario.getNombre() + "!</h2>" +
+                "<p>Has creado una cuenta en el <b>Sistema de Gestión de Eventos Universitarios</b>.</p>" +
+                "<p>Este es tu correo registrado: <b>" + usuario.getCorreoInstitucional() + "</b></p>" +
+                "<br>" +
+                "<p>Para iniciar sesión, haz clic en el siguiente botón:</p>" +
+                "<a href='" + urlLogin + "' " +
+                "style='background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;'>" +
+                "Iniciar sesión" +
+                "</a>" +
+                "<br><br>" +
+                "<p style='font-size: 12px; color: gray;'>Si no creaste esta cuenta, ignora este mensaje.</p>" +
+                "</body>" +
+                "</html>";
+
+            helper.setText(contenidoHtml, true); // true = HTML habilitado
+
+            mailSender.send(mimeMessage);
+            System.out.println("✅ Correo de registro enviado a " + usuario.getCorreoInstitucional());
+        } catch (MessagingException e) {
+            e.printStackTrace();
+            System.err.println("❌ Error al enviar el correo: " + e.getMessage());
+        }
         return new MensajeResponse("Usuario creado con éxito");         
 
 }
