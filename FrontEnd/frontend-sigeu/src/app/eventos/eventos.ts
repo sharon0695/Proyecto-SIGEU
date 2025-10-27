@@ -711,5 +711,5 @@ export class Eventos {
     this.listar();
   }
 
-
+  enviarEvento():void{}
 }
