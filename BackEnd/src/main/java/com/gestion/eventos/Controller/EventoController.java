@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.gestion.eventos.DTO.EventoCompletoResponse;
@@ -40,8 +41,9 @@ public class EventoController {
     }
 
     @GetMapping ("/listar")
-    public ResponseEntity<List<EventoModel>> listarEventos(){
-        return new ResponseEntity<>(eventoService.listarEventos(), HttpStatus.OK);
+    public ResponseEntity<List<EventoModel>> listarEventosPorUsuario(@RequestParam Integer idUsuario) {
+        List<EventoModel> eventos = eventoService.listarPorUsuario(idUsuario);
+        return ResponseEntity.ok(eventos);
     }
     @PutMapping(value = "/editar", consumes = "multipart/form-data")
     public ResponseEntity<?> editarEvento(@ModelAttribute EventoEdicionCompleto request) {

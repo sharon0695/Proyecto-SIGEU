@@ -50,10 +50,11 @@
   <main class="main-container">
     <section class="event-container">
       <div class="event-header">
-        <h2>Eventos</h2><div class="filter-container">
+        <h2>Eventos</h2>
+        <div class="filter-container">
           <div class="filter-select">
             <span class="material-symbols-outlined">filter_alt</span>
-            <select [(ngModel)]="filtroTipo" (change)="filtrarEventos()">
+            <select [(ngModel)]="filtroTipo">
               <option value="nombre">Nombre</option>
               <option value="fecha">Fecha</option>
               <option value="estado">Estado</option>
@@ -63,12 +64,20 @@
           <input  
             type="text" 
             placeholder="Valor a buscar" 
-            [(ngModel)]="valorFiltro" 
-            (input)="filtrarEventos()" 
+            [(ngModel)]="valorFiltro"
           >
-          <button class="add-btn" id="addEventBtn" (click)="openModal()">+</button>
+
+          <button (click)="filtrarEventos()" class="btn-filtrar">
+            <span class="material-symbols-outlined">search</span>
+            Filtrar
+          </button>
+          <button (click)="limpiarFiltro()" class="btn-limpiar">
+            <span class="material-symbols-outlined">clear</span>
+            Limpiar
+          </button>
         </div>
-      </div>
+          <button class="add-btn" id="addEventBtn" (click)="openModal()">+</button>
+        </div>            
 
       <table class="event-table">
         <thead>
@@ -85,7 +94,7 @@
           <tr *ngIf="!eventos.length">
             <td colspan="6" class="event-empty">No hay eventos registrados</td>
           </tr>
-          <tr *ngFor="let e of eventos | slice:(paginaActual - 1) * elementosPorPagina : paginaActual * elementosPorPagina">
+          <tr *ngFor="let e of eventosFiltrados | slice:(paginaActual - 1) * elementosPorPagina : paginaActual * elementosPorPagina">
             <td>{{ e.codigo }}</td>
             <td>{{ e.nombre }}</td>
             <td>{{ e.tipo }}</td>
@@ -93,14 +102,15 @@
             <td>{{ e.estado }}</td>
             <td><button class="small-btned" type="button" (click)="openEdit(e)">🖊 Editar</button></td>
             <td><button class="small-btne" type="button" (click)="eliminarEvento(e.codigo)">🗑 Eliminar</button> </td>           
-          </tr>
-          <div class="pagination">
-            <button (click)="paginaAnterior()" [disabled]="paginaActual === 1">Anterior</button>
-            <span>Página {{paginaActual}} de {{totalPaginas}}</span>
-            <button (click)="paginaSiguiente()" [disabled]="paginaActual === totalPaginas">Siguiente</button>
-          </div>
+            <td><button class="small-btnen" type="button" (click)="enviarEvento()">📤 Enviar Revisión</button> </td>           
+          </tr>          
         </tbody>
       </table>
+      <div class="pagination">
+        <button (click)="paginaAnterior()" [disabled]="paginaActual === 1">Anterior</button>
+        <span>Página {{paginaActual}} de {{totalPaginas}}</span>
+        <button (click)="paginaSiguiente()" [disabled]="paginaActual === totalPaginas">Siguiente</button>
+      </div>
     </section>
   </main>
  

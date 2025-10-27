@@ -1,5 +1,6 @@
 package com.gestion.eventos.Model;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -30,4 +31,6 @@ public class EventoModel {
     public enum estado{aprobado, rechazado, borrador, enviado, publicado}
     @Enumerated(EnumType.STRING)
     private estado estado;
+    @Column(name = "id_usuario")
+    private Integer idUsuarioRegistra;
 }

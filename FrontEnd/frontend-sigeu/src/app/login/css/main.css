@@ -460,3 +460,18 @@ iframe {
     opacity: 1;
   }
 }
+
+.btn-ver {
+  background: none;
+  border: none;
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  color: #666;
+}
+
+.btn-ver:hover {
+  color: #000;
+}

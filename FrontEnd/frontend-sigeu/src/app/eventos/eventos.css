@@ -536,16 +536,20 @@ input[type="file"]::file-selector-button:hover {
   display: flex;
   align-items: center;
   gap: 10px;
-  background: #f8f8ff;
+  background: #eeeef7;
   padding: 8px 12px;
   border-radius: 8px;
-  box-shadow: 0 0 5px rgba(0,0,0,0.1);
+  box-shadow: 0 0 5px rgb(199, 149, 149);
 }
 
 .filter-select {
   display: flex;
   align-items: center;
   gap: 5px;
+  background-color: #d89dd0;
+  color: #fcfcfc;
+  border-radius: 8px;
+  padding: 4px 1px;
 }
 
 .filter-select select {
@@ -554,6 +558,7 @@ input[type="file"]::file-selector-button:hover {
   font-size: 14px;
   outline: none;
   cursor: pointer;
+  color: #3d3636;
 }
 
 .filter-container input {
@@ -577,6 +582,42 @@ input[type="file"]::file-selector-button:hover {
   cursor: pointer;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: center;  
 }
 
+.filter-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.btn-filtrar {
+  background-color: #ebb1eb;
+  color: white;
+  border: none;
+  border-radius: 65px;
+  padding: 6px 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: background-color 0.2s;
+}
+
+.btn-filtrar:hover {
+  background-color: #9e00b3;
+}
+
+.btn-limpiar{
+  background-color: #eecbee;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 4px 5px;
+  cursor: pointer;
+  align-items: center;
+  transition: background-color 0.2s;
+}
+
+.btn-limpiar:hover{
+  background-color: #9e00b3;
+}

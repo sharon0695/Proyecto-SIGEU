@@ -34,12 +34,23 @@
 						</span>
 					</div>
 
-					<div class="wrap-input100 validate-input" data-validate = "Es requerida una constraseña">
-						<input class="input100" type="password" name="contrasena" placeholder="Contraseña" [(ngModel)]="form.contrasena">
-						<span class="focus-input100"></span>
-						<span class="symbol-input100">
-							<i class="fa fa-lock" aria-hidden="true"></i>
-						</span>
+					<div class="wrap-input100 validate-input" data-validate="Es requerida una contraseña">
+					<input
+						class="input100"
+						[type]="mostrarContrasena ? 'text' : 'password'"
+						name="contrasena"
+						placeholder="Contraseña"
+						[(ngModel)]="form.contrasena"
+					>
+					<span class="focus-input100"></span>
+					<span class="symbol-input100">
+						<i class="fa fa-lock" aria-hidden="true"></i>
+					</span>
+
+					<!-- 👁️ Botón para mostrar/ocultar contraseña -->
+					<button type="button" class="btn-ver" (click)="toggleContrasena()">
+						<i class="fa" [ngClass]="mostrarContrasena ? 'fa-eye-slash' : 'fa-eye'"></i>
+					</button>
 					</div>
 					
 					<div class="container-login100-form-btn">

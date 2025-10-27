@@ -15,6 +15,7 @@ import { PerfilService } from '../services/perfil.service';
 export class Perfil {
   mensaje = '';
   usuario: any = null;
+  celular: string ='';
   showEdit = false;
   edit = { celular: '', contrasenaActual: '', nuevaContrasena: '' };
 
@@ -23,6 +24,7 @@ export class Perfil {
   ngOnInit() {
     this.cargarPerfil();
     this.rol = (this.auth.getUserRole() || '').toLowerCase();
+    this.obtenerCelular();
   }
 
   private cargarPerfil() {
@@ -38,6 +40,28 @@ export class Perfil {
     } else if (preview) {
       preview.src = 'img/perfil.png';
     }
+  }
+  private obtenerCelular() {
+    const idUsuario = this.auth.getUserId();
+    if (!idUsuario) {
+      console.error('No hay usuario autenticado.');
+      return;
+    }
+
+    this.api.getUsuarios().subscribe({
+      next: (usuarios) => {
+        const usuarioActual = usuarios.find((u: any) => u.identificacion === idUsuario);
+        if (usuarioActual) {
+          this.celular = usuarioActual.celular || 'No registrado';
+        } else {
+          this.celular = 'No encontrado';
+        }
+      },
+      error: (err) => {
+        console.error('Error al obtener usuarios:', err);
+        this.celular = 'Error al cargar';
+      }
+    });
   }
 
   openEdit() { 
