@@ -17,4 +17,8 @@ public class FacultadModel {
     private String id;
     private String nombre;
     private String decano;
+    public String isPresent() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'isPresent'");
+    }
 }

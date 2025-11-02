@@ -10,5 +10,5 @@ public interface IUsuarioRepository extends JpaRepository<UsuarioModel, Integer>
     Optional<UsuarioModel> findByCorreoInstitucional(String correo_institucional);
     Optional<UsuarioModel> findByIdentificacion(Integer identificacion);
     Optional<UsuarioModel> findByCodigo(Integer codigo);
-    Optional<UsuarioModel> findByIdFacultad(String id);
+    Optional<UsuarioModel> findByIdFacultad_Id(String id);
 }

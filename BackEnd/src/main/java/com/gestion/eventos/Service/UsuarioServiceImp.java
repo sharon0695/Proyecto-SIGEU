@@ -94,7 +94,7 @@ public class UsuarioServiceImp implements IUsuarioService {
                 }
                 var facultad = facultadRepository.findById(request.getIdFacultad())
                     .orElseThrow(() -> new RuntimeException("Facultad no encontrada"));
-                if(usuarioRepository.findByIdFacultad(request.getIdFacultad()).isPresent()){
+                if(usuarioRepository.findByIdFacultad_Id(request.getIdFacultad()).isPresent()){
                 throw new IllegalArgumentException("Ya existe una secretaria en esa facultad");
                 }
                 usuario.setIdFacultad(facultad);
