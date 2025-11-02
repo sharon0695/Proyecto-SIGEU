@@ -1,17 +1,20 @@
 package com.gestion.eventos.Service;
 
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
 import com.gestion.eventos.Model.ResponsableEventoModel;
 import com.gestion.eventos.Repository.IEventoRepository;
 import com.gestion.eventos.Repository.IResponsableEventoRepository;
-import java.util.List;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
 @Service
 public class ResponsableEventoServiceImp implements IResponsableEventoService{
     @Autowired IResponsableEventoRepository responsableEventoRepository;
 
     @Autowired IEventoRepository eventoRepository;
 
+    @Override
     public ResponsableEventoModel crearResponsable(ResponsableEventoModel responsable) {
         if (responsable.getCodigoEvento() == null) {
             throw new IllegalArgumentException("Debe asociar el responsable a un evento.");

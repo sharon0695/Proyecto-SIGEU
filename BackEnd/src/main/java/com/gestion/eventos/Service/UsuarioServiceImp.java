@@ -1,9 +1,21 @@
 package com.gestion.eventos.Service;
 
+import java.io.IOException;
+import java.util.List;
+import java.util.Optional;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
 import com.gestion.eventos.DTO.LoginRequest;
 import com.gestion.eventos.DTO.LoginResponse;
 import com.gestion.eventos.DTO.MensajeResponse;
 import com.gestion.eventos.DTO.UsuarioRegistroRequest;
+import com.gestion.eventos.Exception.SqlInjectionException;
 import com.gestion.eventos.Model.UsuarioModel;
 import com.gestion.eventos.Repository.IFacultadRepository;
 import com.gestion.eventos.Repository.IProgramaRepository;
@@ -11,26 +23,11 @@ import com.gestion.eventos.Repository.IUnidadAcademicaRepository;
 import com.gestion.eventos.Repository.IUsuarioRepository;
 import com.gestion.eventos.Security.JwtUtil;
 import com.gestion.eventos.Security.PasswordPolicy;
+import com.gestion.eventos.Security.SqlInjectionValidator;
 import com.gestion.eventos.Security.TokenBlacklistService;
 
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
-
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.List;
-import java.util.Optional;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.UrlResource;
-import org.springframework.http.ResponseEntity;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
-import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
 @Service
 public class UsuarioServiceImp implements IUsuarioService {
@@ -97,7 +94,10 @@ public class UsuarioServiceImp implements IUsuarioService {
                 }
                 var facultad = facultadRepository.findById(request.getIdFacultad())
                     .orElseThrow(() -> new RuntimeException("Facultad no encontrada"));
-                usuario.setId_facultad(facultad);
+                if(usuarioRepository.findByIdFacultad(request.getIdFacultad()).isPresent()){
+                throw new IllegalArgumentException("Ya existe una secretaria en esa facultad");
+                }
+                usuario.setIdFacultad(facultad);
             }
             default -> { }
         }
@@ -245,42 +245,7 @@ public class UsuarioServiceImp implements IUsuarioService {
             usuario.setCelular(celular);
         }
 
-        // Guardar imagen si viene
-        if (fotoPerfil != null && !fotoPerfil.isEmpty()) {
-            String contentType = fotoPerfil.getContentType();
-            if (contentType == null || (!contentType.equals("image/png") && !contentType.equals("image/jpeg"))) {
-                throw new RuntimeException("Solo se permiten imágenes PNG y JPG");
-            }
-
-            String directorio = "src/main/resources/static/uploads/perfiles/";
-            String nombreArchivo = usuario.getIdentificacion() + "_" + fotoPerfil.getOriginalFilename();
-            Path rutaArchivo = Paths.get(directorio, nombreArchivo);
-            Files.createDirectories(rutaArchivo.getParent());
-            fotoPerfil.transferTo(rutaArchivo.toFile());
-
-            usuario.setFotoPerfil("/uploads/perfiles/" + nombreArchivo);
-        }
-
         return usuarioRepository.save(usuario);
-    }
-
-    @Override
-    public ResponseEntity<Resource> obtenerFoto(Integer id) throws IOException {
-        UsuarioModel usuario = usuarioRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
-
-        if (usuario.getFotoPerfil() == null) {
-            return ResponseEntity.notFound().build();
-        }
-
-        Path ruta = Paths.get("src/main/resources/static" + usuario.getFotoPerfil());
-        Resource recurso = new UrlResource(ruta.toUri());
-
-        if (!recurso.exists() || !recurso.isReadable()) {
-            return ResponseEntity.notFound().build();
-        }
-
-        return ResponseEntity.ok(recurso);
     }
 
     @Override

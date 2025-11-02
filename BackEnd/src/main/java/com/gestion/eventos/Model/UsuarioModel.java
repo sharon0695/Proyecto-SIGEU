@@ -31,13 +31,11 @@ public class UsuarioModel {
     private String celular;
     @ManyToOne
     @JoinColumn (name="id_facultad")
-    private FacultadModel id_facultad;
+    private FacultadModel idFacultad;
     @ManyToOne
     @JoinColumn (name="codigo_programa")
     private ProgramaModel codigo_programa;
     @ManyToOne
     @JoinColumn (name="codigo_unidad")
     private UnidadAcademicaModel codigo_unidad;
-    @Column(name = "foto_perfil", nullable = true)
-    private String fotoPerfil;
 }
