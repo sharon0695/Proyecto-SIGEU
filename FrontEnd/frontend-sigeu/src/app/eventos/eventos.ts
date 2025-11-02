@@ -711,5 +711,26 @@ export class Eventos {
     this.listar();
   }
 
-  enviarEvento():void{}
+  enviarEvento(codigo: number) {
+    if (!confirm('¿Seguro que deseas enviar este evento a revisión, luego de confirmar no puede modificar el evento?')) {
+      return;
+    }
+
+    this.eventosService.enviarEvento(codigo).subscribe({
+      next: (response) => {
+        this.showMessage('success', 'Evento enviado', response?.mensaje || 'Su evento fue enviado a revisión con éxito');
+        this.listar(); // 🔄 vuelve a cargar la lista para actualizar el estado
+      },
+      error: (error) => {
+        let errorMsg: any = error?.error?.mensaje || error?.error?.message || error?.message || error?.error;
+        if (typeof errorMsg === 'object') {
+          try { errorMsg = JSON.stringify(errorMsg); } catch { errorMsg = 'Error al enviar el evento.'; }
+        }
+        if (!errorMsg || typeof errorMsg !== 'string') {
+          errorMsg = 'Error al enviar el evento.';
+        }
+        this.showMessage('error', 'Error de envío', errorMsg);
+      }
+    });
+  }
 }

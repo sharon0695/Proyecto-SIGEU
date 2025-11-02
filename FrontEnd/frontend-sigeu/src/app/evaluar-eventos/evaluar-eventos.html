@@ -39,7 +39,11 @@
             <th>Código</th>
             <th>Nombre</th>
             <th>Descripción</th>
+            <th>Tipo</th>
             <th>Fecha</th>
+            <th>Hora inicio</th>
+            <th>Hora fin</th>
+            <th>Estado</th>
             <th>Organizador</th>
             <th>Acciones</th>
           </tr>
@@ -56,7 +60,11 @@
             <td>{{ evento.codigo }}</td>
             <td>{{ evento.nombre }}</td>
             <td>{{ evento.descripcion }}</td>
+            <td>{{ evento.tipo || '-' }}</td>
             <td>{{ evento.fecha ? (evento.fecha | date:'shortDate') : '-' }}</td>
+            <td>{{ evento.hora_inicio || '-' }}</td>
+            <td>{{ evento.hora_fin || '-' }}</td>
+            <td>{{ evento.estado || '-' }}</td>
             <td>{{ evento.organizador }}</td>
             <td><button class="small-btn" (click)="verDetalles(evento)">👁 Ver más</button>
             <button class="small-btn approve" (click)="abrirModalEvaluacion(evento)">📝 Evaluar evento</button></td>
@@ -88,6 +96,37 @@
         <p><strong>Descripción:</strong> {{ eventoSeleccionado.descripcion }}</p>
         <p><strong>Fecha:</strong> {{ eventoSeleccionado.fecha ? (eventoSeleccionado.fecha | date:'longDate') : '-' }}</p>
         <p><strong>Organizador:</strong> {{ eventoSeleccionado.organizador }}</p>
+
+        <div *ngIf="detallesEvento">
+          <h4>Organizaciones colaboradoras</h4>
+          <ul>
+            <li *ngFor="let org of detallesEvento.organizaciones">
+              {{org.nombre}} (NIT: {{org.nit}})
+              <ng-container *ngIf="org.certificado_participacion">
+                - <a [href]="eventosService.getFileViewUrl('organizaciones', org.certificado_participacion)" target="_blank">Ver certificado</a>
+                | <a [href]="eventosService.getFileDownloadUrl('organizaciones', org.certificado_participacion)">Descargar</a>
+              </ng-container>
+            </li>
+          </ul>
+
+          <h4>Responsables</h4>
+          <ul>
+            <li *ngFor="let resp of detallesEvento.responsables">
+              {{resp.nombreUsuario || resp.id_usuario}}
+              <ng-container *ngIf="resp.documentoAval">
+                - <a [href]="eventosService.getFileViewUrl('responsables', resp.documentoAval)" target="_blank">Ver aval</a>
+                | <a [href]="eventosService.getFileDownloadUrl('responsables', resp.documentoAval)">Descargar</a>
+              </ng-container>
+            </li>
+          </ul>
+
+          <h4>Reservaciones</h4>
+          <ul>
+            <li *ngFor="let res of detallesEvento.reservaciones">
+              {{res.nombreEspacio || res.codigo_espacio}} - {{res.hora_inicio}} a {{res.hora_fin}}
+            </li>
+          </ul>
+        </div>
       </div>
 
       <div class="modal-footer">
@@ -121,6 +160,22 @@
       <div class="modal-footer">
         <button class="small-btn cancel" (click)="cerrarModalEvaluacion()">Cancelar</button>
         <button class="save-btn" (click)="confirmarEvaluacion()">Confirmar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======= MODAL: MENSAJE ======= -->
+  <div class="modal" [style.display]="mensajeVisible ? 'flex' : 'none'">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Mensaje</h3>
+        <span class="close" (click)="cerrarMensaje()">&times;</span>
+      </div>
+      <div class="modal-body">
+        <p>{{ mensajeTexto }}</p>
+      </div>
+      <div class="modal-footer">
+        <button class="small-btn" (click)="cerrarMensaje()">Cerrar</button>
       </div>
     </div>
   </div>

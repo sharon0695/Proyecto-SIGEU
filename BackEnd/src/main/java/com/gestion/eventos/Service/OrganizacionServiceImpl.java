@@ -77,7 +77,7 @@ public class OrganizacionServiceImpl implements IOrganizacionService {
 
         return organizacionRepository.save(organizacionExistente);
     }
-     @Override
+    @Override
     public String buscarOrganizacionPorNombre(String nombre) {
         Optional<OrganizacionModel> organizacionOpt = organizacionRepository.findByNombre(nombre);
         

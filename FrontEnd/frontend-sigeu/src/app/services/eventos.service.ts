@@ -109,4 +109,6 @@ export class EventosService {
   enviarEvento(codigo: number): Observable<any> {
     return this.http.put(`${this.baseUrl}/enviar/${codigo}`, {}); 
   }
+
+
 }

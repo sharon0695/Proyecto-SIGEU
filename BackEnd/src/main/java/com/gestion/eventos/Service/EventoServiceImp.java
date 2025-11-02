@@ -878,7 +878,7 @@ public class EventoServiceImp implements IEventoService {
     public Optional<EventoModel> buscarPorCodigo(Integer codigo) {
         return eventoRepository.findById(codigo);
     }
-
+    
     @Override
     @Transactional
     public void eliminarEvento(Integer codigo) {
