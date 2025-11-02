@@ -9,12 +9,10 @@ import com.gestion.eventos.Service.IUsuarioService;
 import java.io.IOException;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -67,10 +65,5 @@ public class UsuarioController {
     ) throws IOException {
         UsuarioModel actualizado = usuarioService.actualizarPerfil(identificacion, contrasenaActual, contrasenaNueva, celular, fotoPerfil);
         return ResponseEntity.ok(actualizado);
-    }
-
-    @GetMapping("/foto/{id}")
-    public ResponseEntity<Resource> obtenerFoto(@PathVariable Integer id) throws IOException {
-        return usuarioService.obtenerFoto(id);
     }
 }   
