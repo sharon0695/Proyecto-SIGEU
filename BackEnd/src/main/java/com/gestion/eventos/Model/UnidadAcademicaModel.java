@@ -20,5 +20,5 @@ public class UnidadAcademicaModel {
     private String tipo;
     @ManyToOne
     @JoinColumn (name="id_facultad")
-    private FacultadModel id_facultad;
+    private FacultadModel idFacultad;
 }

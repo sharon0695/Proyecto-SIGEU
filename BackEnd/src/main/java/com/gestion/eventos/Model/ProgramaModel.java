@@ -20,5 +20,5 @@ public class ProgramaModel {
     private String director;
     @ManyToOne
     @JoinColumn (name="id_facultad")
-    private FacultadModel id_facultad;
+    private FacultadModel idFacultad;
 }

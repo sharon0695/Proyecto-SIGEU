@@ -1,25 +1,5 @@
 package com.gestion.eventos.Service;
 
-import com.gestion.eventos.DTO.EventoCompletoResponse;
-import com.gestion.eventos.DTO.EventoEdicionCompleto;
-import com.gestion.eventos.DTO.EventoRegistroCompleto;
-import com.gestion.eventos.Model.ColaboracionModel;
-import com.gestion.eventos.Model.EspacioModel;
-import com.gestion.eventos.Model.EventoModel;
-import com.gestion.eventos.Model.NotificacionModel;
-import com.gestion.eventos.Model.OrganizacionModel;
-import com.gestion.eventos.Model.ReservacionModel;
-import com.gestion.eventos.Model.ResponsableEventoModel;
-import com.gestion.eventos.Model.UsuarioModel;
-import com.gestion.eventos.Repository.IColaboracionRepository;
-import com.gestion.eventos.Repository.IEspacioRepository;
-import com.gestion.eventos.Repository.IEventoRepository;
-import com.gestion.eventos.Repository.IOrganizacionRepository;
-import com.gestion.eventos.Repository.IReservacionRepository;
-import com.gestion.eventos.Repository.IResponsableEventoRepository;
-import com.gestion.eventos.Repository.IUsuarioRepository;
-import com.gestion.eventos.Repository.INotificacionRepository;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -28,6 +8,27 @@ import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import com.gestion.eventos.DTO.EventoCompletoResponse;
+import com.gestion.eventos.DTO.EventoEdicionCompleto;
+import com.gestion.eventos.DTO.EventoRegistroCompleto;
+import com.gestion.eventos.Model.ColaboracionModel;
+import com.gestion.eventos.Model.EspacioModel;
+import com.gestion.eventos.Model.EventoModel;
+import com.gestion.eventos.Model.FacultadModel;
+import com.gestion.eventos.Model.NotificacionModel;
+import com.gestion.eventos.Model.OrganizacionModel;
+import com.gestion.eventos.Model.ReservacionModel;
+import com.gestion.eventos.Model.ResponsableEventoModel;
+import com.gestion.eventos.Model.UsuarioModel;
+import com.gestion.eventos.Repository.IColaboracionRepository;
+import com.gestion.eventos.Repository.IEspacioRepository;
+import com.gestion.eventos.Repository.IEventoRepository;
+import com.gestion.eventos.Repository.INotificacionRepository;
+import com.gestion.eventos.Repository.IOrganizacionRepository;
+import com.gestion.eventos.Repository.IReservacionRepository;
+import com.gestion.eventos.Repository.IResponsableEventoRepository;
+import com.gestion.eventos.Repository.IUsuarioRepository;
 
 @Service
 public class EventoServiceImp implements IEventoService {
@@ -737,7 +738,7 @@ public class EventoServiceImp implements IEventoService {
         // Buscar el evento por su código
         EventoModel evento = eventoRepository.findById(codigoEvento)
                 .orElseThrow(() -> new RuntimeException("Evento no encontrado"));
-    
+
         if (evento.getNombre() == null || evento.getDescripcion() == null || evento.getFecha() == null) {
             throw new RuntimeException("No se puede enviar el evento. Faltan campos obligatorios.");
         }
@@ -748,28 +749,51 @@ public class EventoServiceImp implements IEventoService {
             evento.getEstado() == EventoModel.estado.publicado) {
             throw new RuntimeException("El evento ya fue enviado o aprobado, no se puede reenviar.");
         }
-    
+
         // Cambiar el estado del evento a "enviado"
         evento.setEstado(EventoModel.estado.enviado);
         eventoRepository.save(evento);
-    
-        // Crear la notificación para la Secretaría Académica
+
+        // Buscar el usuario que registró el evento
+        UsuarioModel usuarioRegistra = usuarioRepository.findByIdentificacion(evento.getIdUsuarioRegistra())
+    .orElseThrow(() -> new RuntimeException("Usuario que registró el evento no encontrado"));
+
+        FacultadModel facultadUsuario = null;
+
+        if (usuarioRegistra.getCodigo_programa() != null &&
+            usuarioRegistra.getCodigo_programa().getIdFacultad() != null) {
+            facultadUsuario = usuarioRegistra.getCodigo_programa().getIdFacultad();
+        }
+
+        else if (usuarioRegistra.getCodigo_unidad() != null &&
+                usuarioRegistra.getCodigo_unidad().getIdFacultad() != null) {
+            facultadUsuario = usuarioRegistra.getCodigo_unidad().getIdFacultad();
+        }
+
+        // 3️⃣ Si no tiene ninguna de las dos, lanzar error
+        else {
+            throw new RuntimeException("El usuario que registró el evento no tiene una facultad asociada (ni por programa ni por unidad académica).");
+        }
+
+
+        // Buscar la secretaria académica de la misma facultad
+        UsuarioModel secretaria = usuarioRepository.findByRolAndIdFacultad(
+            UsuarioModel.rol.secretaria_academica,
+            facultadUsuario
+        ).orElseThrow(() -> new RuntimeException("No existe una secretaria asociada a esta facultad."));
+
+        // Crear la notificación
         NotificacionModel notificacion = new NotificacionModel();
-        notificacion.setRemitente(evento.getIdUsuarioRegistra());
+        notificacion.setRemitente(usuarioRegistra.getIdentificacion());
+        notificacion.setDestinatario(secretaria.getIdentificacion());
         notificacion.setDetalles("Nuevo evento enviado a validación: " + evento.getNombre());
         notificacion.setFecha(new java.sql.Date(System.currentTimeMillis()));
         notificacion.setHora(new java.sql.Time(System.currentTimeMillis()));
-    
-        // Crear usuario destinatario (secretaría académica)
-        UsuarioModel destinatario = new UsuarioModel();
-        destinatario.setIdentificacion(2789548); 
-        notificacion.setDestinatario(destinatario);
-    
+
         notificacionRepository.save(notificacion);
-    
+
         return evento;
     }
-    
 
     @Override
     public EventoCompletoResponse obtenerEventoCompleto(Integer codigo) {

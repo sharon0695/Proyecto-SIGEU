@@ -1,184 +1,96 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Evaluar Eventos</title>
-  <link rel="stylesheet" href="evaluar-eventos.css">
-  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
-</head>
-<body>
+<div class="contenedor">
+  <div class="encabezado">
+    <h2>Evaluar Eventos</h2>
+    <button class="btn-notificaciones" (click)="mostrarNotificaciones()">
+      🔔 Notificaciones ({{notificaciones.length}})
+    </button>
+  </div>
 
-  <!-- ======= HEADER ======= -->
-  <header>
-    <nav class="navbar">
-      <div class="nav-left">
-        <a routerLink="/homeS">Inicio</a>
-        <a routerLink="/evaluar-eventos" class="active">Evaluar eventos</a>
-      </div>
+  <div *ngIf="mostrarNotificaciones" class="panel-notificaciones">
+    <h3>Notificaciones recientes</h3>
+    <ul>
+      <li *ngFor="let noti of notificaciones">
+        <strong>{{noti.titulo}}</strong> - {{noti.mensaje}}
+      </li>
+    </ul>
+  </div>
 
-      <div class="nav-icons">
-        <span class="material-symbols-outlined icon" id="notificaciones">notifications</span>
-        <a routerLink="/perfil">
-          <span class="material-symbols-outlined profile-pic" id="perfil">account_circle</span>
-        </a>
-      </div>
-    </nav>
-  </header>
+  <div class="filtros">
+    <input [(ngModel)]="busqueda" placeholder="Buscar por nombre..." />
+    <select [(ngModel)]="filtroEstado">
+      <option value="">Todos los estados</option>
+      <option value="pendiente">Pendiente</option>
+      <option value="aprobado">Aprobado</option>
+      <option value="rechazado">Rechazado</option>
+    </select>
+  </div>
 
-  <!-- ======= CONTENIDO PRINCIPAL ======= -->
-  <main class="main-container">
-    <section class="event-container">
-      <div class="event-header">
-        <h2>Revisión de eventos</h2>
-      </div>
+  <table class="tabla-eventos">
+    <thead>
+      <tr>
+        <th>Código</th>
+        <th>Nombre</th>
+        <th>Tipo</th>
+        <th>Fecha</th>
+        <th>Organizador</th>
+        <th>Estado</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let evento of eventosFiltradosList()">
+        <td>{{evento.codigo}}</td>
+        <td>{{evento.nombre}}</td>
+        <td>{{evento.tipo}}</td>
+        <td>{{evento.fecha}}</td>
+        <td>{{evento.organizador}}</td>
+        <td>{{evento.estado}}</td>
+        <td>
+          <button (click)="verDetalles(evento)">👁 Ver más</button>
+          <button (click)="abrirModalEvaluacion(evento)">✅ Evaluar</button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
 
-      <table class="event-table">
-        <thead>
-          <tr>
-            <th>Código</th>
-            <th>Nombre</th>
-            <th>Descripción</th>
-            <th>Tipo</th>
-            <th>Fecha</th>
-            <th>Hora inicio</th>
-            <th>Hora fin</th>
-            <th>Estado</th>
-            <th>Organizador</th>
-            <th>Acciones</th>
-          </tr>
-        </thead>
+  <div class="paginacion">
+    <button (click)="paginaAnterior()" [disabled]="paginaActual===1">Anterior</button>
+    <span>Página {{paginaActual}} de {{totalPaginas}}</span>
+    <button (click)="paginaSiguiente()" [disabled]="paginaActual===totalPaginas">Siguiente</button>
+  </div>
 
-        <tbody>
-          <!-- Mostrar mensaje si no hay eventos -->
-          <tr *ngIf="!eventosFiltrados().length">
-            <td colspan="6" class="event-empty">No hay eventos pendientes por evaluar</td>
-          </tr>
+  <!-- Modal Ver Más -->
+  <div class="modal" *ngIf="modalVerMasVisible">
+    <div class="contenido-modal">
+      <h3>Detalles del Evento</h3>
+      <p><strong>Nombre:</strong> {{detallesEvento?.nombre}}</p>
+      <p><strong>Descripción:</strong> {{detallesEvento?.descripcion}}</p>
+      <p><strong>Fecha:</strong> {{detallesEvento?.fecha}}</p>
+      <button (click)="cerrarModalVerMas()">Cerrar</button>
+    </div>
+  </div>
 
-          <!-- Iterar sobre eventos -->
-          <tr *ngFor="let evento of eventosFiltrados()">
-            <td>{{ evento.codigo }}</td>
-            <td>{{ evento.nombre }}</td>
-            <td>{{ evento.descripcion }}</td>
-            <td>{{ evento.tipo || '-' }}</td>
-            <td>{{ evento.fecha ? (evento.fecha | date:'shortDate') : '-' }}</td>
-            <td>{{ evento.hora_inicio || '-' }}</td>
-            <td>{{ evento.hora_fin || '-' }}</td>
-            <td>{{ evento.estado || '-' }}</td>
-            <td>{{ evento.organizador }}</td>
-            <td><button class="small-btn" (click)="verDetalles(evento)">👁 Ver más</button>
-            <button class="small-btn approve" (click)="abrirModalEvaluacion(evento)">📝 Evaluar evento</button></td>
-          </tr>       
-          <tr *ngIf="eventos.length === 0">
-          <td colspan="6" class="event-empty">No hay eventos pendientes por revisar.</td>
-        </tr>   
-        </tbody>        
-      </table>
-      <div class="pagination">
-        <button (click)="paginaAnterior()" [disabled]="paginaActual === 1">Anterior</button>
-        <span>Página {{paginaActual}} de {{totalPaginas}}</span>
-        <button (click)="paginaSiguiente()" [disabled]="paginaActual === totalPaginas">Siguiente</button>
-      </div>
-    </section>
-  </main>
-
-  <!-- ======= MODAL: VER MÁS ======= -->
-  <div class="modal" [style.display]="modalVerMasVisible ? 'flex' : 'none'">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h3>Detalles del evento</h3>
-        <span class="close" (click)="cerrarModalVerMas()">&times;</span>
-      </div>
-
-      <div class="modal-body" *ngIf="eventoSeleccionado">
-        <p><strong>Código:</strong> {{ eventoSeleccionado.codigo }}</p>
-        <p><strong>Nombre:</strong> {{ eventoSeleccionado.nombre }}</p>
-        <p><strong>Descripción:</strong> {{ eventoSeleccionado.descripcion }}</p>
-        <p><strong>Fecha:</strong> {{ eventoSeleccionado.fecha ? (eventoSeleccionado.fecha | date:'longDate') : '-' }}</p>
-        <p><strong>Organizador:</strong> {{ eventoSeleccionado.organizador }}</p>
-
-        <div *ngIf="detallesEvento">
-          <h4>Organizaciones colaboradoras</h4>
-          <ul>
-            <li *ngFor="let org of detallesEvento.organizaciones">
-              {{org.nombre}} (NIT: {{org.nit}})
-              <ng-container *ngIf="org.certificado_participacion">
-                - <a [href]="eventosService.getFileViewUrl('organizaciones', org.certificado_participacion)" target="_blank">Ver certificado</a>
-                | <a [href]="eventosService.getFileDownloadUrl('organizaciones', org.certificado_participacion)">Descargar</a>
-              </ng-container>
-            </li>
-          </ul>
-
-          <h4>Responsables</h4>
-          <ul>
-            <li *ngFor="let resp of detallesEvento.responsables">
-              {{resp.nombreUsuario || resp.id_usuario}}
-              <ng-container *ngIf="resp.documentoAval">
-                - <a [href]="eventosService.getFileViewUrl('responsables', resp.documentoAval)" target="_blank">Ver aval</a>
-                | <a [href]="eventosService.getFileDownloadUrl('responsables', resp.documentoAval)">Descargar</a>
-              </ng-container>
-            </li>
-          </ul>
-
-          <h4>Reservaciones</h4>
-          <ul>
-            <li *ngFor="let res of detallesEvento.reservaciones">
-              {{res.nombreEspacio || res.codigo_espacio}} - {{res.hora_inicio}} a {{res.hora_fin}}
-            </li>
-          </ul>
-        </div>
-      </div>
-
-      <div class="modal-footer">
-        <button class="small-btn" (click)="cerrarModalVerMas()">Cerrar</button>
+  <!-- Modal Evaluación -->
+  <div class="modal" *ngIf="modalEvaluarVisible">
+    <div class="contenido-modal">
+      <h3>Evaluar evento</h3>
+      <p>¿Deseas aprobar o rechazar el evento <b>{{eventoSeleccionado?.nombre}}</b>?</p>
+      <select [(ngModel)]="decision">
+        <option value="">Selecciona una opción</option>
+        <option value="aprobado">Aprobar</option>
+        <option value="rechazado">Rechazar</option>
+      </select>
+      <div class="botones">
+        <button (click)="confirmarEvaluacion()">Confirmar</button>
+        <button (click)="cerrarModalEvaluacion()">Cancelar</button>
       </div>
     </div>
   </div>
 
-  <!-- ======= MODAL: EVALUAR EVENTO ======= -->
-  <div class="modal" [style.display]="modalEvaluarVisible ? 'flex' : 'none'">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h3>Evaluar evento</h3>
-        <span class="close" (click)="cerrarModalEvaluacion()">&times;</span>
-      </div>
-
-      <div class="modal-body">
-        <p><strong>Código:</strong> {{ eventoSeleccionado?.codigo }}</p>
-        <p><strong>Nombre:</strong> {{ eventoSeleccionado?.nombre }}</p>
-
-        <div class="form-group full-width">
-          <label for="decision">Decisión</label>
-          <select id="decision" [(ngModel)]="decision" name="decision" class="select-decision">
-            <option value="">-- Seleccione una opción --</option>
-            <option value="aprobado">Aprobar evento</option>
-            <option value="rechazado">Rechazar evento</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="modal-footer">
-        <button class="small-btn cancel" (click)="cerrarModalEvaluacion()">Cancelar</button>
-        <button class="save-btn" (click)="confirmarEvaluacion()">Confirmar</button>
-      </div>
-    </div>
+  <!-- Mensaje -->
+  <div class="mensaje" *ngIf="mensajeVisible">
+    <p>{{mensajeTexto}}</p>
+    <button (click)="cerrarMensaje()">Cerrar</button>
   </div>
+</div>
 
-  <!-- ======= MODAL: MENSAJE ======= -->
-  <div class="modal" [style.display]="mensajeVisible ? 'flex' : 'none'">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h3>Mensaje</h3>
-        <span class="close" (click)="cerrarMensaje()">&times;</span>
-      </div>
-      <div class="modal-body">
-        <p>{{ mensajeTexto }}</p>
-      </div>
-      <div class="modal-footer">
-        <button class="small-btn" (click)="cerrarMensaje()">Cerrar</button>
-      </div>
-    </div>
-  </div>
-
-</body>
-</html>

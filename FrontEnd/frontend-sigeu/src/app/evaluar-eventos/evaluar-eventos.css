@@ -324,3 +324,42 @@ label {
   font-weight: 500;
   color: #333;
 }
+.nav-icons {
+  position: relative;
+}
+
+.notificaciones-dropdown {
+  position: absolute;
+  right: 0;
+  top: 35px;
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  width: 300px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  z-index: 10;
+  max-height: 300px;
+  overflow-y: auto;
+  padding: 10px;
+}
+
+.notificacion-item {
+  border-bottom: 1px solid #eee;
+  padding: 8px 0;
+}
+
+.notificacion-item:last-child {
+  border-bottom: none;
+}
+
+.notificacion-fecha {
+  display: block;
+  font-size: 0.8em;
+  color: gray;
+}
+
+.notificacion-vacia {
+  text-align: center;
+  color: #999;
+  padding: 10px;
+}

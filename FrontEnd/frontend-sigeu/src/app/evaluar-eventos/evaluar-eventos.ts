@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component} from '@angular/core';
+import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { EvaluacionService } from '../services/evaluacion.service';
@@ -7,49 +7,49 @@ import { EventosService } from '../services/eventos.service';
 
 @Component({
   selector: 'app-evaluar-eventos',
+  standalone: true,
   imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './evaluar-eventos.html',
-  styleUrl: './evaluar-eventos.css'
+  styleUrls: ['./evaluar-eventos.css']
 })
 export class EvaluarEventos {
+  // 🔍 Filtros y búsqueda
   busqueda: string = '';
   filtroEstado: string = '';
 
+  // 📋 Datos
   eventos: any[] = [];
-  eventosPaginados: any[] = [];
+  eventosFiltradosList: any[] = [];
+
+  // ⚙️ Modales y mensajes
   modalEvaluarVisible = false;
   modalVerMasVisible = false;
   mensajeVisible = false;
   mensajeTexto: string = '';
+  mostrarNotificaciones: boolean = false;
+  notificaciones: string[] = [];
+
+  // 🔘 Control de evaluación
   eventoSeleccionado: any = null;
   detallesEvento: any = null;
   decision: string = '';
 
+  // 📄 Paginación
   paginaActual = 1;
-  elementosPorPagina = 3; 
+  elementosPorPagina = 3;
+
+  constructor(
+    private evaluacionService: EvaluacionService,
+    public eventosService: EventosService
+  ) {}
 
   get totalPaginas(): number {
-    return Math.ceil(this.eventos.length / this.elementosPorPagina);
+    return Math.ceil(this.eventosFiltradosList.length / this.elementosPorPagina);
   }
-
-  paginaAnterior() {
-    if (this.paginaActual > 1) {
-      this.paginaActual--;
-    }
-  }
-
-  paginaSiguiente() {
-    if (this.paginaActual < this.totalPaginas) {
-      this.paginaActual++;
-    }
-  }
-
-  constructor(private evaluacionService: EvaluacionService, public eventosService: EventosService) {}
 
   ngOnInit() {
     this.evaluacionService.listarPendientes().subscribe({
       next: (data) => {
-        // Normalizar datos mínimos esperados por la vista
         this.eventos = (data || []).map((e: any) => ({
           codigo: e.codigo,
           nombre: e.nombre,
@@ -61,6 +61,7 @@ export class EvaluarEventos {
           estado: e.estado,
           organizador: e.organizadorNombre || '-',
         }));
+        this.filtrarEventos();
       },
       error: () => {
         this.eventos = [];
@@ -68,11 +69,24 @@ export class EvaluarEventos {
     });
   }
 
-  eventosFiltrados() {
-    // temporalmente se simula una lista
-    return this.eventos || [];
+  // 🔍 Filtrado de eventos
+  filtrarEventos() {
+    this.eventosFiltradosList = this.eventos.filter(e => {
+      const coincideBusqueda = e.nombre.toLowerCase().includes(this.busqueda.toLowerCase());
+      const coincideEstado = this.filtroEstado ? e.estado === this.filtroEstado : true;
+      return coincideBusqueda && coincideEstado;
+    });
   }
 
+  paginaAnterior() {
+    if (this.paginaActual > 1) this.paginaActual--;
+  }
+
+  paginaSiguiente() {
+    if (this.paginaActual < this.totalPaginas) this.paginaActual++;
+  }
+
+  // 🔎 Ver detalles de evento
   verDetalles(evento: any) {
     this.eventoSeleccionado = evento;
     this.evaluacionService.obtenerDetalle(evento.codigo).subscribe({
@@ -107,6 +121,15 @@ export class EvaluarEventos {
     this.mensajeTexto = '';
   }
 
+  mostrarMensajeNotificacion(mensaje: string) {
+    this.notificaciones.push(mensaje);
+    this.mostrarNotificaciones = true;
+    setTimeout(() => {
+      this.mostrarNotificaciones = false;
+      this.notificaciones = [];
+    }, 3000);
+  }
+
   confirmarEvaluacion() {
     if (!this.eventoSeleccionado || !this.decision) return;
 
@@ -117,18 +140,14 @@ export class EvaluarEventos {
 
     accion$.subscribe({
       next: (resp) => {
-        // Eliminar de la lista local
         this.eventos = this.eventos.filter(e => e.codigo !== codigo);
-        // Mensaje de éxito en ventana
-        this.mensajeTexto = resp?.mensaje || `Evento ${this.decision}`;
-        this.mensajeVisible = true;
+        this.filtrarEventos();
+        this.mostrarMensajeNotificacion(resp?.mensaje || `Evento ${this.decision}`);
         this.cerrarModalEvaluacion();
       },
       error: (err) => {
-        this.mensajeTexto = err?.error?.message || 'No se pudo completar la acción';
-        this.mensajeVisible = true;
+        this.mostrarMensajeNotificacion(err?.error?.message || 'No se pudo completar la acción');
       }
     });
   }
-
 }

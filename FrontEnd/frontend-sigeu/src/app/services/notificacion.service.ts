@@ -8,8 +8,8 @@ export class NotificacionService {
   private baseUrl = buildApiUrl(API_PATHS.notificacion);
   constructor(private http: HttpClient) {}
 
-  listar(): Observable<any> {
-    return this.http.get(`${this.baseUrl}/ruta2`);
+  obtenerNotificaciones(idUsuario: number): Observable<any[]> {
+    return this.http.get<any[]>(`${this.baseUrl}/${idUsuario}`);
   }
 
   crear(body: any): Observable<any> {
