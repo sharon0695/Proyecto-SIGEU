@@ -35,4 +35,10 @@ public class GlobalExceptionHandler {
     public ResponseEntity<MensajeResponse> handleGeneric(Exception ex) {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new MensajeResponse("Error interno del servidor"));
     }
+    @ExceptionHandler(SqlInjectionException.class)
+    public ResponseEntity<MensajeResponse> handleSqlInjection(SqlInjectionException ex) {
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(new MensajeResponse(ex.getMessage()));
+    }
 }

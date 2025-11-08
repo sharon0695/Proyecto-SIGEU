@@ -164,6 +164,10 @@ public class UsuarioServiceImp implements IUsuarioService {
             throw new IllegalArgumentException("La contraseña es obligatoria");
         }
 
+        if (SqlInjectionValidator.contieneInyeccion(correo) || SqlInjectionValidator.contieneInyeccion(contrasena)) {
+            throw new SqlInjectionException("Intento de inyección SQL detectado");
+        }
+
         Optional<UsuarioModel> usuarioOpt = usuarioRepository.findByCorreoInstitucional(correo);
         if (usuarioOpt.isEmpty()) {
             throw new IllegalArgumentException("Credenciales inválidas");

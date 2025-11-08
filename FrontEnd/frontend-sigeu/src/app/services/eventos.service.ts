@@ -111,4 +111,8 @@ export class EventosService {
   }
 
 
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> d341e202c25cd4f6a4f6f0a92fb8802e8b2acad7

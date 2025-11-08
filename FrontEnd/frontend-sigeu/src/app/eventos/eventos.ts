@@ -711,21 +711,5 @@ export class Eventos {
     this.listar();
   }
 
-  enviarEvento(codigo: number) {
-    if (!confirm('¿Seguro que deseas enviar este evento a revisión, luego de confirmar no puede modificar el evento?')) {
-      return;
-    }
-
-    this.eventosService.enviarEvento(codigo).subscribe({
-      next: (response) => {
-        this.showMessage('success', 'Evento enviado', response.mensaje || 'El evento fue enviado correctamente.');
-        this.listar(); // 🔄 vuelve a cargar la lista para actualizar el estado
-      },
-      error: (error) => {
-        const errorMsg = error.error?.message || error.error || 'Error al enviar el evento.';
-        this.showMessage('error', 'Error de envío', errorMsg);
-      }
-    });
-  }
-
+  enviarEvento():void{}
 }
