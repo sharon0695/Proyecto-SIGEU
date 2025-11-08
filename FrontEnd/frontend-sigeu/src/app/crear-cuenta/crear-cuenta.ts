@@ -125,7 +125,6 @@ export class CrearCuenta {
   }
 
   private mapRol(rolUi: string): string {
-    // Backend enum: estudiante, docente, secretaria_academica, administrador
     if (rolUi === 'estudiante') return 'estudiante';
     if (rolUi === 'docente') return 'docente';
     if (rolUi === 'secretaria') return 'secretaria_academica';
