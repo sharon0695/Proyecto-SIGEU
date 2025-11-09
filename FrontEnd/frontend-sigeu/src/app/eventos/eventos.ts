@@ -7,10 +7,11 @@ import { EspacioService } from '../services/espacio.service';
 import { OrganizacionesService } from '../services/organizaciones.service';
 import { Api } from '../services/usuarios.service';
 import { AuthService } from '../services/auth.service';
+import { Notificaciones } from '../notificaciones/notificaciones';
 
 @Component({
   selector: 'app-eventos',
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, Notificaciones],
   templateUrl: './eventos.html',
   styleUrl: './eventos.css'
 })

@@ -4,10 +4,11 @@ import { FormsModule } from '@angular/forms';
 import { OrganizacionesService } from '../services/organizaciones.service';
 import { AuthService } from '../services/auth.service';
 import { RouterLink } from '@angular/router';
+import { Notificaciones } from '../notificaciones/notificaciones';
 
 @Component({
   selector: 'app-organizaciones',
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, Notificaciones],
   templateUrl: './organizaciones.html',
   styleUrl: './organizaciones.css'
 })

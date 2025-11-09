@@ -93,7 +93,7 @@ export class EventosService {
   getFileDownloadUrl(tipo: 'organizaciones' | 'responsables', filePath: string): string {
     if (!filePath) {
       console.error('filePath está vacío');
-      return '';
+      return ''; 
     }
     
     const partes = filePath.split('/');

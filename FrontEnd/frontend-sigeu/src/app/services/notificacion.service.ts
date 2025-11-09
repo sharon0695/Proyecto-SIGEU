@@ -3,6 +3,15 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { API_PATHS, buildApiUrl } from '../config/config';
 
+export interface Notificacion {
+  id: number;
+  titulo?: string;
+  mensaje?: string;
+  detalles?: string;
+  fecha?: Date;
+  leida?: boolean;
+}
+
 @Injectable({ providedIn: 'root' })
 export class NotificacionService {
   private baseUrl = buildApiUrl(API_PATHS.notificacion);

@@ -11,7 +11,7 @@ export const API_PATHS = {
   reservacion: '/reservacion',
   colaboracion: '/colaboracion',
   responsable: '/responsable',
-  notificacion: '/rutaNot',
+  notificacion: '/notificaciones',
   evaluacion: '/rutaEva',
 } as const;
 

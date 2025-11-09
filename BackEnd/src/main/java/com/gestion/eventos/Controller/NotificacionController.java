@@ -25,7 +25,7 @@ public class NotificacionController {
     public ResponseEntity<NotificacionModel> crearNotificacion(@RequestBody NotificacionModel notificacion){
         return new ResponseEntity<>(notificacionService.guardarNotificacion(notificacion),HttpStatus.CREATED);
     }
-    @GetMapping("/notificaciones/{idUsuario}")
+    @GetMapping("/{idUsuario}")
     public ResponseEntity<List<NotificacionModel>> obtenerNotificacionesPorUsuario(@PathVariable Integer idUsuario) {
         List<NotificacionModel> notificaciones = notificacionRepository.findByDestinatario(idUsuario);
         return ResponseEntity.ok(notificaciones);

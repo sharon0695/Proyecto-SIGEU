@@ -1,56 +1,66 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { EvaluacionService } from '../services/evaluacion.service';
 import { EventosService } from '../services/eventos.service';
+import { Notificaciones } from '../notificaciones/notificaciones';
+import { AuthService } from '../services/auth.service';
 
 @Component({
   selector: 'app-evaluar-eventos',
-  standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, Notificaciones],
   templateUrl: './evaluar-eventos.html',
-  styleUrls: ['./evaluar-eventos.css']
+  styleUrl: './evaluar-eventos.css'
 })
 export class EvaluarEventos {
-  // 🔍 Filtros y búsqueda
   busqueda: string = '';
   filtroEstado: string = '';
 
-  // 📋 Datos
   eventos: any[] = [];
-  eventosFiltradosList: any[] = [];
-
-  // ⚙️ Modales y mensajes
+  eventosPaginados: any[] = [];
   modalEvaluarVisible = false;
   modalVerMasVisible = false;
   mensajeVisible = false;
   mensajeTexto: string = '';
-  mostrarNotificaciones: boolean = false;
-  notificaciones: string[] = [];
-
-  // 🔘 Control de evaluación
   eventoSeleccionado: any = null;
   detallesEvento: any = null;
   decision: string = '';
+  observaciones: string = '';
+  actaComite: File | null = null;
 
-  // 📄 Paginación
   paginaActual = 1;
-  elementosPorPagina = 3;
-
-  constructor(
-    private evaluacionService: EvaluacionService,
-    public eventosService: EventosService
-  ) {}
+  elementosPorPagina = 3; 
 
   get totalPaginas(): number {
-    return Math.ceil(this.eventosFiltradosList.length / this.elementosPorPagina);
+    return Math.ceil(this.eventos.length / this.elementosPorPagina);
   }
+
+  paginaAnterior() {
+    if (this.paginaActual > 1) {
+      this.paginaActual--;
+    }
+  }
+
+  paginaSiguiente() {
+    if (this.paginaActual < this.totalPaginas) {
+      this.paginaActual++;
+    }
+  }
+
+  constructor(
+    private evaluacionService: EvaluacionService, 
+    public eventosService: EventosService,
+    private authService: AuthService
+  ) {}
 
   ngOnInit() {
     this.evaluacionService.listarPendientes().subscribe({
       next: (data) => {
-        this.eventos = (data || []).map((e: any) => ({
+        // Ordenar por código (primero enviado = primero en lista)
+        const dataSorted = (data || []).sort((a: any, b: any) => a.codigo - b.codigo);
+        
+        this.eventos = dataSorted.map((e: any) => ({
           codigo: e.codigo,
           nombre: e.nombre,
           descripcion: e.descripcion,
@@ -61,7 +71,6 @@ export class EvaluarEventos {
           estado: e.estado,
           organizador: e.organizadorNombre || '-',
         }));
-        this.filtrarEventos();
       },
       error: () => {
         this.eventos = [];
@@ -69,24 +78,10 @@ export class EvaluarEventos {
     });
   }
 
-  // 🔍 Filtrado de eventos
-  filtrarEventos() {
-    this.eventosFiltradosList = this.eventos.filter(e => {
-      const coincideBusqueda = e.nombre.toLowerCase().includes(this.busqueda.toLowerCase());
-      const coincideEstado = this.filtroEstado ? e.estado === this.filtroEstado : true;
-      return coincideBusqueda && coincideEstado;
-    });
+  eventosFiltrados() {
+    return this.eventos || [];
   }
 
-  paginaAnterior() {
-    if (this.paginaActual > 1) this.paginaActual--;
-  }
-
-  paginaSiguiente() {
-    if (this.paginaActual < this.totalPaginas) this.paginaActual++;
-  }
-
-  // 🔎 Ver detalles de evento
   verDetalles(evento: any) {
     this.eventoSeleccionado = evento;
     this.evaluacionService.obtenerDetalle(evento.codigo).subscribe({
@@ -108,12 +103,17 @@ export class EvaluarEventos {
 
   abrirModalEvaluacion(evento: any) {
     this.eventoSeleccionado = evento;
+    this.decision = '';
+    this.observaciones = '';
+    this.actaComite = null;
     this.modalEvaluarVisible = true;
   }
 
   cerrarModalEvaluacion() {
     this.modalEvaluarVisible = false;
     this.decision = '';
+    this.observaciones = '';
+    this.actaComite = null;
   }
 
   cerrarMensaje() {
@@ -121,32 +121,65 @@ export class EvaluarEventos {
     this.mensajeTexto = '';
   }
 
-  mostrarMensajeNotificacion(mensaje: string) {
-    this.notificaciones.push(mensaje);
-    this.mostrarNotificaciones = true;
-    setTimeout(() => {
-      this.mostrarNotificaciones = false;
-      this.notificaciones = [];
-    }, 3000);
+  onActaChange(event: Event) {
+    const file = (event.target as HTMLInputElement).files?.[0] || null;
+    if (file && file.type !== 'application/pdf') {
+      this.mensajeTexto = 'El acta debe ser un archivo PDF';
+      this.mensajeVisible = true;
+      (event.target as HTMLInputElement).value = '';
+      return;
+    }
+    this.actaComite = file;
   }
 
   confirmarEvaluacion() {
-    if (!this.eventoSeleccionado || !this.decision) return;
+    if (!this.eventoSeleccionado || !this.decision) {
+      this.mensajeTexto = 'Debe seleccionar una decisión';
+      this.mensajeVisible = true;
+      return;
+    }
 
-    const codigo = this.eventoSeleccionado.codigo;
+    // Validar observaciones obligatorias para rechazo
+    if (this.decision === 'rechazado' && (!this.observaciones || !this.observaciones.trim())) {
+      this.mensajeTexto = 'Las observaciones son obligatorias para rechazar un evento';
+      this.mensajeVisible = true;
+      return;
+    }
+
+    const idSecretaria = this.authService.getUserId();
+    if (!idSecretaria) {
+      this.mensajeTexto = 'No se encontró sesión activa';
+      this.mensajeVisible = true;
+      return;
+    }
+
+    // Crear FormData
+    const formData = new FormData();
+    formData.append('codigoEvento', this.eventoSeleccionado.codigo.toString());
+    formData.append('idSecretaria', idSecretaria.toString());
+    formData.append('observaciones', this.observaciones || '');
+    
+    if (this.actaComite) {
+      formData.append('actaComite', this.actaComite, this.actaComite.name);
+    }
+
+    // Llamar al servicio apropiado
     const accion$ = this.decision === 'aprobado'
-      ? this.evaluacionService.aprobar(codigo)
-      : this.evaluacionService.rechazar(codigo);
+      ? this.evaluacionService.aprobar(formData)
+      : this.evaluacionService.rechazar(formData);
 
     accion$.subscribe({
       next: (resp) => {
-        this.eventos = this.eventos.filter(e => e.codigo !== codigo);
-        this.filtrarEventos();
-        this.mostrarMensajeNotificacion(resp?.mensaje || `Evento ${this.decision}`);
+        // Eliminar de la lista local
+        this.eventos = this.eventos.filter(e => e.codigo !== this.eventoSeleccionado.codigo);
+        // Mensaje de éxito
+        this.mensajeTexto = resp?.mensaje || `Evento ${this.decision === 'aprobado' ? 'aprobado' : 'rechazado'} correctamente`;
+        this.mensajeVisible = true;
         this.cerrarModalEvaluacion();
       },
       error: (err) => {
-        this.mostrarMensajeNotificacion(err?.error?.message || 'No se pudo completar la acción');
+        this.mensajeTexto = err?.error?.mensaje || err?.error?.message || 'No se pudo completar la acción';
+        this.mensajeVisible = true;
       }
     });
   }

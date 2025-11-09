@@ -1,0 +1,32 @@
+<div class="notificaciones-container">
+  <button class="icon-btn" (click)="mostrar()" title="Notificaciones">
+    <span class="material-symbols-outlined icon">notifications</span>
+    <span *ngIf="nuevas > 0" class="badge">{{ nuevas }}</span>
+  </button>
+
+  <div class="notificaciones-dropdown" *ngIf="visible">
+    <div class="header">
+      <h4>Notificaciones</h4>
+      <button class="close" (click)="cerrar()">&times;</button>
+    </div>
+
+    <div *ngIf="loading" class="vacio">Cargando...</div>
+    <div *ngIf="errorMsg" class="vacio">{{ errorMsg }}</div>
+
+    <div *ngIf="!loading && notificacionesUsuario.length === 0" class="vacio">
+      No tienes notificaciones
+    </div>
+
+    <ul *ngIf="!loading && notificacionesUsuario.length > 0">
+      <li *ngFor="let n of notificacionesUsuario">
+        <div class="nt-row">
+          <div class="nt-left">
+            <strong>{{ n.titulo || (n.detalles && (n.detalles | slice:0:40)) || 'Notificación' }}</strong>
+            <p class="nt-text">{{ n.detalles || n.mensaje }}</p>
+            <small class="nt-time">{{ n.fecha ? (n.fecha | date:'short') : '' }}</small>
+          </div>
+        </div>
+      </li>
+    </ul>
+  </div>
+</div>

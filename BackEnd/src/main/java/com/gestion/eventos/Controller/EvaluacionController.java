@@ -1,12 +1,5 @@
 package com.gestion.eventos.Controller;
 
-import com.gestion.eventos.DTO.EventoCompletoResponse;
-import com.gestion.eventos.Model.EvaluacionModel;
-import com.gestion.eventos.Model.EventoModel;
-import com.gestion.eventos.Repository.IUsuarioRepository;
-import com.gestion.eventos.Service.IEvaluacionService;
-import com.gestion.eventos.Service.IEventoService;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,12 +9,20 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import com.gestion.eventos.DTO.EventoCompletoResponse;
+import com.gestion.eventos.Model.EvaluacionModel;
+import com.gestion.eventos.Model.EventoModel;
+import com.gestion.eventos.Repository.IUsuarioRepository;
+import com.gestion.eventos.Service.IEvaluacionService;
+import com.gestion.eventos.Service.IEventoService;
 
 @RestController
 @RequestMapping ("/rutaEva")
@@ -60,18 +61,47 @@ public class EvaluacionController {
         return ResponseEntity.ok(respuesta);
     }
 
-    @PutMapping("/aprobar/{codigo}")
-    public ResponseEntity<?> aprobarEvento(@PathVariable Integer codigo) {
-        EventoModel evento = evaluacionService.aprobarEvento(codigo);
+    public static class EvaluacionRequest {
+        private Integer codigoEvento;
+        private Integer idSecretaria;
+        private String observaciones;
+        private org.springframework.web.multipart.MultipartFile actaComite;
+
+        public Integer getCodigoEvento() { return codigoEvento; }
+        public void setCodigoEvento(Integer codigoEvento) { this.codigoEvento = codigoEvento; }
+        
+        public Integer getIdSecretaria() { return idSecretaria; }
+        public void setIdSecretaria(Integer idSecretaria) { this.idSecretaria = idSecretaria; }
+        
+        public String getObservaciones() { return observaciones; }
+        public void setObservaciones(String observaciones) { this.observaciones = observaciones; }
+        
+        public org.springframework.web.multipart.MultipartFile getActaComite() { return actaComite; }
+        public void setActaComite(org.springframework.web.multipart.MultipartFile actaComite) { this.actaComite = actaComite; }
+    }
+
+    @PutMapping(value = "/aprobar", consumes = "multipart/form-data")
+    public ResponseEntity<?> aprobarEvento(@ModelAttribute EvaluacionRequest request) {
+        EventoModel evento = evaluacionService.aprobarEvento(
+            request.getCodigoEvento(), 
+            request.getIdSecretaria(),
+            request.getObservaciones(), 
+            request.getActaComite()
+        );
         Map<String, Object> body = new HashMap<>();
         body.put("mensaje", "Evento aprobado correctamente");
         body.put("nuevoEstado", evento.getEstado().toString());
         return ResponseEntity.ok(body);
     }
 
-    @PutMapping("/rechazar/{codigo}")
-    public ResponseEntity<?> rechazarEvento(@PathVariable Integer codigo) {
-        EventoModel evento = evaluacionService.rechazarEvento(codigo);
+    @PutMapping(value = "/rechazar", consumes = "multipart/form-data")
+    public ResponseEntity<?> rechazarEvento(@ModelAttribute EvaluacionRequest request) {
+        EventoModel evento = evaluacionService.rechazarEvento(
+            request.getCodigoEvento(),
+            request.getIdSecretaria(),
+            request.getObservaciones(),
+            request.getActaComite()
+        );
         Map<String, Object> body = new HashMap<>();
         body.put("mensaje", "Evento rechazado correctamente");
         body.put("nuevoEstado", evento.getEstado().toString());

@@ -46,7 +46,8 @@ public class SecurityConfig {
                     "/error",
                     "/",            
                     "/static/**",                    
-                    "/images/**"
+                    "/images/**",
+                    "/archivos/**"
                 ).permitAll()
                 .requestMatchers("/organizacionExterna/**", "/eventos/**")
                 .hasAnyRole("ESTUDIANTE", "DOCENTE")

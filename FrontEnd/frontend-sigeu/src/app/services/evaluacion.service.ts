@@ -13,16 +13,26 @@ export class EvaluacionService {
     return this.http.get<any[]>(`${this.baseUrl}/pendientes`);
   }
 
-  aprobar(codigo: number): Observable<any> {
-    return this.http.put(`${this.baseUrl}/aprobar/${codigo}`, {});
-    }
-
-  rechazar(codigo: number): Observable<any> {
-    return this.http.put(`${this.baseUrl}/rechazar/${codigo}`, {});
+  obtenerDetalle(codigo: number): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/detalle/${codigo}`);
   }
 
-  obtenerDetalle(codigo: number): Observable<any> {
-    return this.http.get(`${this.baseUrl}/detalle/${codigo}`);
+  aprobar(formData: FormData): Observable<any> {
+    return this.http.put<any>(`${this.baseUrl}/aprobar`, formData);
+  }
+
+  rechazar(formData: FormData): Observable<any> {
+    return this.http.put<any>(`${this.baseUrl}/rechazar`, formData);
+  }
+
+  getFileViewUrl(tipo: string, filePath: string): string {
+    const fileName = filePath.split('/').pop();
+    return `http://localhost:8080/archivos/ver?tipo=${tipo}&archivo=${fileName}`;
+  }
+
+  getFileDownloadUrl(tipo: string, filePath: string): string {
+    const fileName = filePath.split('/').pop();
+    return `http://localhost:8080/archivos/descargar?tipo=${tipo}&archivo=${fileName}`;
   }
 }
 

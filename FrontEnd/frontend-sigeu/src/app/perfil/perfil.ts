@@ -5,10 +5,11 @@ import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 import { Api } from '../services/usuarios.service'; 
 import { PerfilService } from '../services/perfil.service';
+import { Notificaciones } from '../notificaciones/notificaciones';
 
 @Component({
   selector: 'app-perfil',
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, Notificaciones],
   templateUrl: './perfil.html',
   styleUrl: './perfil.css'
 })

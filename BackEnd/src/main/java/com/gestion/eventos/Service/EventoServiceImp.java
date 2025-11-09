@@ -770,7 +770,7 @@ public class EventoServiceImp implements IEventoService {
             facultadUsuario = usuarioRegistra.getCodigo_unidad().getIdFacultad();
         }
 
-        // 3️⃣ Si no tiene ninguna de las dos, lanzar error
+        // Si no tiene ninguna de las dos, lanzar error
         else {
             throw new RuntimeException("El usuario que registró el evento no tiene una facultad asociada (ni por programa ni por unidad académica).");
         }
@@ -782,7 +782,7 @@ public class EventoServiceImp implements IEventoService {
             facultadUsuario
         ).orElseThrow(() -> new RuntimeException("No existe una secretaria asociada a esta facultad."));
 
-        // Crear la notificación
+        // Crear la notificación 
         NotificacionModel notificacion = new NotificacionModel();
         notificacion.setRemitente(usuarioRegistra.getIdentificacion());
         notificacion.setDestinatario(secretaria.getIdentificacion());
