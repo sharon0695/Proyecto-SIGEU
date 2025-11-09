@@ -5,11 +5,13 @@ import { API_PATHS, buildApiUrl } from '../config/config';
 
 export interface Notificacion {
   id: number;
-  titulo?: string;
-  mensaje?: string;
-  detalles?: string;
-  fecha?: Date;
+  remitente: number;
+  destinatario: number;
+  fecha: string;
+  hora: string;
+  detalles: string;
   leida?: boolean;
+  fechaCompleta?: string;
 }
 
 @Injectable({ providedIn: 'root' })

@@ -21,9 +21,9 @@
       <li *ngFor="let n of notificacionesUsuario">
         <div class="nt-row">
           <div class="nt-left">
-            <strong>{{ n.titulo || (n.detalles && (n.detalles | slice:0:40)) || 'Notificación' }}</strong>
-            <p class="nt-text">{{ n.detalles || n.mensaje }}</p>
-            <small class="nt-time">{{ n.fecha ? (n.fecha | date:'short') : '' }}</small>
+            <strong>Notificación</strong>
+            <p class="nt-text">{{ n.detalles }}</p>
+            <small class="nt-time">{{ n.fechaCompleta | date:'short' }}</small>
           </div>
         </div>
       </li>

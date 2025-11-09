@@ -46,7 +46,10 @@ export class Notificaciones{
     this.errorMsg = '';
     this.notificacionService.obtenerNotificaciones(this.usuarioId).subscribe({
       next: (data) => {
-        this.notificacionesUsuario = data || [];
+        this.notificacionesUsuario = data.map(n => ({
+          ...n,
+          fechaCompleta: new Date(`${n.fecha}T${n.hora}`)
+        }));
         this.actualizarContador();
         this.loading = false;
       },
