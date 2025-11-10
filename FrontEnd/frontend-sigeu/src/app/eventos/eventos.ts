@@ -30,6 +30,7 @@ export class Eventos {
   showModal = false;
   editMode = false;
   editCodigo: number | null = null;
+  esError = false;
 
   // Modal de mensajes
   showMessageModal = false;
@@ -132,11 +133,37 @@ export class Eventos {
       }
     });
   }
+  private contieneInyeccion(valor: string): boolean {
+    if (!valor) return false;
+
+    // Palabras o patrones comunes de inyección SQL o HTML
+    const patronesPeligrosos = [
+      /<script.*?>.*?<\/script>/i,  // scripts HTML
+      /<[^>]+>/,                    // etiquetas HTML
+      /['"`;]/,                     // comillas o punto y coma
+      /\b(SELECT|INSERT|UPDATE|DELETE|DROP|UNION|ALTER|CREATE|EXEC|--|#)\b/i // SQL
+    ];
+
+    return patronesPeligrosos.some((patron) => patron.test(valor));
+  }
 
   private validarFormulario(): string | null {
+    const campos = [
+      this.nuevoEvento.nombre, this.nuevoEvento.descripcion, this.nuevoEvento.representante_alterno];
+
+    for (const i of campos){
+      if (this.contieneInyeccion(i)) {
+        this.mensaje = 'No se permiten scripts o comandos en los campos de texto.';
+        this.esError = true;
+        return this.mensaje;
+      }
+    }
     // Validación de campos básicos
     if (!this.nuevoEvento.nombre?.trim()) {
       return 'El nombre del evento es obligatorio';
+    }
+    if (this.nuevoEvento.nombre?.length > 40){
+      return 'El nombre del evento puede tener un máximo de 40 caracteres'
     }
     
     if (!this.nuevoEvento.fecha) {

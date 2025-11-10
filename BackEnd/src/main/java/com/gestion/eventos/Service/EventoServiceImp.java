@@ -655,6 +655,9 @@ public class EventoServiceImp implements IEventoService {
         if (request.getNombre() == null || request.getNombre().trim().isEmpty()) {
             throw new IllegalArgumentException("El nombre del evento es obligatorio");
         }
+        if (request.getNombre().length() > 40){
+            throw new IllegalArgumentException("El número de caracteres para el nombre es de máximo 40");
+        }
         
         if (request.getDescripcion() == null || request.getDescripcion().trim().isEmpty()) {
             throw new IllegalArgumentException("La descripción del evento es obligatoria");
@@ -678,7 +681,7 @@ public class EventoServiceImp implements IEventoService {
         
         if (request.getHora_fin() == null) {
             throw new IllegalArgumentException("La hora de fin del evento es obligatoria");
-        }
+        }        
 
         java.time.LocalDate fechaActual = java.time.LocalDate.now();
         java.time.LocalDate fechaEvento = request.getFecha().toLocalDate();

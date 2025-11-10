@@ -48,6 +48,19 @@ export class CrearCuenta {
     this.unidadService.listar().subscribe({ next: (data) => { this.unidades = (data || []).map((u: any) => ({ codigo: u.codigo, nombre: u.nombre })); } });
     this.facultadService.listar().subscribe({ next: (data) => { this.facultades = (data || []).map((f: any) => ({ id: f.id, nombre: f.nombre })); } });
   }
+  private contieneInyeccion(valor: string): boolean {
+    if (!valor) return false;
+
+    // Palabras o patrones comunes de inyección SQL o HTML
+    const patronesPeligrosos = [
+      /<script.*?>.*?<\/script>/i,  // scripts HTML
+      /<[^>]+>/,                    // etiquetas HTML
+      /['"`;]/,                     // comillas o punto y coma
+      /\b(SELECT|INSERT|UPDATE|DELETE|DROP|UNION|ALTER|CREATE|EXEC|--|#)\b/i // SQL
+    ];
+
+    return patronesPeligrosos.some((patron) => patron.test(valor));
+  }
 
   onRolChange(nuevoRol: string) {
     this.usuario.rol = nuevoRol;
@@ -98,6 +111,17 @@ export class CrearCuenta {
       return;
     }
 
+    const campos = [
+      this.usuario.nombre, this.usuario.apellido];
+
+    for (const i of campos){
+      if (this.contieneInyeccion(i)) {
+        this.mensaje = 'No se permiten scripts o comandos en los campos de texto.';
+        this.esError = true;
+        return;
+      }
+    }
+
     const { confirmar_contrasena, ...formValues } = this.usuario;
 
     const toNum = (v: any) => (v === null || v === undefined || v === '' ? undefined : Number(v));
@@ -113,6 +137,7 @@ export class CrearCuenta {
     codigoUnidad: formValues.codigoUnidad || undefined,    
     idFacultad: formValues.idFacultad || undefined,       
   };
+ 
     this.apiService.registrarUsuario(payload).subscribe({
       next: () => {
         this.mensaje = 'Usuario registrado exitosamente'; this.esError = false;

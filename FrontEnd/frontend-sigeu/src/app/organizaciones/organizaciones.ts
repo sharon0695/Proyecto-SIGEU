@@ -70,7 +70,19 @@ export class Organizaciones {
       error: () => this.showMessage('error', 'Error de Carga', 'No fue posible cargar organizaciones'),
     });
   }
+  private contieneInyeccion(valor: string): boolean {
+    if (!valor) return false;
 
+    // Palabras o patrones comunes de inyección SQL o HTML
+    const patronesPeligrosos = [
+      /<script.*?>.*?<\/script>/i,  // scripts HTML
+      /<[^>]+>/,                    // etiquetas HTML
+      /['"`;]/,                     // comillas o punto y coma
+      /\b(SELECT|INSERT|UPDATE|DELETE|DROP|UNION|ALTER|CREATE|EXEC|--|#)\b/i // SQL
+    ];
+
+    return patronesPeligrosos.some((patron) => patron.test(valor));
+  }
   buscar() {
     if (!this.nombreBusqueda) { this.organizaciones = this.organizacionesTodas.slice(); return; }
     const term = this.nombreBusqueda.trim().toLowerCase();

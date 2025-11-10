@@ -1,12 +1,14 @@
 package com.gestion.eventos.Exception;
 
-import com.gestion.eventos.DTO.MensajeResponse;
 import java.util.NoSuchElementException;
+
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+import com.gestion.eventos.DTO.MensajeResponse;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -23,7 +25,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<MensajeResponse> handleDataIntegrity(DataIntegrityViolationException ex) {
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(new MensajeResponse("Violación de integridad de datos"));
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(new MensajeResponse("Error con los datos suministrados"));
     }
 
     @ExceptionHandler(RuntimeException.class)
