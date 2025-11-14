@@ -57,6 +57,7 @@ export interface ReservacionDTO {
 @Injectable({ providedIn: 'root' })
 export class EventosService {
   private baseUrl = buildApiUrl(API_PATHS.eventos);
+  private baseArcUrl = 'http://localhost:8080/archivos';
   constructor(private http: HttpClient) {}
 
   listar(idUsuario: number): Observable<any> {
@@ -79,27 +80,18 @@ export class EventosService {
     return this.http.get(`${this.baseUrl}/edicion/${codigo}`);
   }
 
-  getFileViewUrl(tipo: 'organizaciones' | 'responsables', filePath: string): string {
-    if (!filePath) {
-      console.error('filePath está vacío');
-      return '';
-    }
-    const partes = filePath.split('/');
-    const fileName = partes[partes.length - 1]; 
-    const url = `http://localhost:8080/archivos/ver?tipo=${tipo}&archivo=${fileName}`;
-    return url;
+  getFileViewUrl(folder: string, rutaRelativa: string): string {
+    const partes = rutaRelativa.split('/');
+    const evento = partes[1]; 
+    const filename = partes[2];
+    return `${this.baseArcUrl}/view/${folder}/${evento}/${filename}`;
   }
 
-  getFileDownloadUrl(tipo: 'organizaciones' | 'responsables', filePath: string): string {
-    if (!filePath) {
-      console.error('filePath está vacío');
-      return ''; 
-    }
-    
-    const partes = filePath.split('/');
-    const fileName = partes[partes.length - 1];
-    const url = `http://localhost:8080/archivos/descargar?tipo=${tipo}&archivo=${fileName}`;
-    return url;
+  getFileDownloadUrl(folder: string, filePath: string) {
+    const parts = filePath.split('/');
+    const evento = parts[1];
+    const filename = parts[2];
+    return `${this.baseArcUrl}/download/${folder}/${evento}/${filename}`;
   }
 
   eliminarEvento(codigo: number): Observable<any> {

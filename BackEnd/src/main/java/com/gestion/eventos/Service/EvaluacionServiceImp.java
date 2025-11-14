@@ -89,7 +89,9 @@ public class EvaluacionServiceImp implements IEvaluacionService{
         }
 
         // Guardar archivo PDF (usa el método sobrecargado)
-        String rutaActa = fileStorageService.storeFile(actaComite);
+        String rutaActa = fileStorageService.storeFile(
+                actaComite, 
+                "acta/evento_" + idEvento);
 
         // Crear registro de evaluación
         EvaluacionModel evaluacion = new EvaluacionModel();

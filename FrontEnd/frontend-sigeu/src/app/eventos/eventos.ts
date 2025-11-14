@@ -402,35 +402,28 @@ export class Eventos {
   // Método para mostrar archivos existentes en el HTML
   getFileName(filePath: string | undefined): string {
     if (!filePath) return 'Ningún archivo seleccionado';
-    
-    // Extraer solo el nombre del archivo de la ruta completa
     const parts = filePath.split('/');
-    return parts[parts.length - 1] || 'Archivo existente';
+    return parts[parts.length - 1];
   }
 
-  // Método para ver archivo existente
+  getFileViewUrl(path: string) {
+    return `/archivos/view/${path}`;
+  }
+
+  getFileDownloadUrl(path: string) {
+    return `/archivos/descargar/${path}`;
+  }
+
   verArchivo(tipo: 'organizaciones' | 'responsables', filePath: string) {
-    if (!filePath) {
-      this.showMessage('error', 'Archivo no disponible', 'No hay archivo para mostrar');
-      return;
-    }
-
     const url = this.eventosService.getFileViewUrl(tipo, filePath);
-    
     window.open(url, '_blank');
   }
 
-  // Método para descargar archivo existente
   descargarArchivo(tipo: 'organizaciones' | 'responsables', filePath: string) {
-    if (!filePath) {
-      this.showMessage('error', 'Archivo no disponible', 'No hay archivo para descargar');
-      return;
-    }
-
     const url = this.eventosService.getFileDownloadUrl(tipo, filePath);
-    
     window.open(url, '_blank');
   }
+
   getNewFileName(file: File | null | undefined): string {
     if (!file) return 'Ningún archivo seleccionado';
     return file.name;

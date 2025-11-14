@@ -119,34 +119,41 @@
 
         <div *ngIf="detallesEvento">
           <h4>Organizaciones colaboradoras</h4>
-          <ul>
-            <li *ngFor="let org of detallesEvento.organizaciones">
-              <strong>{{org.nombre}}</strong> (NIT: {{org.nit}})
-              <div *ngIf="org.certificado_participacion" class="file-actions">
-                <button class="small-btn-file">
-                  <a [href]="eventosService.getFileViewUrl('organizaciones', org.certificado_participacion)" target="_blank">👁 Ver certificado</a>
-                </button>
-                <button class="small-btn-file">
-                  <a [href]="eventosService.getFileDownloadUrl('organizaciones', org.certificado_participacion)" download>⬇ Descargar</a>
-                </button>
-              </div>
-            </li>
-          </ul>
+            <ul>
+              <li *ngFor="let org of detallesEvento.organizaciones">
+                <strong>{{org.nombre}}</strong> (NIT: {{org.nit}})
+                <div *ngIf="org.certificado_participacion" class="file-actions">
+                  <button class="small-btn-file">
+                    <a 
+                    [href]="eventosService.getFileViewUrl('organizaciones', org.certificado_participacion)" target="_blank"> 👁 Ver certificado</a>
+                  </button>
+                  <button class="small-btn-file">
+                    <a 
+                      [href]="eventosService.getFileDownloadUrl('organizaciones', org.certificado_participacion)" 
+                      download>⬇ Descargar</a>
+                  </button>
+                </div>
+              </li>
+            </ul>
 
-          <h4>Responsables</h4>
-          <ul>
-            <li *ngFor="let resp of detallesEvento.responsables">
-              <strong>{{resp.nombreUsuario || resp.id_usuario}}</strong>
-              <div *ngIf="resp.documentoAval" class="file-actions">
-                <button class="small-btn-file">
-                  <a [href]="eventosService.getFileViewUrl('responsables', resp.documentoAval)" target="_blank">👁 Ver aval</a>
-                </button>
-                <button class="small-btn-file">
-                  <a [href]="eventosService.getFileDownloadUrl('responsables', resp.documentoAval)" download>⬇ Descargar</a>
-                </button>
-              </div>
-            </li>
-          </ul>
+            <h4>Responsables</h4>
+            <ul>
+              <li *ngFor="let resp of detallesEvento.responsables">
+                <strong>{{resp.nombreUsuario || resp.id_usuario}}</strong>
+                <div *ngIf="resp.documentoAval" class="file-actions">
+                  <button class="small-btn-file">
+                    <a 
+                      [href]="eventosService.getFileViewUrl('responsables', resp.documentoAval)" 
+                      target="_blank">👁 Ver aval</a>
+                  </button>
+                  <button class="small-btn-file">
+                    <a 
+                      [href]="eventosService.getFileDownloadUrl('responsables', resp.documentoAval)" 
+                      download>⬇ Descargar</a>
+                  </button>
+                </div>
+              </li>
+            </ul>
 
           <h4>Reservaciones</h4>
           <ul>

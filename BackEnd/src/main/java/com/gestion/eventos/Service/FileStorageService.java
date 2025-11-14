@@ -4,178 +4,75 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.util.UUID;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.gestion.eventos.Config.FileStorageProperties;
 
 @Service
 public class FileStorageService {
 
-    private final Path fileStorageLocation;
-    private static final long MAX_FILE_SIZE = 20 * 1024 * 1024;
-
-    @Autowired
-    public FileStorageService(FileStorageProperties fileStorageProperties) {
-        this.fileStorageLocation = Paths.get(fileStorageProperties.getUploadDir())
-                .toAbsolutePath().normalize();
-
-        try {
-            Files.createDirectories(this.fileStorageLocation);
-        } catch (Exception ex) {
-            throw new RuntimeException("No se pudo crear el directorio para guardar los archivos.", ex);
-        }
-    }
-
-    /*public String storeFile(MultipartFile file, String subDirectory) {
-        try {
-            // Validar que el archivo no esté vacío
-            if (file.isEmpty()) {
-                throw new IllegalArgumentException("El archivo está vacío");
-            }
-
-            // Validar tamaño máximo permitido
-            if (file.getSize() > MAX_FILE_SIZE) {
-                double tamanioMB = (double) file.getSize() / (1024 * 1024);
-                double limiteMB = (double) MAX_FILE_SIZE / (1024 * 1024);
-                throw new IllegalArgumentException(
-                    String.format("El archivo excede el tamaño máximo permitido (%.2f MB / máximo %.2f MB)",
-                            tamanioMB, limiteMB)
-                );
-            }
-
-            // Validar que sea PDF
-            if (!"application/pdf".equals(file.getContentType())) {
-                throw new IllegalArgumentException("Solo se permiten archivos PDF");
-            }
-
-            // Crear subdirectorio si no existe
-            Path subDirPath = this.fileStorageLocation.resolve(subDirectory);
-            Files.createDirectories(subDirPath);
-
-            // Generar nombre único para el archivo
-            String originalFileName = file.getOriginalFilename();
-            String fileExtension = "";
-            if (originalFileName != null && originalFileName.contains(".")) {
-                fileExtension = originalFileName.substring(originalFileName.lastIndexOf("."));
-            }
-
-            String fileName = UUID.randomUUID().toString() + fileExtension;
-
-            // Copiar archivo al directorio destino
-            Path targetLocation = subDirPath.resolve(fileName);
-            Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
-
-            // Retornar la ruta relativa para guardar en BD
-            return subDirectory + "/" + fileName;
-
-        } catch (IOException ex) {
-            throw new RuntimeException("No se pudo guardar el archivo " + file.getOriginalFilename() + ". Por favor intenta de nuevo.", ex);
-        }
-    }*/
-
     private final Path rootLocation = Paths.get("uploads");
 
-    // Método original
-    public String storeFile(MultipartFile file, String subDirectory) {
-        try {
-            Path dirPath = this.rootLocation.resolve(subDirectory);
-            Files.createDirectories(dirPath);
-
-            String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
-            Path destinationFile = dirPath.resolve(fileName);
-
-            Files.copy(file.getInputStream(), destinationFile);
-
-            return destinationFile.toString();
-        } catch (IOException e) {
-            throw new RuntimeException("Error al guardar el archivo: " + e.getMessage());
+    public FileStorageService() throws IOException {
+        if (!Files.exists(rootLocation)) {
+            Files.createDirectories(rootLocation);
         }
     }
 
-    // ✔ Método sobrecargado recomendado
-    public String storeFile(MultipartFile file) {
-        return storeFile(file, "actas");  // Carpeta por defecto
-    }
-
-
-    // Método para cargar archivo como Path (NECESARIO para el controller)
-    public Path loadFileAsPath(String filePath) {
+    // ==== GUARDAR ARCHIVO EN SUBCARPETA ====
+    public String storeFile(MultipartFile file, String subfolder) {
         try {
-            Path file = this.fileStorageLocation.resolve(filePath).normalize();
-            if (Files.exists(file) && Files.isReadable(file)) {
-                return file;
-            } else {
-                throw new RuntimeException("Archivo no encontrado: " + filePath);
+            if (file.isEmpty()) {
+                throw new RuntimeException("El archivo está vacío");
             }
-        } catch (Exception ex) {
-            throw new RuntimeException("No se pudo cargar el archivo: " + filePath, ex);
+
+            // Crear carpeta destino: uploads/organizaciones/evento_40
+            Path destinationFolder = rootLocation.resolve(subfolder);
+            Files.createDirectories(destinationFolder);
+
+            // Nombre único
+            String filename = UUID.randomUUID() + "_" + file.getOriginalFilename();
+
+            Path destinationFile = destinationFolder.resolve(filename);
+            Files.copy(file.getInputStream(), destinationFile, StandardCopyOption.REPLACE_EXISTING);
+
+            // Retornar ruta que GUARDAS EN BD:
+            return subfolder + "/" + filename;
+
+        } catch (Exception e) {
+            throw new RuntimeException("Error guardando archivo: " + e.getMessage());
         }
     }
 
-    // Método para cargar archivo como Resource
-    public Resource loadFileAsResource(String filePath) {
+    // ==== ELIMINAR ARCHIVO ====
+    public boolean deleteFile(String relativePath) {
         try {
-            Path file = loadFileAsPath(filePath);
-            Resource resource = new UrlResource(file.toUri());
+            Path filePath = rootLocation.resolve(relativePath);
+            return Files.deleteIfExists(filePath);
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    // ==== OBTENER ARCHIVO PARA STREAMING ====
+    public Resource loadAsResource(String relativePath) {
+        try {
+            Path filePath = rootLocation.resolve(relativePath).normalize();
+            Resource resource = new UrlResource(filePath.toUri());
+
             if (resource.exists()) {
                 return resource;
             } else {
-                throw new RuntimeException("Archivo no encontrado: " + filePath);
+                throw new RuntimeException("Archivo no encontrado: " + relativePath);
             }
-        } catch (Exception ex) {
-            throw new RuntimeException("No se pudo cargar el archivo: " + filePath, ex);
-        }
-    }
 
-    // Método para cargar bytes del archivo (si lo necesitas)
-    public byte[] loadFile(String filePath) {
-        try {
-            Path file = loadFileAsPath(filePath);
-            return Files.readAllBytes(file);
-        } catch (IOException ex) {
-            throw new RuntimeException("No se pudo cargar el archivo: " + filePath, ex);
+        } catch (Exception e) {
+            throw new RuntimeException("Error cargando archivo " + relativePath + ": " + e.getMessage());
         }
-    }
-
-    public boolean deleteFile(String filePath) {
-        try {
-            if (filePath == null || filePath.trim().isEmpty()) {
-                return false;
-            }
-            
-            Path file = this.fileStorageLocation.resolve(filePath).normalize();
-            boolean deleted = Files.deleteIfExists(file);
-            
-            if (deleted) {
-                System.out.println("✓ Archivo eliminado: " + filePath);
-            } else {
-                System.out.println("ℹ️ Archivo no existía: " + filePath);
-            }
-            
-            return deleted;
-            
-        } catch (IOException ex) {
-            System.out.println("⚠ Error eliminando archivo " + filePath + ": " + ex.getMessage());
-            return false;
-        }
-    }
-
-    public boolean fileExists(String filePath) {
-        try {
-            Path file = this.fileStorageLocation.resolve(filePath).normalize();
-            return Files.exists(file) && Files.isReadable(file);
-        } catch (Exception ex) {
-            return false;
-        }
-    }
-
-    // Método para obtener la ruta completa del archivo
-    public String getFullPath(String filePath) {
-        return this.fileStorageLocation.resolve(filePath).normalize().toString();
     }
 }
