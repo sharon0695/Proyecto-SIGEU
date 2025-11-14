@@ -4,8 +4,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
-import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
@@ -33,7 +31,7 @@ public class FileStorageService {
         }
     }
 
-    public String storeFile(MultipartFile file, String subDirectory) {
+    /*public String storeFile(MultipartFile file, String subDirectory) {
         try {
             // Validar que el archivo no esté vacío
             if (file.isEmpty()) {
@@ -78,7 +76,32 @@ public class FileStorageService {
         } catch (IOException ex) {
             throw new RuntimeException("No se pudo guardar el archivo " + file.getOriginalFilename() + ". Por favor intenta de nuevo.", ex);
         }
+    }*/
+
+    private final Path rootLocation = Paths.get("uploads");
+
+    // Método original
+    public String storeFile(MultipartFile file, String subDirectory) {
+        try {
+            Path dirPath = this.rootLocation.resolve(subDirectory);
+            Files.createDirectories(dirPath);
+
+            String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
+            Path destinationFile = dirPath.resolve(fileName);
+
+            Files.copy(file.getInputStream(), destinationFile);
+
+            return destinationFile.toString();
+        } catch (IOException e) {
+            throw new RuntimeException("Error al guardar el archivo: " + e.getMessage());
+        }
     }
+
+    // ✔ Método sobrecargado recomendado
+    public String storeFile(MultipartFile file) {
+        return storeFile(file, "actas");  // Carpeta por defecto
+    }
+
 
     // Método para cargar archivo como Path (NECESARIO para el controller)
     public Path loadFileAsPath(String filePath) {

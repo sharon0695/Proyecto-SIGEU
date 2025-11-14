@@ -9,13 +9,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.gestion.eventos.DTO.EventoCompletoResponse;
 import com.gestion.eventos.Model.EvaluacionModel;
@@ -25,7 +25,7 @@ import com.gestion.eventos.Service.IEvaluacionService;
 import com.gestion.eventos.Service.IEventoService;
 
 @RestController
-@RequestMapping ("/rutaEva")
+@RequestMapping ("/evaluacion")
 public class EvaluacionController {
     @Autowired IEvaluacionService evaluacionService;
     @Autowired IEventoService eventoService;
@@ -61,51 +61,27 @@ public class EvaluacionController {
         return ResponseEntity.ok(respuesta);
     }
 
-    public static class EvaluacionRequest {
-        private Integer codigoEvento;
-        private Integer idSecretaria;
-        private String observaciones;
-        private org.springframework.web.multipart.MultipartFile actaComite;
 
-        public Integer getCodigoEvento() { return codigoEvento; }
-        public void setCodigoEvento(Integer codigoEvento) { this.codigoEvento = codigoEvento; }
-        
-        public Integer getIdSecretaria() { return idSecretaria; }
-        public void setIdSecretaria(Integer idSecretaria) { this.idSecretaria = idSecretaria; }
-        
-        public String getObservaciones() { return observaciones; }
-        public void setObservaciones(String observaciones) { this.observaciones = observaciones; }
-        
-        public org.springframework.web.multipart.MultipartFile getActaComite() { return actaComite; }
-        public void setActaComite(org.springframework.web.multipart.MultipartFile actaComite) { this.actaComite = actaComite; }
+    @PostMapping("/aprobar/{idEvento}")
+    public ResponseEntity<?> aprobarEvento(
+            @PathVariable Integer idEvento,
+            @RequestParam String decision,
+            @RequestParam("idSecretaria") Integer idSecretaria,
+            @RequestParam("actaComite") MultipartFile actaComite) {
+
+            evaluacionService.aprobarEvento(idEvento, decision, actaComite, idSecretaria);
+            return ResponseEntity.ok("Evento aprobado correctamente.");        
     }
 
-    @PutMapping(value = "/aprobar", consumes = "multipart/form-data")
-    public ResponseEntity<?> aprobarEvento(@ModelAttribute EvaluacionRequest request) {
-        EventoModel evento = evaluacionService.aprobarEvento(
-            request.getCodigoEvento(), 
-            request.getIdSecretaria(),
-            request.getObservaciones(), 
-            request.getActaComite()
-        );
-        Map<String, Object> body = new HashMap<>();
-        body.put("mensaje", "Evento aprobado correctamente");
-        body.put("nuevoEstado", evento.getEstado().toString());
-        return ResponseEntity.ok(body);
-    }
+    @PostMapping("/rechazar/{idEvento}")
+    public ResponseEntity<?> rechazarEvento(
+            @PathVariable Integer idEvento,
+            @RequestParam String decision,
+            @RequestParam("idSecretaria") Integer idSecretaria,
+            @RequestParam("observaciones") String observaciones) {
 
-    @PutMapping(value = "/rechazar", consumes = "multipart/form-data")
-    public ResponseEntity<?> rechazarEvento(@ModelAttribute EvaluacionRequest request) {
-        EventoModel evento = evaluacionService.rechazarEvento(
-            request.getCodigoEvento(),
-            request.getIdSecretaria(),
-            request.getObservaciones(),
-            request.getActaComite()
-        );
-        Map<String, Object> body = new HashMap<>();
-        body.put("mensaje", "Evento rechazado correctamente");
-        body.put("nuevoEstado", evento.getEstado().toString());
-        return ResponseEntity.ok(body);
+            evaluacionService.rechazarEvento(idEvento, decision, observaciones, idSecretaria);
+            return ResponseEntity.ok("Evento rechazado correctamente.");
     }
 
     @GetMapping("/detalle/{codigo}")

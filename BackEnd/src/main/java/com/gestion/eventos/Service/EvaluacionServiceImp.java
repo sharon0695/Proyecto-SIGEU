@@ -8,17 +8,18 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.gestion.eventos.Model.EvaluacionModel;
 import com.gestion.eventos.Model.EventoModel;
-import com.gestion.eventos.Model.UsuarioModel;
+import com.gestion.eventos.Model.NotificacionModel;
 import com.gestion.eventos.Repository.IEvaluacionRepository;
 import com.gestion.eventos.Repository.IEventoRepository;
-import com.gestion.eventos.Repository.IUsuarioRepository;
+import com.gestion.eventos.Repository.INotificacionRepository;
+
 @Service
 public class EvaluacionServiceImp implements IEvaluacionService{
     @Autowired IEvaluacionRepository evaluacionRepository;
-    @Autowired private IEventoRepository eventoRepository;
-    @Autowired private IUsuarioRepository usuarioRepository;
-    @Autowired private FileStorageService fileStorageService;
-    
+    @Autowired IEventoRepository eventoRepository;
+    @Autowired FileStorageService fileStorageService;
+    @Autowired INotificacionRepository notificacionRepository;
+
     @Override
     public EvaluacionModel guardarEvaluacion(EvaluacionModel evaluacion) {
         return evaluacionRepository.save(evaluacion);
@@ -35,76 +36,65 @@ public class EvaluacionServiceImp implements IEvaluacionService{
     }
 
     @Override
-    public EventoModel aprobarEvento(Integer codigoEvento, Integer idSecretaria, String observaciones, MultipartFile actaComite) {
-        EventoModel evento = eventoRepository.findById(codigoEvento)
-            .orElseThrow(() -> new RuntimeException("Evento no encontrado"));
-        
-        if (evento.getEstado() != EventoModel.estado.enviado) {
-            throw new RuntimeException("Solo se pueden aprobar eventos en estado 'enviado'");
+    public void aprobarEvento(Integer idEvento, String decision, MultipartFile actaComite, Integer idSecreAcad) {
+        EventoModel evento = eventoRepository.findById(idEvento)
+                .orElseThrow(() -> new RuntimeException("Evento no encontrado"));
+
+        if (actaComite == null || actaComite.isEmpty()) {
+            throw new IllegalArgumentException("Debe adjuntar el acta del comité en formato PDF.");
         }
 
-        // Validar que la secretaria existe
-        UsuarioModel secretaria = usuarioRepository.findById(idSecretaria)
-            .orElseThrow(() -> new RuntimeException("Secretaria académica no encontrada"));
+        // Guardar archivo PDF (usa el método sobrecargado)
+        String rutaActa = fileStorageService.storeFile(actaComite);
 
-        // Cambiar estado del evento
+        // Crear registro de evaluación
+        EvaluacionModel evaluacion = new EvaluacionModel();
+        evaluacion.setCodigoEvento(evento);
+        evaluacion.setDecision(decision);
+        evaluacion.setActa_comite(rutaActa);
+        evaluacionRepository.save(evaluacion);
+
+        // Actualizar estado del evento
         evento.setEstado(EventoModel.estado.aprobado);
         eventoRepository.save(evento);
 
-        // Crear evaluación
-        EvaluacionModel evaluacion = new EvaluacionModel();
-        evaluacion.setCodigo_evento(evento);
-        evaluacion.setId_secreAcad(secretaria);
-        evaluacion.setObservaciones(observaciones != null ? observaciones : "");
-
-        // Guardar archivo si existe
-        if (actaComite != null && !actaComite.isEmpty()) {
-            if (!actaComite.getContentType().equals("application/pdf")) {
-                throw new RuntimeException("El acta del comité debe ser un archivo PDF");
-            }
-            String actaPath = fileStorageService.storeFile(actaComite, "evaluaciones/evento_" + codigoEvento);
-            evaluacion.setActa_comite(actaPath);
-        }
-
-        evaluacionRepository.save(evaluacion);
-
-        return evento;
+        // Notificar al organizador
+        NotificacionModel notificacion = new NotificacionModel();
+        notificacion.setRemitente(idSecreAcad);
+        notificacion.setDetalles("Su evento \"" + evento.getNombre() + "\" fue aprobado.");
+        notificacion.setDestinatario(evento.getIdUsuarioRegistra());
+        notificacion.setFecha(new java.sql.Date(System.currentTimeMillis()));
+        notificacion.setHora(new java.sql.Time(System.currentTimeMillis()));
+        notificacionRepository.save(notificacion);
     }
 
     @Override
-    public EventoModel rechazarEvento(Integer codigoEvento, Integer idSecretaria, String observaciones, MultipartFile actaComite) {
-        EventoModel evento = eventoRepository.findById(codigoEvento)
-            .orElseThrow(() -> new RuntimeException("Evento no encontrado"));
-        
-        if (evento.getEstado() != EventoModel.estado.enviado) {
-            throw new RuntimeException("Solo se pueden rechazar eventos en estado 'enviado'");
+    public void rechazarEvento(Integer idEvento, String decision, String observaciones, Integer idSecreAcad) {
+        EventoModel evento = eventoRepository.findById(idEvento)
+                .orElseThrow(() -> new RuntimeException("Evento no encontrado"));
+
+        if (observaciones == null || observaciones.trim().isEmpty()) {
+            throw new IllegalArgumentException("Debe ingresar una justificación para el rechazo.");
         }
 
-        // Validar que la secretaria existe
-        UsuarioModel secretaria = usuarioRepository.findById(idSecretaria)
-            .orElseThrow(() -> new RuntimeException("Secretaria académica no encontrada"));
+        // Crear registro de evaluación
+        EvaluacionModel evaluacion = new EvaluacionModel();
+        evaluacion.setCodigoEvento(evento);
+        evaluacion.setDecision(decision);
+        evaluacion.setObservaciones(observaciones);
+        evaluacionRepository.save(evaluacion);
 
-        // Cambiar estado del evento
+        // Actualizar estado del evento
         evento.setEstado(EventoModel.estado.rechazado);
         eventoRepository.save(evento);
 
-        // Crear evaluación
-        EvaluacionModel evaluacion = new EvaluacionModel();
-        evaluacion.setCodigo_evento(evento);
-        evaluacion.setId_secreAcad(secretaria);
-        evaluacion.setObservaciones(observaciones != null ? observaciones : "");
-
-        // Guardar archivo si existe
-        if (actaComite != null && !actaComite.isEmpty()) {
-            if (!actaComite.getContentType().equals("application/pdf")) {
-                throw new RuntimeException("El acta del comité debe ser un archivo PDF");
-            }
-            String actaPath = fileStorageService.storeFile(actaComite, "evaluaciones/evento_" + codigoEvento);
-            evaluacion.setActa_comite(actaPath);
-        }
-
-        evaluacionRepository.save(evaluacion);
-
-        return evento;
+        // Notificar al organizador
+        NotificacionModel notificacion = new NotificacionModel();
+        notificacion.setRemitente(idSecreAcad);
+        notificacion.setDetalles("Su evento \"" + evento.getNombre() + "\" fue rechazado. Motivo: " + observaciones);
+        notificacion.setDestinatario(evento.getIdUsuarioRegistra());
+        notificacion.setFecha(new java.sql.Date(System.currentTimeMillis()));
+        notificacion.setHora(new java.sql.Time(System.currentTimeMillis()));
+        notificacionRepository.save(notificacion);
     }
 }

@@ -12,6 +12,6 @@ public interface IEvaluacionService {
     EvaluacionModel guardarEvaluacion(EvaluacionModel evaluacion);
     List<EvaluacionModel> listarEvaluaciones();
     List<EventoModel> listarPorEstado(estado estado);
-    EventoModel aprobarEvento(Integer codigoEvento, Integer idSecretaria, String observaciones, MultipartFile actaComite);
-    EventoModel rechazarEvento(Integer codigoEvento, Integer idSecretaria, String observaciones, MultipartFile actaComite);
+    void aprobarEvento(Integer idEvento, String decision, MultipartFile actaComite, Integer idSecreAcad);
+    void rechazarEvento(Integer idEvento, String decision, String observaciones, Integer idSecreAcad);
 }

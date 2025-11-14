@@ -19,13 +19,14 @@ import lombok.NoArgsConstructor;
 public class EvaluacionModel {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    private Long id;
     @ManyToOne
     @JoinColumn (name="codigo_evento")
-    private EventoModel codigo_evento;
+    private EventoModel codigoEvento;
     @ManyToOne
-    @JoinColumn (name="id_secretaria")
-    private UsuarioModel id_secreAcad;
+    @JoinColumn (name="id_secreAcad")
+    private UsuarioModel idSecreAcad;
     private String observaciones;
     private String acta_comite;
+    private String decision;
 }
