@@ -30,7 +30,13 @@ export class EvaluarEventos {
   actaComite: File | null = null;
 
   paginaActual = 1;
-  elementosPorPagina = 3; 
+  elementosPorPagina = 5; 
+
+  // Modal de mensajes
+  showMessageModal = false;
+  messageType: 'success' | 'error' = 'success';
+  messageText = '';
+  messageTitle = '';
 
   get totalPaginas(): number {
     return Math.ceil(this.eventos.length / this.elementosPorPagina);
@@ -55,12 +61,16 @@ export class EvaluarEventos {
   ) {}
 
   ngOnInit() {
-    this.evaluacionService.listarPendientes().subscribe({
-      next: (data) => {
-        // Ordenar por código (primero enviado = primero en lista)
-        const dataSorted = (data || []).sort((a: any, b: any) => a.codigo - b.codigo);
+    const idSecretaria = this.authService.getUserId();
+    if (!idSecretaria) {
+      console.error("ID de secretaria no encontrado");
+      this.eventos = [];
+      return;
+    }
+    this.evaluacionService.listarPendientes(idSecretaria).subscribe({
+      next: (data) => {      
         
-        this.eventos = dataSorted.map((e: any) => ({
+        this.eventos = data.map((e: any) => ({
           codigo: e.codigo,
           nombre: e.nombre,
           descripcion: e.descripcion,
@@ -76,6 +86,20 @@ export class EvaluarEventos {
         this.eventos = [];
       }
     });
+  }
+
+  // Métodos para el modal de mensajes
+  showMessage(type: 'success' | 'error', title: string, message: string) {
+    this.messageType = type;
+    this.messageTitle = title;
+    this.messageText = message;
+    this.showMessageModal = true;
+  }
+
+  closeMessageModal() {
+    this.showMessageModal = false;
+    this.messageText = '';
+    this.messageTitle = '';
   }
 
   eventosFiltrados() {
@@ -134,15 +158,18 @@ export class EvaluarEventos {
 
   confirmarEvaluacion() {
     if (!this.eventoSeleccionado || !this.decision) {
-      this.mensajeTexto = 'Debe seleccionar una decisión';
-      this.mensajeVisible = true;
+      this.showMessage('error', 'Error en evaluación', 'Debe seleccionar una decisión antes de confirmar');
       return;
     }
 
     // Validar observaciones obligatorias para rechazo
     if (this.decision === 'rechazado' && (!this.observaciones || !this.observaciones.trim())) {
-      this.mensajeTexto = 'Las observaciones son obligatorias para rechazar un evento';
-      this.mensajeVisible = true;
+      this.showMessage('error', 'Error en evaluación', 'Las observaciones son obligatorias para rechazar un evento');     
+      return;
+    }
+
+    if (this.decision === 'aprobado' && (!this.actaComite)){
+      this.showMessage('error', 'Error en evaluación', 'El acta del cómite es obligatoria para aprobar un evento');     
       return;
     }
 
@@ -155,9 +182,11 @@ export class EvaluarEventos {
 
     // Crear FormData
     const formData = new FormData();
-    formData.append('codigoEvento', this.eventoSeleccionado.codigo.toString());
+    formData.append('decision', this.decision);
     formData.append('idSecretaria', idSecretaria.toString());
-    formData.append('observaciones', this.observaciones || '');
+    if (this.observaciones){
+      formData.append('observaciones', this.observaciones);
+    }    
     
     if (this.actaComite) {
       formData.append('actaComite', this.actaComite, this.actaComite.name);
@@ -165,16 +194,15 @@ export class EvaluarEventos {
 
     // Llamar al servicio apropiado
     const accion$ = this.decision === 'aprobado'
-      ? this.evaluacionService.aprobar(formData)
-      : this.evaluacionService.rechazar(formData);
+      ? this.evaluacionService.aprobar(this.eventoSeleccionado.codigo.toString(),formData)
+      : this.evaluacionService.rechazar(this.eventoSeleccionado.codigo.toString(), formData);
 
     accion$.subscribe({
       next: (resp) => {
         // Eliminar de la lista local
         this.eventos = this.eventos.filter(e => e.codigo !== this.eventoSeleccionado.codigo);
         // Mensaje de éxito
-        this.mensajeTexto = resp?.mensaje || `Evento ${this.decision === 'aprobado' ? 'aprobado' : 'rechazado'} correctamente`;
-        this.mensajeVisible = true;
+        this.showMessage('success', '¡Evaluación Exitosa!', resp?.mensaje || 'El evento ha sido evaluado exitosamente');
         this.cerrarModalEvaluacion();
       },
       error: (err) => {

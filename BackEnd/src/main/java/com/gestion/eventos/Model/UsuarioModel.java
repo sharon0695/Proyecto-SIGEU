@@ -38,4 +38,5 @@ public class UsuarioModel {
     @ManyToOne
     @JoinColumn (name="codigo_unidad")
     private UnidadAcademicaModel codigo_unidad;
+    private Integer notLeidas;
 }

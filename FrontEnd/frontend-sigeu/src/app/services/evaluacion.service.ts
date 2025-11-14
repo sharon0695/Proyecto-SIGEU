@@ -9,20 +9,20 @@ export class EvaluacionService {
 
   constructor(private http: HttpClient) {}
 
-  listarPendientes(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.baseUrl}/pendientes`);
+  listarPendientes(idSecre: number): Observable<any[]> {
+    return this.http.get<any[]>(`${this.baseUrl}/pendientes/${idSecre}`);
   }
 
   obtenerDetalle(codigo: number): Observable<any> {
     return this.http.get<any>(`${this.baseUrl}/detalle/${codigo}`);
   }
 
-  aprobar(formData: FormData): Observable<any> {
-    return this.http.put<any>(`${this.baseUrl}/aprobar`, formData);
+  aprobar(idEvento: number, formData: FormData): Observable<any> {
+    return this.http.post<any>(`${this.baseUrl}/aprobar/${idEvento}`, formData);
   }
 
-  rechazar(formData: FormData): Observable<any> {
-    return this.http.put<any>(`${this.baseUrl}/rechazar`, formData);
+  rechazar(idEvento:number, formData: FormData): Observable<any> {
+    return this.http.post<any>(`${this.baseUrl}/rechazar/${idEvento}`, formData);
   }
 
   getFileViewUrl(tipo: string, filePath: string): string {

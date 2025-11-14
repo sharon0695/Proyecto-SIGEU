@@ -26,6 +26,7 @@ export class CrearCuenta {
     idFacultad: '',
     codigoPrograma: '',
     codigoUnidad: '',
+    notLeidas: ''
   };
 
   mensaje: string = '';

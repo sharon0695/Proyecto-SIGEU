@@ -26,6 +26,27 @@
     </nav>
   </header>
 
+  <!-- ======= MODAL DE MENSAJES ======= -->
+  <div class="modal mensaje-modal" [style.display]="showMessageModal ? 'flex' : 'none'">
+    <div class="modal-content" style="max-width: 500px;">
+      <div class="modal-header">
+        <h3 [style.color]="messageType === 'success' ? '#4caf50' : '#f44336'">{{ messageTitle }}</h3>
+        <span class="close" (click)="closeMessageModal()">&times;</span>
+      </div>
+      <div style="padding: 20px 0;">
+        <p [style.color]="messageType === 'success' ? '#2e7d32' : '#c62828'">{{ messageText }}</p>
+      </div>
+      <div style="text-align: right;">
+        <button 
+          class="save-btn" 
+          (click)="closeMessageModal()"
+          [style.background-color]="messageType === 'success' ? '#4caf50' : '#f44336'">
+          Cerrar
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- ======= CONTENIDO PRINCIPAL ======= -->
   <main class="main-container">
     <section class="event-container">
@@ -162,8 +183,10 @@
             <option value="rechazado">Rechazar evento</option>
           </select>
         </div>
-
-        <div class="form-group">
+        
+        <ng-container [ngSwitch]="decision">
+          <div *ngSwitchCase="'rechazado'">
+          <div class="form-group">          
           <label for="observaciones">
             Observaciones {{ decision === 'rechazado' ? '*' : '(opcional)' }}
           </label>
@@ -175,8 +198,10 @@
             class="textarea-observaciones"
             placeholder="Ingrese observaciones sobre la decisión"
             [required]="decision === 'rechazado'"></textarea>
-        </div>
-
+            </div>
+            </div>
+                
+        <div *ngSwitchCase="'aprobado'">
         <div class="form-group">
           <label for="actaComite">Acta del Comité (opcional)</label>
           <input 
@@ -187,8 +212,10 @@
             class="input-file">
           <small>Solo archivos PDF</small>
         </div>
+        </div>
+        </ng-container>  
       </div>
-
+      
       <div class="modal-footer">
         <button class="small-btn cancel" (click)="cerrarModalEvaluacion()">Cancelar</button>
         <button class="save-btn" (click)="confirmarEvaluacion()">Confirmar</button>

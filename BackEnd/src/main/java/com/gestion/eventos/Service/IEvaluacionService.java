@@ -11,7 +11,7 @@ import com.gestion.eventos.Model.EventoModel.estado;
 public interface IEvaluacionService {
     EvaluacionModel guardarEvaluacion(EvaluacionModel evaluacion);
     List<EvaluacionModel> listarEvaluaciones();
-    List<EventoModel> listarPorEstado(estado estado);
-    void aprobarEvento(Integer idEvento, String decision, MultipartFile actaComite, Integer idSecreAcad);
-    void rechazarEvento(Integer idEvento, String decision, String observaciones, Integer idSecreAcad);
+    void aprobarEvento(Integer idEvento, String decision, Integer idSecreAcad, MultipartFile actaComite);
+    void rechazarEvento(Integer idEvento, String decision, Integer idSecreAcad, String observaciones);
+    List<EventoModel> listarPorEstado(estado estado, Integer idUsuarioSecretaria);
 }

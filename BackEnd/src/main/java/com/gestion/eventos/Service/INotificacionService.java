@@ -1,9 +1,11 @@
 package com.gestion.eventos.Service;
 
-import com.gestion.eventos.Model.NotificacionModel;
 import java.util.List;
+
+import com.gestion.eventos.Model.NotificacionModel;
 
 public interface INotificacionService {
     NotificacionModel guardarNotificacion(NotificacionModel notificacion);
     List<NotificacionModel> listarNotificaciones();
+    void marcarTodasComoLeidas(Integer idUsuario);
 }

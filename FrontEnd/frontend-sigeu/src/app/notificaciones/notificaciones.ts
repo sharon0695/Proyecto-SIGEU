@@ -31,10 +31,18 @@ export class Notificaciones{
 
   mostrar(): void {
     this.visible = true;
-    if (this.visible) {
-      this.notificacionesUsuario.forEach(n => n.leida = true);
-      this.actualizarContador();
-    }
+
+    // Marcar como leídas en la BD
+    this.notificacionService.marcarComoLeidas(this.usuarioId).subscribe({
+      next: () => {
+        // También actualizamos en el front
+        this.notificacionesUsuario = this.notificacionesUsuario.map(n => ({
+          ...n,
+          leida: true
+        }));
+        this.actualizarContador();
+      }
+    });
   }
 
   cerrar(): void {
@@ -44,12 +52,16 @@ export class Notificaciones{
   cargarNotificaciones(): void {
     this.loading = true;
     this.errorMsg = '';
+
     this.notificacionService.obtenerNotificaciones(this.usuarioId).subscribe({
       next: (data) => {
-        this.notificacionesUsuario = data.map(n => ({
-          ...n,
-          fechaCompleta: new Date(`${n.fecha}T${n.hora}`)
-        }));
+        this.notificacionesUsuario = data
+          .map(n => ({
+            ...n,
+            fechaCompleta: new Date(`${n.fecha}T${n.hora}`)
+          }))
+          .sort((a, b) => b.fechaCompleta.getTime() - a.fechaCompleta.getTime());
+
         this.actualizarContador();
         this.loading = false;
       },
@@ -59,6 +71,7 @@ export class Notificaciones{
       }
     });
   }
+
 
   actualizarContador() {
     this.nuevas = this.notificacionesUsuario.filter(n => !n.leida).length;

@@ -1,10 +1,12 @@
 package com.gestion.eventos.Service;
 
-import com.gestion.eventos.Model.NotificacionModel;
-import com.gestion.eventos.Repository.INotificacionRepository;
 import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import com.gestion.eventos.Model.NotificacionModel;
+import com.gestion.eventos.Repository.INotificacionRepository;
 @Service
 public class NotificacionServiceImp implements INotificacionService{
     @Autowired INotificacionRepository notificacionRepository;
@@ -17,6 +19,13 @@ public class NotificacionServiceImp implements INotificacionService{
     @Override
     public List<NotificacionModel> listarNotificaciones() {
         return notificacionRepository.findAll();    
+    }
+
+    @Override
+    public void marcarTodasComoLeidas(Integer idUsuario) {
+        List<NotificacionModel> lista = notificacionRepository.findByDestinatario(idUsuario);
+        lista.forEach(n -> n.setLeida(true));
+        notificacionRepository.saveAll(lista);
     }
 
 }

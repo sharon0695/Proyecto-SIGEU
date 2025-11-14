@@ -39,9 +39,9 @@ public class EvaluacionController {
     public ResponseEntity<List<EvaluacionModel>> listarEvaluaciones(){
         return new ResponseEntity<>(evaluacionService.listarEvaluaciones(), HttpStatus.OK);
     }
-    @GetMapping("/pendientes")
-    public ResponseEntity<List<Map<String, Object>>> listarEventosPendientes() {
-        List<EventoModel> pendientes = evaluacionService.listarPorEstado(EventoModel.estado.enviado);
+    @GetMapping("/pendientes/{idSecre}")
+    public ResponseEntity<List<Map<String, Object>>> listarEventosPendientes(@PathVariable Integer idSecre) {
+        List<EventoModel> pendientes = evaluacionService.listarPorEstado(EventoModel.estado.enviado, idSecre);
         List<Map<String, Object>> respuesta = pendientes.stream().map(e -> {
             String organizadorNombre = usuarioRepository.findById(e.getIdUsuarioRegistra())
                 .map(u -> (u.getNombre() != null ? u.getNombre() : "") + " " + (u.getApellido() != null ? u.getApellido() : ""))
@@ -69,8 +69,10 @@ public class EvaluacionController {
             @RequestParam("idSecretaria") Integer idSecretaria,
             @RequestParam("actaComite") MultipartFile actaComite) {
 
-            evaluacionService.aprobarEvento(idEvento, decision, actaComite, idSecretaria);
-            return ResponseEntity.ok("Evento aprobado correctamente.");        
+            evaluacionService.aprobarEvento(idEvento, decision, idSecretaria, actaComite);
+            Map<String, String> response = new HashMap<>();
+            response.put("mensaje", "Evento aprobado correctamente.");
+            return ResponseEntity.ok(response);       
     }
 
     @PostMapping("/rechazar/{idEvento}")
@@ -80,8 +82,10 @@ public class EvaluacionController {
             @RequestParam("idSecretaria") Integer idSecretaria,
             @RequestParam("observaciones") String observaciones) {
 
-            evaluacionService.rechazarEvento(idEvento, decision, observaciones, idSecretaria);
-            return ResponseEntity.ok("Evento rechazado correctamente.");
+            evaluacionService.rechazarEvento(idEvento, decision, idSecretaria, observaciones);
+            Map<String, String> response = new HashMap<>();
+            response.put("mensaje", "Evento rechazado correctamente.");
+            return ResponseEntity.ok(response);     
     }
 
     @GetMapping("/detalle/{codigo}")

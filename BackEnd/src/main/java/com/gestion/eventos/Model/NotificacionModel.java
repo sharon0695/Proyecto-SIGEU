@@ -25,4 +25,5 @@ public class NotificacionModel {
     private Time hora;
     private Date fecha;
     private String detalles;
+    private Boolean leida;
 }

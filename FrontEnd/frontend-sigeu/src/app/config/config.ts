@@ -12,7 +12,7 @@ export const API_PATHS = {
   colaboracion: '/colaboracion',
   responsable: '/responsable',
   notificacion: '/notificaciones',
-  evaluacion: '/rutaEva',
+  evaluacion: '/evaluacion',
 } as const;
 
 export function buildApiUrl(path: string): string {

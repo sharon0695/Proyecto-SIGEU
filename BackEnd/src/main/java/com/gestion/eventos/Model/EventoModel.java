@@ -1,5 +1,9 @@
 package com.gestion.eventos.Model;
 
+import java.sql.Date;
+import java.sql.Time;
+import java.time.LocalDateTime;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -8,8 +12,6 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import java.sql.Date;
-import java.sql.Time;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -33,4 +35,5 @@ public class EventoModel {
     private estado estado;
     @Column(name = "id_usuario")
     private Integer idUsuarioRegistra;
+    private LocalDateTime fechaEnvio;
 }

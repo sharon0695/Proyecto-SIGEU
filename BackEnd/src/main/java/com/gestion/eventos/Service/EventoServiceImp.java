@@ -1,5 +1,6 @@
 package com.gestion.eventos.Service;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -755,6 +756,7 @@ public class EventoServiceImp implements IEventoService {
 
         // Cambiar el estado del evento a "enviado"
         evento.setEstado(EventoModel.estado.enviado);
+        evento.setFechaEnvio(LocalDateTime.now());
         eventoRepository.save(evento);
 
         // Buscar el usuario que registró el evento

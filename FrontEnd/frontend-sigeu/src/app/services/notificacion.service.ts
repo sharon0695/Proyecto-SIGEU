@@ -12,6 +12,7 @@ export interface Notificacion {
   detalles: string;
   leida?: boolean;
   fechaCompleta?: string;
+  notLeidas?: number;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -26,4 +27,9 @@ export class NotificacionService {
   crear(body: any): Observable<any> {
     return this.http.post(`${this.baseUrl}/ruta1`, body);
   }
+  
+  marcarComoLeidas(idUsuario: number) {
+    return this.http.put(`${this.baseUrl}/leer/${idUsuario}`, {});
+  }
+
 }
