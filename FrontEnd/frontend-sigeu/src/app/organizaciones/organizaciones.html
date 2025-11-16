@@ -85,7 +85,10 @@
         <p><strong>Teléfono:</strong> {{ viewOrg?.telefono || '-' }}</p>
         <p><strong>Ubicación:</strong> {{ viewOrg?.ubicacion || '-' }}</p>
         <p><strong>Sector económico:</strong> {{ viewOrg?.sector_economico || '-' }}</p>
-        <p><strong>Actividad principal:</strong> {{ viewOrg?.actividad_principal || '-' }}</p>
+        <p><strong>Actividad principal:</strong></p>
+        <div class="actividad-principal-container">
+          <p class="actividad-principal-text">{{ viewOrg?.actividad_principal || '-' }}</p>
+        </div>
       </div>
       <div class="home-actions" style="margin-top:12px; justify-content:flex-end;">
         <button class="btn btn-secondary" type="button" (click)="closeViewModal()">Cerrar</button>

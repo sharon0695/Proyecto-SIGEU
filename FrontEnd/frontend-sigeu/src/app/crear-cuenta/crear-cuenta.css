@@ -407,6 +407,36 @@ iframe {
   }
 }
 
+/*------------------------------------------------------------------
+[ Select styles ]*/
+.select-programa {
+  position: relative !important;
+  z-index: 10 !important;
+  cursor: pointer !important;
+  pointer-events: auto !important;
+  -webkit-appearance: auto !important;
+  -moz-appearance: auto !important;
+  appearance: auto !important;
+}
+
+.select-programa:focus {
+  outline: none;
+  border: none;
+}
+
+.select-programa option {
+  padding: 10px;
+  background: #fff;
+  color: #333;
+}
+
+.wrap-input100 select.input100 {
+  position: relative;
+  z-index: 10;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
 
 /*------------------------------------------------------------------
 [ Alert validate ]*/

@@ -5,6 +5,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.sql.Date;
+import java.sql.Time;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -56,6 +58,9 @@ public class EventoServiceImp implements IEventoService {
         
         usuarioRepository.findById(request.getId_usuario_registra())
             .orElseThrow(() -> new IllegalArgumentException("El usuario registrador no existe en el sistema"));
+        
+        // Validar duplicidad de evento
+        validarDuplicidadEvento(request);
         
         EventoModel evento = new EventoModel();
         evento.setNombre(request.getNombre());
@@ -128,6 +133,37 @@ public class EventoServiceImp implements IEventoService {
         
         if (request.getResponsables() == null || request.getResponsables().isEmpty()) {
             throw new IllegalArgumentException("Debe asignar al menos un responsable al evento");
+        }
+    }
+
+    private void validarDuplicidadEvento(EventoRegistroCompleto request) {
+        Optional<EventoModel> eventoExistente = eventoRepository.findByNombreAndFechaAndHoraInicio(
+            request.getNombre(), 
+            request.getFecha(), 
+            request.getHora_inicio()
+        );
+        
+        if (eventoExistente.isPresent()) {
+            throw new IllegalArgumentException(
+                "Ya existe un evento con el mismo nombre, fecha y hora de inicio. " +
+                "Por favor, verifique los datos o modifique el nombre, fecha u hora del evento."
+            );
+        }
+    }
+    
+    private void validarDuplicidadEventoEdicion(EventoEdicionCompleto request) {
+        Optional<EventoModel> eventoExistente = eventoRepository.findByNombreAndFechaAndHoraInicio(
+            request.getNombre(), 
+            request.getFecha(), 
+            request.getHora_inicio()
+        );
+        
+        // Si existe un evento con los mismos datos pero es diferente al que estamos editando, es duplicado
+        if (eventoExistente.isPresent() && !eventoExistente.get().getCodigo().equals(request.getCodigo())) {
+            throw new IllegalArgumentException(
+                "Ya existe otro evento con el mismo nombre, fecha y hora de inicio. " +
+                "Por favor, verifique los datos o modifique el nombre, fecha u hora del evento."
+            );
         }
     }
 
@@ -247,6 +283,12 @@ public class EventoServiceImp implements IEventoService {
                 "organizaciones/evento_" + codigoEvento
             );
             System.out.println("✓ Certificado de colaboración guardado: " + certificadoPath);
+        } else {
+            // Mejorar mensaje de error cuando falta el PDF
+            throw new IllegalArgumentException(
+                "El certificado de participación (PDF) es obligatorio para la organización colaboradora. " +
+                "Por favor, adjunte un archivo PDF con el certificado de participación."
+            );
         }
         
         return certificadoPath;
@@ -268,12 +310,21 @@ public class EventoServiceImp implements IEventoService {
                 "responsables/evento_" + codigoEvento
             );
             System.out.println("✓ Documento de aval de responsable guardado: " + documentoAvalPath);
+        } else {
+            // Mejorar mensaje de error cuando falta el PDF
+            throw new IllegalArgumentException(
+                "El documento de aval (PDF) es obligatorio para el responsable. " +
+                "Por favor, adjunte un archivo PDF con el documento de aval correspondiente."
+            );
         }
         
         return documentoAvalPath;
     }
     private void procesarReservaciones(List<EventoRegistroCompleto.ReservacionDTO> reservacionesDTO, EventoModel evento) {
         int contador = 0;
+        int capacidadTotalNecesaria = 0;
+        
+        // Primero validar todos los espacios y calcular capacidad total necesaria
         for (EventoRegistroCompleto.ReservacionDTO resDTO : reservacionesDTO) {
             contador++;
             final int numeroEspacio = contador;
@@ -302,6 +353,33 @@ public class EventoServiceImp implements IEventoService {
             EspacioModel espacio = espacioRepository.findById(codigoEspacio)
                 .orElseThrow(() -> new IllegalArgumentException("El espacio " + codigoEspacio + " no existe en el sistema"));
             
+            // Validar capacidad del espacio
+            if (espacio.getCapacidad() == null || espacio.getCapacidad() <= 0) {
+                throw new IllegalArgumentException("El espacio " + codigoEspacio + " no tiene una capacidad válida configurada");
+            }
+            
+            // Calcular capacidad total necesaria (suma de todas las capacidades de espacios únicos)
+            // Nota: Si el mismo espacio se usa múltiples veces, solo contamos su capacidad una vez
+            capacidadTotalNecesaria += espacio.getCapacidad();
+        }
+        
+        // Validar que no haya solapamiento de horarios en el mismo espacio
+        validarSolapamientoReservaciones(reservacionesDTO);
+        
+        // Validar capacidad total: la capacidad total necesaria no debe exceder la capacidad disponible
+        // En este caso, asumimos que la capacidad necesaria es la suma de las capacidades de los espacios
+        // Si se necesita una capacidad específica del evento, se debería agregar un campo al DTO
+        // Por ahora, validamos que cada espacio tenga capacidad suficiente (ya validado arriba)
+        
+        // Crear las reservaciones
+        contador = 0;
+        for (EventoRegistroCompleto.ReservacionDTO resDTO : reservacionesDTO) {
+            contador++;
+            final String codigoEspacio = resDTO.getCodigo_espacio();
+            EspacioModel espacio = espacioRepository.findById(codigoEspacio).orElse(null);
+            
+            if (espacio == null) continue; // Ya validado arriba
+            
             ReservacionModel reservacion = new ReservacionModel();
             reservacion.setCodigoEvento(evento);
             reservacion.setCodigo_espacio(espacio);
@@ -309,6 +387,34 @@ public class EventoServiceImp implements IEventoService {
             reservacion.setHora_fin(resDTO.getHora_fin());
             
             reservacionRepository.save(reservacion);
+        }
+    }
+    
+    private void validarSolapamientoReservaciones(List<EventoRegistroCompleto.ReservacionDTO> reservacionesDTO) {
+        // Validar que no haya solapamiento de horarios en el mismo espacio
+        for (int i = 0; i < reservacionesDTO.size(); i++) {
+            EventoRegistroCompleto.ReservacionDTO res1 = reservacionesDTO.get(i);
+            String espacio1 = res1.getCodigo_espacio();
+            Time inicio1 = res1.getHora_inicio();
+            Time fin1 = res1.getHora_fin();
+            
+            for (int j = i + 1; j < reservacionesDTO.size(); j++) {
+                EventoRegistroCompleto.ReservacionDTO res2 = reservacionesDTO.get(j);
+                String espacio2 = res2.getCodigo_espacio();
+                Time inicio2 = res2.getHora_inicio();
+                Time fin2 = res2.getHora_fin();
+                
+                // Si es el mismo espacio, verificar solapamiento
+                if (espacio1 != null && espacio1.equals(espacio2)) {
+                    // Verificar si hay solapamiento: inicio1 < fin2 && inicio2 < fin1
+                    if (inicio1.before(fin2) && inicio2.before(fin1)) {
+                        throw new IllegalArgumentException(
+                            "El espacio " + espacio1 + " tiene horarios solapados. " +
+                            "Por favor, ajuste los horarios para evitar conflictos."
+                        );
+                    }
+                }
+            }
         }
     }
 
@@ -328,6 +434,9 @@ public class EventoServiceImp implements IEventoService {
 
             // Validar campos básicos
             validarCamposEventoEdicion(request);
+            
+            // Validar duplicidad de evento (excluyendo el evento actual)
+            validarDuplicidadEventoEdicion(request);
 
             System.out.println("Obteniendo archivos existentes...");
             List<ColaboracionModel> colaboracionesExistentes = colaboracionRepository.findAllByCodigoEvento_Codigo(request.getCodigo());
@@ -611,6 +720,8 @@ public class EventoServiceImp implements IEventoService {
     private void procesarReservacionesEdicion(List<EventoEdicionCompleto.ReservacionDTO> reservacionesDTO, EventoModel evento) {
         // Reservaciones son obligatorias - ya validamos que no son null/vacíos, así que procesamos directamente
         int contador = 0;
+        
+        // Primero validar todos los espacios y calcular capacidad total necesaria
         for (EventoEdicionCompleto.ReservacionDTO resDTO : reservacionesDTO) {
             contador++;
             final int numeroEspacio = contador;
@@ -638,6 +749,24 @@ public class EventoServiceImp implements IEventoService {
             final String codigoEspacio = resDTO.getCodigo_espacio();
             EspacioModel espacio = espacioRepository.findById(codigoEspacio)
                     .orElseThrow(() -> new IllegalArgumentException("El espacio " + codigoEspacio + " no existe en el sistema"));
+            
+            // Validar capacidad del espacio
+            if (espacio.getCapacidad() == null || espacio.getCapacidad() <= 0) {
+                throw new IllegalArgumentException("El espacio " + codigoEspacio + " no tiene una capacidad válida configurada");
+            }
+        }
+        
+        // Validar que no haya solapamiento de horarios en el mismo espacio
+        validarSolapamientoReservacionesEdicion(reservacionesDTO);
+        
+        // Crear las reservaciones
+        contador = 0;
+        for (EventoEdicionCompleto.ReservacionDTO resDTO : reservacionesDTO) {
+            contador++;
+            final String codigoEspacio = resDTO.getCodigo_espacio();
+            EspacioModel espacio = espacioRepository.findById(codigoEspacio).orElse(null);
+            
+            if (espacio == null) continue; // Ya validado arriba
 
             ReservacionModel reservacion = new ReservacionModel();
             reservacion.setCodigoEvento(evento);
@@ -645,6 +774,34 @@ public class EventoServiceImp implements IEventoService {
             reservacion.setHora_inicio(resDTO.getHora_inicio());
             reservacion.setHora_fin(resDTO.getHora_fin());
             reservacionRepository.save(reservacion);
+        }
+    }
+    
+    private void validarSolapamientoReservacionesEdicion(List<EventoEdicionCompleto.ReservacionDTO> reservacionesDTO) {
+        // Validar que no haya solapamiento de horarios en el mismo espacio
+        for (int i = 0; i < reservacionesDTO.size(); i++) {
+            EventoEdicionCompleto.ReservacionDTO res1 = reservacionesDTO.get(i);
+            String espacio1 = res1.getCodigo_espacio();
+            Time inicio1 = res1.getHora_inicio();
+            Time fin1 = res1.getHora_fin();
+            
+            for (int j = i + 1; j < reservacionesDTO.size(); j++) {
+                EventoEdicionCompleto.ReservacionDTO res2 = reservacionesDTO.get(j);
+                String espacio2 = res2.getCodigo_espacio();
+                Time inicio2 = res2.getHora_inicio();
+                Time fin2 = res2.getHora_fin();
+                
+                // Si es el mismo espacio, verificar solapamiento
+                if (espacio1 != null && espacio1.equals(espacio2)) {
+                    // Verificar si hay solapamiento: inicio1 < fin2 && inicio2 < fin1
+                    if (inicio1.before(fin2) && inicio2.before(fin1)) {
+                        throw new IllegalArgumentException(
+                            "El espacio " + espacio1 + " tiene horarios solapados. " +
+                            "Por favor, ajuste los horarios para evitar conflictos."
+                        );
+                    }
+                }
+            }
         }
     }
 

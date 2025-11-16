@@ -93,11 +93,13 @@
             </div>
             <div class="wrap-input100">
               <label class="label-input100" for="programa">Programa académico</label>
-              <div class="input100" style="padding:0;">
-                <select id="programa" name="programa" class="input100"
-                        [(ngModel)]="usuario.codigoPrograma">
-                  <option [ngValue]="''">Seleccione un programa</option>
-                  <option *ngFor="let p of programas" [ngValue]="p.codigo">{{ p.nombre }}</option>
+              <div class="input100" style="padding:0; position: relative;">
+                <select id="programa" name="programa" class="input100 select-programa"
+                        [(ngModel)]="usuario.codigoPrograma" 
+                        (change)="usuario.codigoPrograma = $any($event.target).value"
+                        style="width: 100%; padding: 0 20px 0 53px; height: 50px; border: none; background: transparent; position: relative; z-index: 10; cursor: pointer; appearance: auto;">
+                  <option value="">Seleccione un programa</option>
+                  <option *ngFor="let p of programas" [value]="p.codigo">{{ p.nombre }}</option>
                 </select>
               </div>
               <span class="focus-input100"></span>
@@ -108,11 +110,13 @@
           <div *ngSwitchCase="'docente'">
             <div class="wrap-input100">
               <label class="label-input100" for="unidad_academica">Unidad Académica</label>
-              <div class="input100" style="padding:0;">
-                <select id="unidad_academica" name="unidad_academica" class="input100"
-                        [(ngModel)]="usuario.codigoUnidad">
-                  <option [ngValue]="''">Seleccione una unidad</option>
-                  <option *ngFor="let u of unidades" [ngValue]="u.codigo">{{ u.nombre }}</option>
+              <div class="input100" style="padding:0; position: relative;">
+                <select id="unidad_academica" name="unidad_academica" class="input100 select-programa"
+                        [(ngModel)]="usuario.codigoUnidad" 
+                        (change)="usuario.codigoUnidad = $any($event.target).value"
+                        style="width: 100%; padding: 0 20px 0 53px; height: 50px; border: none; background: transparent; position: relative; z-index: 10; cursor: pointer; appearance: auto;">
+                  <option value="">Seleccione una unidad</option>
+                  <option *ngFor="let u of unidades" [value]="u.codigo">{{ u.nombre }}</option>
                 </select>
               </div>
               <span class="focus-input100"></span>
@@ -123,11 +127,13 @@
           <div *ngSwitchCase="'secretaria'">
             <div class="wrap-input100">
               <label class="label-input100" for="facultad">Facultad</label>
-              <div class="input100" style="padding:0;">
-                <select id="facultad" name="facultad" class="input100"
-                        [(ngModel)]="usuario.idFacultad">
-                  <option [ngValue]="''">Seleccione una facultad</option>
-                  <option *ngFor="let f of facultades" [ngValue]="f.id">{{ f.nombre }}</option>
+              <div class="input100" style="padding:0; position: relative;">
+                <select id="facultad" name="facultad" class="input100 select-programa"
+                        [(ngModel)]="usuario.idFacultad" 
+                        (change)="usuario.idFacultad = $any($event.target).value"
+                        style="width: 100%; padding: 0 20px 0 53px; height: 50px; border: none; background: transparent; position: relative; z-index: 10; cursor: pointer; appearance: auto;">
+                  <option value="">Seleccione una facultad</option>
+                  <option *ngFor="let f of facultades" [value]="f.id">{{ f.nombre }}</option>
                 </select>
               </div>
               <span class="focus-input100"></span>

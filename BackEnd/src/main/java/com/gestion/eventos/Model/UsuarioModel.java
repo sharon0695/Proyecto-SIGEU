@@ -39,4 +39,11 @@ public class UsuarioModel {
     @JoinColumn (name="codigo_unidad")
     private UnidadAcademicaModel codigo_unidad;
     private Integer notLeidas;
+    
+    // Campos para bloqueo por intentos fallidos
+    @Column(name = "intentos_fallidos")
+    private Integer intentosFallidos = 0;
+    
+    @Column(name = "bloqueado_hasta")
+    private java.time.LocalDateTime bloqueadoHasta;
 }

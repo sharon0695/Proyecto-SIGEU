@@ -1,6 +1,7 @@
 package com.gestion.eventos.Service;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -175,9 +176,50 @@ public class UsuarioServiceImp implements IUsuarioService {
 
         UsuarioModel usuario = usuarioOpt.get();
 
-        if (!contrasena.equals(usuario.getContrasena())) {
-            throw new IllegalArgumentException("Credenciales inválidas");
+        // Verificar si el usuario está bloqueado
+        if (usuario.getBloqueadoHasta() != null && usuario.getBloqueadoHasta().isAfter(LocalDateTime.now())) {
+            long minutosRestantes = java.time.Duration.between(LocalDateTime.now(), usuario.getBloqueadoHasta()).toMinutes();
+            throw new IllegalArgumentException(
+                "Su cuenta está bloqueada debido a múltiples intentos fallidos de inicio de sesión. " +
+                "Por favor, intente nuevamente en " + minutosRestantes + " minuto(s)."
+            );
         }
+
+        // Si el bloqueo expiró, resetear intentos
+        if (usuario.getBloqueadoHasta() != null && usuario.getBloqueadoHasta().isBefore(LocalDateTime.now())) {
+            usuario.setIntentosFallidos(0);
+            usuario.setBloqueadoHasta(null);
+            usuarioRepository.save(usuario);
+        }
+
+        // Verificar contraseña
+        if (!contrasena.equals(usuario.getContrasena())) {
+            // Incrementar intentos fallidos
+            int intentosActuales = (usuario.getIntentosFallidos() == null ? 0 : usuario.getIntentosFallidos()) + 1;
+            usuario.setIntentosFallidos(intentosActuales);
+            
+            // Bloquear después de 5 intentos fallidos por 30 minutos
+            if (intentosActuales >= 5) {
+                usuario.setBloqueadoHasta(LocalDateTime.now().plusMinutes(30));
+                usuarioRepository.save(usuario);
+                throw new IllegalArgumentException(
+                    "Ha excedido el número máximo de intentos fallidos. " +
+                    "Su cuenta ha sido bloqueada por 30 minutos. Por favor, intente nuevamente más tarde."
+                );
+            } else {
+                usuarioRepository.save(usuario);
+                int intentosRestantes = 5 - intentosActuales;
+                throw new IllegalArgumentException(
+                    "Credenciales inválidas. Intentos restantes: " + intentosRestantes + 
+                    ". Después de 5 intentos fallidos, su cuenta será bloqueada por 30 minutos."
+                );
+            }
+        }
+
+        // Login exitoso: resetear intentos fallidos
+        usuario.setIntentosFallidos(0);
+        usuario.setBloqueadoHasta(null);
+        usuarioRepository.save(usuario);
 
         String token = jwtUtil.generateToken(usuario);
 

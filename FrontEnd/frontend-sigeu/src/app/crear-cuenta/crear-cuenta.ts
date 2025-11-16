@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { Api, UsuarioRegistroDto } from '../services/usuarios.service';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
@@ -13,7 +13,7 @@ import { FacultadService } from '../services/facultad.service';
   templateUrl: './crear-cuenta.html',
   styleUrl: './crear-cuenta.css'
 })
-export class CrearCuenta {
+export class CrearCuenta implements OnInit {
   usuario = {
     identificacion: '',
     nombre: '',
@@ -24,8 +24,8 @@ export class CrearCuenta {
     rol: '',
     codigo: '',
     idFacultad: '',
-    codigoPrograma: '',
-    codigoUnidad: '',
+    codigoPrograma: '' as string | null,
+    codigoUnidad: '' as string | null,
     notLeidas: ''
   };
 
@@ -43,11 +43,39 @@ export class CrearCuenta {
     private facultadService: FacultadService
   ) {}
 
-  ngOnInit() { this.cargarListas(); }
+  ngOnInit() { 
+    this.cargarListas(); 
+  }
+  
   private cargarListas() {
-    this.programasService.listar().subscribe({ next: (data) => { this.programas = (data || []).map((p: any) => ({ codigo: p.codigo, nombre: p.nombre })); } });
-    this.unidadService.listar().subscribe({ next: (data) => { this.unidades = (data || []).map((u: any) => ({ codigo: u.codigo, nombre: u.nombre })); } });
-    this.facultadService.listar().subscribe({ next: (data) => { this.facultades = (data || []).map((f: any) => ({ id: f.id, nombre: f.nombre })); } });
+    this.programasService.listar().subscribe({ 
+      next: (data) => { 
+        this.programas = (data || []).map((p: any) => ({ 
+          codigo: String(p.codigo || ''), 
+          nombre: p.nombre || '' 
+        })); 
+        console.log('Programas cargados:', this.programas);
+      },
+      error: (err) => {
+        console.error('Error al cargar programas:', err);
+      }
+    });
+    this.unidadService.listar().subscribe({ 
+      next: (data) => { 
+        this.unidades = (data || []).map((u: any) => ({ 
+          codigo: String(u.codigo || ''), 
+          nombre: u.nombre || '' 
+        })); 
+      } 
+    });
+    this.facultadService.listar().subscribe({ 
+      next: (data) => { 
+        this.facultades = (data || []).map((f: any) => ({ 
+          id: String(f.id || ''), 
+          nombre: f.nombre || '' 
+        })); 
+      } 
+    });
   }
   private contieneInyeccion(valor: string): boolean {
     if (!valor) return false;
