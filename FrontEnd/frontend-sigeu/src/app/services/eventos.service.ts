@@ -56,6 +56,11 @@ export interface ReservacionDTO {
 
 @Injectable({ providedIn: 'root' })
 export class EventosService {
+  url: any;
+  obtenerDetallesEvaluacion(codigo: number): Observable<any> {
+    return this.http.get(`${this.url}/detalles-evaluacion/${codigo}`);
+  }
+  
   private baseUrl = buildApiUrl(API_PATHS.eventos);
   private baseArcUrl = 'http://localhost:8080/archivos';
   constructor(private http: HttpClient) {}
@@ -101,6 +106,5 @@ export class EventosService {
   enviarEvento(codigo: number): Observable<any> {
     return this.http.put(`${this.baseUrl}/enviar/${codigo}`, {}); 
   }
-
 
 }

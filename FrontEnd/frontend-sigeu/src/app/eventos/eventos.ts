@@ -610,6 +610,8 @@ private validarFormulario(): string | null {
   observaciones: '',
   actaComite: '',
   evaluadoPor: ''
+
+  
   };
 
   orgInline: any = { nit: '', nombre: '', representante_legal: '', telefono: '', ubicacion: '', sector_economico: '', actividad_principal: '' };
@@ -817,8 +819,50 @@ private validarFormulario(): string | null {
       }
     });
   }
-
-  obtenerDetallesEvaluacion(codigo: number): Observable<any> {
-    return this.http.get(`${this.url}/detalles-evaluacion/${codigo}`);
+  // 1️⃣ Método para abrir el modal de detalles de evaluación
+  abrirDetallesEvaluacion(codigo: number) {
+      this.eventosService.obtenerDetallesEvaluacion(codigo).subscribe({
+        next: (detalles: any) => {
+        // Guarda los detalles recibidos del backend
+        this.detallesEvaluacion = detalles;
+      
+        // Muestra el modal
+        this.showDetallesModal = true;
+      },
+      error: (err: { error: { mensaje: string; }; }) => {
+        const mensaje = err?.error?.mensaje || 'No se pudieron cargar los detalles de evaluación';
+        this.showMessage('error', 'Error al cargar detalles', mensaje);
+      }
+    });
   }
+
+  // 2️⃣ Método para cerrar el modal
+  cerrarDetallesModal() {
+    this.showDetallesModal = false;
+  
+    // Limpia los datos del modal
+    this.detallesEvaluacion = {
+      estado: '',
+      nombre: '',
+      decision: '',
+      observaciones: '',
+      actaComite: '',
+      evaluadoPor: ''
+    };
+  }
+
+  // 3️⃣ Método para descargar el acta del comité (si existe)
+  descargarActaComite() {
+    if (this.detallesEvaluacion.actaComite) {
+      // Construye la URL para descargar el archivo
+      const url = this.eventosService.getFileDownloadUrl('actas', this.detallesEvaluacion.actaComite);
+    
+      // Abre el archivo en una nueva pestaña
+      window.open(url, '_blank');
+    } else {
+      this.showMessage('error', 'Sin acta', 'No hay acta disponible para este evento');
+   }
+   
+  }
+
 }
