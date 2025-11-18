@@ -8,6 +8,7 @@ import { OrganizacionesService } from '../services/organizaciones.service';
 import { Api } from '../services/usuarios.service';
 import { AuthService } from '../services/auth.service';
 import { Notificaciones } from '../notificaciones/notificaciones';
+import { Observable } from 'rxjs';
 
 @Component({
   selector: 'app-eventos',
@@ -57,6 +58,8 @@ export class Eventos {
     documentoExistente?: string;       
     tipoAval?: string;
   }> = [];
+  url: any;
+  http: any;
 
   constructor(
     private eventosService: EventosService,
@@ -803,5 +806,9 @@ private validarFormulario(): string | null {
         this.showMessage('error', 'Error de envío', errorMsg);
       }
     });
+  }
+
+  obtenerDetallesEvaluacion(codigo: number): Observable<any> {
+    return this.http.get(`${this.url}/detalles-evaluacion/${codigo}`);
   }
 }
