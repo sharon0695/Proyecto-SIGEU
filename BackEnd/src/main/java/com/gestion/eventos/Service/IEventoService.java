@@ -17,4 +17,5 @@ public interface IEventoService {
     EventoCompletoResponse obtenerEventoCompleto(Integer codigo);
     List<EventoModel> listarPorUsuario(Integer idUsuario);
     EventoModel enviarEventoAValidacion(Integer codigoEvento);
+    Map<String, Object> obtenerDetallesEvaluacion(Integer codigoEvento);
 }
