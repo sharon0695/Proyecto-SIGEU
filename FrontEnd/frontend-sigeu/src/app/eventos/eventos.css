@@ -665,3 +665,31 @@ input[type="file"]::file-selector-button:hover {
   background-color: #5349e6;
   transform: translateY(-2px);
 }
+/* Estilos para indicadores de estado */
+.estado-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.estado-registrado {
+  background-color: #e3f2fd;
+  color: #1976d2;
+}
+
+.estado-revision {
+  background-color: #fff3e0;
+  color: #f57c00;
+}
+
+.estado-aprobado {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+}
+
+.estado-rechazado {
+  background-color: #ffebee;
+  color: #c62828;
+}
