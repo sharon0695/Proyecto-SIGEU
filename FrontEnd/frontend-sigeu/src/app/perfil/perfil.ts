@@ -92,43 +92,70 @@ export class Perfil {
   }
 
   onSaveEdit() {
-  if (!this.usuario?.identificacion) { 
-    this.mensaje = 'No hay usuario cargado'; 
-    return; 
-  }
+    //Verificar si hay intento de cambio de contraseña
+    if (this.edit.nuevaContrasena || this.edit.contrasenaActual || this.edit.confirmarContrasena) {
 
-  const fileInput = document.getElementById('new-avatar') as HTMLInputElement | null;
-  const foto = fileInput?.files?.[0];
+        // Validar que la nueva contraseña y la confirmación no estén vacías
+        if (!this.edit.nuevaContrasena.trim() || !this.edit.confirmarContrasena.trim()) {
+            this.mensaje = 'Debes ingresar y confirmar la nueva contraseña.';
+            setTimeout(() => this.mensaje = '', 3000);
+            return;
+        }
 
-  this.perfil.actualizarPerfil(this.usuario.identificacion, {
-    contrasenaActual: this.edit.contrasenaActual || undefined,
-    nuevaContrasena: this.edit.nuevaContrasena || undefined,
-    celular: this.edit.celular || undefined,
-    fotoFile: foto || undefined,
-  }).subscribe({
-    next: (usuarioActualizado) => {
-      // Mostrar mensaje de éxito con la misma animación visual
-      this.mensaje = 'Perfil actualizado correctamente';
+        // Validar Coincidencia
+        if (this.edit.nuevaContrasena !== this.edit.confirmarContrasena) {
+            this.mensaje = 'La nueva contraseña y la confirmación no coinciden.';
+            setTimeout(() => this.mensaje = '', 3000);
+            return; // Detiene la ejecución si no coinciden
+        }
 
-      // Actualizar datos en localStorage y en el perfil
-      if (usuarioActualizado) {
-        localStorage.setItem('auth_user', JSON.stringify(usuarioActualizado));
-        this.usuario = usuarioActualizado;
-      }
-
-      this.closeEdit();
-      this.cargarPerfil();
-      this.edit = { celular: '', contrasenaActual: '', nuevaContrasena: '' };
-
-      // Ocultar el mensaje automáticamente después de 3 segundos
-      setTimeout(() => this.mensaje = '', 3000);
-    },
-    error: (err) => {
-      // Mostrar mensaje de error usando la misma clase CSS (roja)
-      this.mensaje = err?.error?.message || err?.error?.mensaje || 'Error al actualizar el perfil';
-      setTimeout(() => this.mensaje = '', 3000);
+        // Validar que la contraseña anterior no esté vacía si se intenta cambiar
+        if (!this.edit.contrasenaActual.trim()) {
+            this.mensaje = 'Debes ingresar tu contraseña actual para realizar el cambio.';
+            setTimeout(() => this.mensaje = '', 3000);
+            return;
+        }
     }
-  });
-}
+    
+    // Si la validación de contraseñas es exitosa o si solo se edita el teléfono:
+    
+    if (!this.usuario?.identificacion) { 
+        this.mensaje = 'No hay usuario cargado'; 
+        return; 
+    }
+
+    const fileInput = document.getElementById('new-avatar') as HTMLInputElement | null;
+    const foto = fileInput?.files?.[0];
+
+    // Se utiliza this.edit.contrasenaActual para la contraseña anterior
+    this.perfil.actualizarPerfil(this.usuario.identificacion, {
+        contrasenaActual: this.edit.contrasenaActual || undefined,
+        nuevaContrasena: this.edit.nuevaContrasena || undefined,
+        celular: this.edit.celular || undefined,
+        fotoFile: foto || undefined,
+    }).subscribe({
+        next: (usuarioActualizado) => {
+            this.mensaje = 'Perfil actualizado correctamente';
+
+            if (usuarioActualizado) {
+                localStorage.setItem('auth_user', JSON.stringify(usuarioActualizado));
+                this.usuario = usuarioActualizado;
+            }
+
+            this.closeEdit();
+            this.cargarPerfil();
+            
+            // Reiniciar el objeto edit después de un cambio exitoso
+            this.edit = { celular: '', contrasenaActual: '', nuevaContrasena: '', confirmarContrasena: '' }; // 🎯 Resetear también el nuevo campo
+
+            setTimeout(() => this.mensaje = '', 3000);
+        },
+        error: (err) => {
+            const mensajeError = err?.error?.message || err?.error?.mensaje || 'Error al actualizar perfil. Verifica tu contraseña anterior.';
+            this.mensaje = mensajeError;
+            setTimeout(() => this.mensaje = '', 3000);
+        }
+    });
+  }
 
 }

@@ -1067,7 +1067,7 @@ public class EventoServiceImp implements IEventoService {
     @Override
     @Transactional
     public void eliminarEvento(Integer codigo) {
-        // Buscar el evento
+        // 1. Buscar el evento
         EventoModel evento = eventoRepository.findById(codigo)
                 .orElseThrow(() -> new RuntimeException("Evento no encontrado"));
 
@@ -1075,10 +1075,41 @@ public class EventoServiceImp implements IEventoService {
         if (!estado.equalsIgnoreCase("borrador") && !estado.equalsIgnoreCase("rechazado")) {
             throw new RuntimeException("Solo se pueden eliminar eventos en estado 'borrador' o 'rechazado'");
         }
+
+        // --- INICIO: LÓGICA PARA ELIMINAR ARCHIVOS FÍSICOS ---
+        System.out.println("Iniciando eliminación de archivos físicos para evento: " + codigo);
+        try {
+            // Definimos las rutas relativas de las carpetas a eliminar
+            String carpetaOrganizaciones = "organizaciones/evento_" + codigo;
+            String carpetaResponsables = "responsables/evento_" + codigo;
+            
+            // Llamamos al servicio de almacenamiento para eliminar el directorio completo de organizaciones.
+            boolean orgEliminada = fileStorageService.deleteFolderByPath(carpetaOrganizaciones);
+            System.out.println(orgEliminada ? "✓ Carpeta de organizaciones eliminada correctamente: " + carpetaOrganizaciones 
+                                          : "⚠ No se pudo eliminar la carpeta de organizaciones o no existía: " + carpetaOrganizaciones);
+            
+            // Llamamos al servicio de almacenamiento para eliminar el directorio completo de responsables.
+            boolean respEliminada = fileStorageService.deleteFolderByPath(carpetaResponsables);
+            System.out.println(respEliminada ? "✓ Carpeta de responsables eliminada correctamente: " + carpetaResponsables 
+                                           : "⚠ No se pudo eliminar la carpeta de responsables o no existía: " + carpetaResponsables);
+
+        } catch (Exception e) {
+            // Si falla la eliminación de archivos (ej. error de permisos), es un error I/O. 
+            System.err.println("ERROR FATAL al intentar eliminar directorios del evento " + codigo + ": " + e.getMessage());
+            
+            // Lanzamos una RuntimeException para asegurar que la transacción de la base de datos (@Transactional) 
+            // haga ROLLBACK, manteniendo la coherencia si los archivos no se pudieron eliminar.
+            throw new RuntimeException("Error al eliminar los archivos físicos del evento. La eliminación de la base de datos fue revertida.", e);
+        }
+        System.out.println("Fin de eliminación de archivos físicos.");
+        // 2. Eliminar de la base de datos (relaciones y evento principal)
+        // (Esto solo se ejecutará si la eliminación de archivos fue exitosa)
+        
         List<ResponsableEventoModel> responsables = responsableEventoRepository.findAllByCodigoEvento_Codigo(codigo);
         if (!responsables.isEmpty()) {
-        responsableEventoRepository.deleteAll(responsables);
+            responsableEventoRepository.deleteAll(responsables);
         }
+        
         List<ColaboracionModel> colaboraciones = colaboracionRepository.findAllByCodigoEvento_Codigo(codigo);
         if (!colaboraciones.isEmpty()) {
             colaboracionRepository.deleteAll(colaboraciones);
@@ -1089,7 +1120,8 @@ public class EventoServiceImp implements IEventoService {
             reservacionRepository.deleteAll(reservaciones);
         }
 
+        // Finalmente, se elimina el evento principal
         eventoRepository.delete(evento);
+        System.out.println("✓ Evento " + codigo + " eliminado de la base de datos.");
     }
-
 }

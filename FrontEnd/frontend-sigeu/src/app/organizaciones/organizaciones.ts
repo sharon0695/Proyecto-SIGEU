@@ -83,6 +83,14 @@ export class Organizaciones {
 
     return patronesPeligrosos.some((patron) => patron.test(valor));
   }
+
+  private containsInvalidChars(text: string): boolean {
+    // Expresión Regular: Permite letras (a-z, A-Z), números (0-9), espacios, guiones (-) y puntos (.).
+    // Esto es un estándar común para nombres y documentos.
+    const regex = /[^a-zA-Z0-9\s\.\-]/; 
+    return regex.test(text);
+  }
+  
   buscar() {
     if (!this.nombreBusqueda) { this.organizaciones = this.organizacionesTodas.slice(); return; }
     const term = this.nombreBusqueda.trim().toLowerCase();
@@ -118,7 +126,48 @@ export class Organizaciones {
       this.showMessage('error', 'Campos incompletos', 'Por favor completa todos los campos obligatorios.');
       return;
     }
+    
+    if (body.nombre.length > 30) {
+        this.showMessage('error', 'Longitud excedida', 'El Nombre de la Organización no puede exceder los 30 caracteres.');
+        return;
+    }
+    if (body.representante_legal.length > 30) {
+        this.showMessage('error', 'Longitud excedida', 'El Representante Legal no puede exceder los 30 caracteres.');
+        return;
+    }
+    if (body.ubicacion.length > 40) {
+        this.showMessage('error', 'Longitud excedida', 'La Ubicación no puede exceder los 40 caracteres.');
+        return;
+    }
+    if (body.sector_economico.length > 20) {
+        this.showMessage('error', 'Longitud excedida', 'El Sector Económico no puede exceder los 20 caracteres.');
+        return;
+    }
+    if (body.actividad_principal.length > 100) { 
+        this.showMessage('error', 'Longitud excedida', 'La Descripción (Actividad Principal) no puede exceder los 100 caracteres.');
+        return;
+    }
 
+    // A. Validación de caracteres especiales
+    if (this.containsInvalidChars(body.nombre) || 
+        this.containsInvalidChars(body.nit) || 
+        this.containsInvalidChars(body.representante_legal)) {
+      this.showMessage('error', 'Caracteres inválidos', 'Los campos Nombre, NIT y Representante Legal solo pueden contener letras, números, espacios, puntos (.) y guiones (-).');
+      return;
+    }
+
+    // B. Validación de 9 caracteres del NIT (Manteniendo la restricción anterior)
+    if (!this.editMode && body.nit.length > 9) {
+      this.showMessage('error', 'NIT inválido', 'El NIT no puede tener más de 9 caracteres.');
+      return;
+    }
+
+    // Esta validación solo se aplica al crear (ya que en modo edición el NIT es readonly)
+    if (!this.editMode && body.nit.length > 9) {
+      this.showMessage('error', 'NIT inválido', 'El NIT no puede tener más de 9 caracteres.');
+      return;
+    }
+    
     if (!body.telefono || !/^\d+$/.test(body.telefono)) {
       this.showMessage('error', 'Teléfono inválido', 'El teléfono debe contener solo números y no puede estar vacío.');
       return;

@@ -2,9 +2,11 @@ package com.gestion.eventos.Service;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.Comparator;
 import java.util.UUID;
 
 import org.springframework.core.io.Resource;
@@ -56,6 +58,32 @@ public class FileStorageService {
             return Files.deleteIfExists(filePath);
         } catch (Exception e) {
             return false;
+        }
+    }
+     // ==== ELIMINAR CARPETA ====
+    public boolean deleteFolderByPath(String relativePath) {
+        try {
+            // 1. Resolver la ruta absoluta (uploads/ruta/relativa)
+            Path folderPath = this.rootLocation.resolve(relativePath).normalize();
+            
+            // 2. Verificar si existe y es un directorio
+            if (Files.exists(folderPath) && Files.isDirectory(folderPath)) {
+                
+                // 3. Recorrer el directorio, eliminar archivos y subdirectorios de forma inversa
+                Files.walk(folderPath)
+                    .sorted(Comparator.reverseOrder()) // Empezar por los archivos más profundos
+                    .map(Path::toFile)
+                    .forEach(File::delete);
+                
+                // 4. Intenta eliminar el directorio principal (debería estar vacío ahora)
+                return Files.deleteIfExists(folderPath);
+            }
+            return false; // El directorio no existía
+        } catch (IOException e) {
+            System.err.println("Error I/O al eliminar carpeta: " + relativePath + ". " + e.getMessage());
+            // Lanzamos una excepción para que el método eliminarEvento en EventoServiceImp 
+            // pueda hacer rollback de la base de datos si la eliminación falla por permisos, etc.
+            throw new RuntimeException("Error al eliminar carpeta en el sistema de archivos: " + relativePath, e);
         }
     }
 
