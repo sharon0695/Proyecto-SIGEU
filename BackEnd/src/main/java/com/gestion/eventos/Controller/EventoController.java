@@ -78,6 +78,11 @@ public class EventoController {
             response.put("nuevoEstado", evento.getEstado().toString());
             return ResponseEntity.ok(response);       
     }
+    @GetMapping("/detalles-evaluacion/{codigo}")
+    public ResponseEntity<Map<String, Object>> obtenerDetallesEvaluacion(@PathVariable Integer codigo) {
+        Map<String, Object> detalles = eventoService.obtenerDetallesEvaluacion(codigo);
+        return ResponseEntity.ok(detalles);
+    }
 }
 
 
