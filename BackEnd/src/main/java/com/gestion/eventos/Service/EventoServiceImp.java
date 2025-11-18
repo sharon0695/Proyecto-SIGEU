@@ -267,127 +267,142 @@ public class EventoServiceImp implements IEventoService {
         }
     }
     private String procesarArchivoColaboracionRegistro(EventoRegistroCompleto.ColaboracionDTO colabDTO, Integer codigoEvento) {
-        String certificadoPath = null;
+    String certificadoPath = null;
+    
+    if (colabDTO.getCertificado_participacion() != null && 
+        !colabDTO.getCertificado_participacion().isEmpty()) {
         
-        if (colabDTO.getCertificado_participacion() != null && 
-            !colabDTO.getCertificado_participacion().isEmpty()) {
-            
-            // Validar y guardar nuevo archivo
-            if (!colabDTO.getCertificado_participacion().getContentType().equals("application/pdf")) {
-                throw new IllegalArgumentException("El certificado de participación debe ser un archivo PDF");
-            }
-            
-            certificadoPath = fileStorageService.storeFile(
-                colabDTO.getCertificado_participacion(), 
-                "organizaciones/evento_" + codigoEvento
-            );
-            System.out.println("✓ Certificado de colaboración guardado: " + certificadoPath);
-        } else {
-            // Mejorar mensaje de error cuando falta el PDF
-            throw new IllegalArgumentException(
-                "El certificado de participación (PDF) es obligatorio para la organización colaboradora. " +
-                "Por favor, adjunte un archivo PDF con el certificado de participación."
-            );
+        // Validar tipo de archivo
+        if (!colabDTO.getCertificado_participacion().getContentType().equals("application/pdf")) {
+            throw new IllegalArgumentException("El certificado de participación debe ser un archivo PDF");
         }
         
-        return certificadoPath;
+        // Validar tamaño del archivo (máximo 5MB)
+        if (colabDTO.getCertificado_participacion().getSize() > 5 * 1024 * 1024) {
+            throw new IllegalArgumentException("El certificado de participación no debe superar los 5MB");
+        }
+        
+        certificadoPath = fileStorageService.storeFile(
+            colabDTO.getCertificado_participacion(), 
+            "organizaciones/evento_" + codigoEvento
+        );
+        System.out.println("✓ Certificado de colaboración guardado: " + certificadoPath);
+    } else {
+        throw new IllegalArgumentException(
+            "Debe adjuntar el certificado de participación en formato PDF. " +
+            "Este documento es obligatorio para registrar la colaboración con la organización externa."
+        );
     }
+    
+    return certificadoPath;
+}
 
     private String procesarArchivoResponsableRegistro(EventoRegistroCompleto.ResponsableDTO respDTO, Integer codigoEvento) {
-        String documentoAvalPath = null;
+    String documentoAvalPath = null;
+    
+    if (respDTO.getDocumentoAval() != null && 
+        !respDTO.getDocumentoAval().isEmpty()) {
         
-        if (respDTO.getDocumentoAval() != null && 
-            !respDTO.getDocumentoAval().isEmpty()) {
-            
-            // Validar y guardar nuevo archivo
-            if (!respDTO.getDocumentoAval().getContentType().equals("application/pdf")) {
-                throw new IllegalArgumentException("El documento de aval del responsable debe ser un archivo PDF");
-            }
-            
-            documentoAvalPath = fileStorageService.storeFile(
-                respDTO.getDocumentoAval(), 
-                "responsables/evento_" + codigoEvento
-            );
-            System.out.println("✓ Documento de aval de responsable guardado: " + documentoAvalPath);
-        } else {
-            // Mejorar mensaje de error cuando falta el PDF
+        // Validar tipo de archivo
+        if (!respDTO.getDocumentoAval().getContentType().equals("application/pdf")) {
+            throw new IllegalArgumentException("El documento de aval del responsable debe ser un archivo PDF");
+        }
+        
+        // Validar tamaño del archivo (máximo 5MB)
+        if (respDTO.getDocumentoAval().getSize() > 5 * 1024 * 1024) {
+            throw new IllegalArgumentException("El documento de aval no debe superar los 5MB");
+        }
+        
+        documentoAvalPath = fileStorageService.storeFile(
+            respDTO.getDocumentoAval(), 
+            "responsables/evento_" + codigoEvento
+        );
+        System.out.println("✓ Documento de aval de responsable guardado: " + documentoAvalPath);
+    } else {
+        throw new IllegalArgumentException(
+            "Debe adjuntar el documento de aval en formato PDF. " +
+            "Este documento es obligatorio y debe estar firmado por la autoridad correspondiente (Director de Programa o Director de Docencia)."
+        );
+    }
+    
+    return documentoAvalPath;
+}
+   private void procesarReservaciones(List<EventoRegistroCompleto.ReservacionDTO> reservacionesDTO, EventoModel evento) {
+    int contador = 0;
+    Map<String, Integer> capacidadesPorEspacio = new HashMap<>();
+    
+    // Primero validar todos los espacios y calcular capacidad total
+    for (EventoRegistroCompleto.ReservacionDTO resDTO : reservacionesDTO) {
+        contador++;
+        final int numeroEspacio = contador;
+        
+        if (resDTO.getCodigo_espacio() == null || resDTO.getCodigo_espacio().trim().isEmpty()) {
+            throw new IllegalArgumentException("Debe seleccionar el espacio " + numeroEspacio);
+        }
+        
+        if (resDTO.getHora_inicio() == null) {
+            throw new IllegalArgumentException("La hora de inicio del espacio " + numeroEspacio + " es obligatoria");
+        }
+        
+        if (resDTO.getHora_fin() == null) {
+            throw new IllegalArgumentException("La hora de fin del espacio " + numeroEspacio + " es obligatoria");
+        }
+        
+        if (resDTO.getHora_inicio().equals(resDTO.getHora_fin())) {
+            throw new IllegalArgumentException("La hora de inicio y fin del espacio " + numeroEspacio + " no pueden ser iguales");
+        }
+        
+        if (resDTO.getHora_fin().before(resDTO.getHora_inicio())) {
+            throw new IllegalArgumentException("La hora de fin del espacio " + numeroEspacio + " debe ser posterior a la hora de inicio");
+        }
+        
+        final String codigoEspacio = resDTO.getCodigo_espacio();
+        EspacioModel espacio = espacioRepository.findById(codigoEspacio)
+            .orElseThrow(() -> new IllegalArgumentException("El espacio " + codigoEspacio + " no existe en el sistema"));
+        
+        // Validar capacidad del espacio
+        if (espacio.getCapacidad() == null || espacio.getCapacidad() <= 0) {
             throw new IllegalArgumentException(
-                "El documento de aval (PDF) es obligatorio para el responsable. " +
-                "Por favor, adjunte un archivo PDF con el documento de aval correspondiente."
+                "El espacio " + codigoEspacio + " no tiene una capacidad válida configurada. " +
+                "Por favor, contacte al administrador del sistema."
             );
         }
         
-        return documentoAvalPath;
+        // Acumular capacidad (si es el mismo espacio usado múltiples veces, solo contar una vez)
+        capacidadesPorEspacio.putIfAbsent(codigoEspacio, espacio.getCapacidad());
     }
-    private void procesarReservaciones(List<EventoRegistroCompleto.ReservacionDTO> reservacionesDTO, EventoModel evento) {
-        int contador = 0;
-        int capacidadTotalNecesaria = 0;
+    
+    // Calcular capacidad total disponible
+    int capacidadTotalDisponible = capacidadesPorEspacio.values().stream()
+        .mapToInt(Integer::intValue)
+        .sum();
+    
+    // Si se necesita validar contra una capacidad específica del evento, agregar aquí
+    // Por ahora, solo mostramos información en los logs
+    System.out.println("📊 Capacidad total disponible en espacios seleccionados: " + capacidadTotalDisponible);
+    
+    // Validar que no haya solapamiento de horarios en el mismo espacio
+    validarSolapamientoReservaciones(reservacionesDTO);
+    
+    // Crear las reservaciones
+    contador = 0;
+    for (EventoRegistroCompleto.ReservacionDTO resDTO : reservacionesDTO) {
+        contador++;
+        final String codigoEspacio = resDTO.getCodigo_espacio();
+        EspacioModel espacio = espacioRepository.findById(codigoEspacio).orElse(null);
         
-        // Primero validar todos los espacios y calcular capacidad total necesaria
-        for (EventoRegistroCompleto.ReservacionDTO resDTO : reservacionesDTO) {
-            contador++;
-            final int numeroEspacio = contador;
-            
-            if (resDTO.getCodigo_espacio() == null || resDTO.getCodigo_espacio().trim().isEmpty()) {
-                throw new IllegalArgumentException("Debe seleccionar el espacio " + numeroEspacio);
-            }
-            
-            if (resDTO.getHora_inicio() == null) {
-                throw new IllegalArgumentException("La hora de inicio del espacio " + numeroEspacio + " es obligatoria");
-            }
-            
-            if (resDTO.getHora_fin() == null) {
-                throw new IllegalArgumentException("La hora de fin del espacio " + numeroEspacio + " es obligatoria");
-            }
-            
-            if (resDTO.getHora_inicio().equals(resDTO.getHora_fin())) {
-                throw new IllegalArgumentException("La hora de inicio y fin del espacio " + numeroEspacio + " no pueden ser iguales");
-            }
-            
-            if (resDTO.getHora_fin().before(resDTO.getHora_inicio())) {
-                throw new IllegalArgumentException("La hora de fin del espacio " + numeroEspacio + " debe ser posterior a la hora de inicio");
-            }
-            
-            final String codigoEspacio = resDTO.getCodigo_espacio();
-            EspacioModel espacio = espacioRepository.findById(codigoEspacio)
-                .orElseThrow(() -> new IllegalArgumentException("El espacio " + codigoEspacio + " no existe en el sistema"));
-            
-            // Validar capacidad del espacio
-            if (espacio.getCapacidad() == null || espacio.getCapacidad() <= 0) {
-                throw new IllegalArgumentException("El espacio " + codigoEspacio + " no tiene una capacidad válida configurada");
-            }
-            
-            // Calcular capacidad total necesaria (suma de todas las capacidades de espacios únicos)
-            // Nota: Si el mismo espacio se usa múltiples veces, solo contamos su capacidad una vez
-            capacidadTotalNecesaria += espacio.getCapacidad();
-        }
+        if (espacio == null) continue;
         
-        // Validar que no haya solapamiento de horarios en el mismo espacio
-        validarSolapamientoReservaciones(reservacionesDTO);
+        ReservacionModel reservacion = new ReservacionModel();
+        reservacion.setCodigoEvento(evento);
+        reservacion.setCodigo_espacio(espacio);
+        reservacion.setHora_inicio(resDTO.getHora_inicio());
+        reservacion.setHora_fin(resDTO.getHora_fin());
         
-        // Validar capacidad total: la capacidad total necesaria no debe exceder la capacidad disponible
-        // En este caso, asumimos que la capacidad necesaria es la suma de las capacidades de los espacios
-        // Si se necesita una capacidad específica del evento, se debería agregar un campo al DTO
-        // Por ahora, validamos que cada espacio tenga capacidad suficiente (ya validado arriba)
-        
-        // Crear las reservaciones
-        contador = 0;
-        for (EventoRegistroCompleto.ReservacionDTO resDTO : reservacionesDTO) {
-            contador++;
-            final String codigoEspacio = resDTO.getCodigo_espacio();
-            EspacioModel espacio = espacioRepository.findById(codigoEspacio).orElse(null);
-            
-            if (espacio == null) continue; // Ya validado arriba
-            
-            ReservacionModel reservacion = new ReservacionModel();
-            reservacion.setCodigoEvento(evento);
-            reservacion.setCodigo_espacio(espacio);
-            reservacion.setHora_inicio(resDTO.getHora_inicio());
-            reservacion.setHora_fin(resDTO.getHora_fin());
-            
-            reservacionRepository.save(reservacion);
-        }
+        reservacionRepository.save(reservacion);
+        System.out.println("✓ Reservación creada para espacio: " + espacio.getNombre() + " (Capacidad: " + espacio.getCapacidad() + ")");
     }
+}
     
     private void validarSolapamientoReservaciones(List<EventoRegistroCompleto.ReservacionDTO> reservacionesDTO) {
         // Validar que no haya solapamiento de horarios en el mismo espacio
