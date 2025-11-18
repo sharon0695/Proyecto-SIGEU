@@ -147,89 +147,139 @@ export class Eventos {
     return patronesPeligrosos.some((patron) => patron.test(valor));
   }
 
-  private validarFormulario(): string | null {
-    const campos = [
-      this.nuevoEvento.nombre, this.nuevoEvento.descripcion, this.nuevoEvento.representante_alterno];
+private validarFormulario(): string | null {
+  const campos = [
+    this.nuevoEvento.nombre, 
+    this.nuevoEvento.descripcion, 
+    this.nuevoEvento.representante_alterno
+  ];
 
-    for (const i of campos){
-      if (this.contieneInyeccion(i)) {
-        this.mensaje = 'No se permiten scripts o comandos en los campos de texto.';
-        this.esError = true;
-        return this.mensaje;
-      }
+  for (const i of campos) {
+    if (this.contieneInyeccion(i)) {
+      this.mensaje = 'No se permiten scripts o comandos en los campos de texto.';
+      this.esError = true;
+      return this.mensaje;
     }
-    // Validación de campos básicos
-    if (!this.nuevoEvento.nombre?.trim()) {
-      return 'El nombre del evento es obligatorio';
-    }
-    if (this.nuevoEvento.nombre?.length > 40){
-      return 'El nombre del evento puede tener un máximo de 40 caracteres'
-    }
-    
-    if (!this.nuevoEvento.fecha) {
-      return 'La fecha del evento es obligatoria';
-    }
-    
-    if (!this.nuevoEvento.hora_inicio) {
-      return 'La hora de inicio es obligatoria';
-    }
-    
-    if (!this.nuevoEvento.hora_fin) {
-      return 'La hora de fin es obligatoria';
-    }
-    
-    if (!this.nuevoEvento.tipo) {
-      return 'El tipo de evento es obligatorio';
-    }
-
-    // Validar fecha no sea anterior a hoy
-    const fechaEvento = new Date(this.nuevoEvento.fecha + 'T00:00:00');
-    const hoy = new Date();
-    hoy.setHours(0, 0, 0, 0);
-    
-    if (fechaEvento < hoy) {
-      return 'La fecha del evento debe ser igual o posterior a la fecha actual';
-    }
-
-    // Validar horas
-    const horaInicio = this.nuevoEvento.hora_inicio;
-    const horaFin = this.nuevoEvento.hora_fin;
-
-    if (horaInicio === horaFin) {
-      return 'La hora de inicio y la hora de fin no pueden ser iguales';
-    }
-
-    if (horaInicio >= horaFin) {
-      return 'La hora de fin debe ser posterior a la hora de inicio';
-    }
-
-    // Validar espacios
-    if (!this.selectedEspacios.length || this.selectedEspacios.every(e => !e)) {
-      return 'Debe seleccionar al menos un espacio';
-    }
-
-    // Validar responsables
-    if (!this.selectedResponsables.length || this.selectedResponsables.every(r => r.id === 0)) {
-      return 'Debe haber al menos un responsable';
-    }
-
-    // Validar archivos PDF
-    for (let i = 0; i < this.selectedOrganizaciones.length; i++) {
-      const org = this.selectedOrganizaciones[i];
-      if (org.avalNuevo && org.avalNuevo.type !== 'application/pdf') {
-        return `El aval de la organización ${i + 1} debe ser un archivo PDF`;
-      }
-    }
-
-    for (let i = 0; i < this.selectedResponsables.length; i++) {
-      const resp = this.selectedResponsables[i];
-      if (resp.avalNuevo && resp.avalNuevo.type !== 'application/pdf') {
-        return `El aval del responsable ${i + 1} debe ser un archivo PDF`;
-      }
-    }
-
-    return null;
   }
+
+  // Validación de campos básicos
+  if (!this.nuevoEvento.nombre?.trim()) {
+    return 'El nombre del evento es obligatorio';
+  }
+  
+  if (this.nuevoEvento.nombre?.length > 40) {
+    return 'El nombre del evento puede tener un máximo de 40 caracteres';
+  }
+  
+  if (!this.nuevoEvento.fecha) {
+    return 'La fecha del evento es obligatoria';
+  }
+  
+  if (!this.nuevoEvento.hora_inicio) {
+    return 'La hora de inicio es obligatoria';
+  }
+  
+  if (!this.nuevoEvento.hora_fin) {
+    return 'La hora de fin es obligatoria';
+  }
+  
+  if (!this.nuevoEvento.tipo) {
+    return 'El tipo de evento es obligatorio';
+  }
+
+  // Validar fecha no sea anterior a hoy
+  const fechaEvento = new Date(this.nuevoEvento.fecha + 'T00:00:00');
+  const hoy = new Date();
+  hoy.setHours(0, 0, 0, 0);
+  
+  if (fechaEvento < hoy) {
+    return 'La fecha del evento debe ser igual o posterior a la fecha actual';
+  }
+
+  // Validar horas
+  const horaInicio = this.nuevoEvento.hora_inicio;
+  const horaFin = this.nuevoEvento.hora_fin;
+
+  if (horaInicio === horaFin) {
+    return 'La hora de inicio y la hora de fin no pueden ser iguales';
+  }
+
+  if (horaInicio >= horaFin) {
+    return 'La hora de fin debe ser posterior a la hora de inicio';
+  }
+
+  // Validar espacios
+  if (!this.selectedEspacios.length || this.selectedEspacios.every(e => !e)) {
+    return 'Debe seleccionar al menos un espacio para el evento';
+  }
+
+  // Validar responsables
+  if (!this.selectedResponsables.length || this.selectedResponsables.every(r => r.id === 0)) {
+    return 'Debe asignar al menos un responsable al evento';
+  }
+
+  // Validar que las organizaciones con colaboración tengan su archivo PDF
+  for (let i = 0; i < this.selectedOrganizaciones.length; i++) {
+    const org = this.selectedOrganizaciones[i];
+    
+    // Si hay una organización seleccionada
+    if (org.nit) {
+      // En modo edición: debe tener archivo existente O nuevo archivo
+      if (this.editMode) {
+        if (!org.certificadoExistente && !org.avalNuevo) {
+          return `Debe adjuntar el certificado de participación (PDF) para la organización ${i + 1}. Este documento es obligatorio.`;
+        }
+      } else {
+        // En modo creación: debe tener nuevo archivo
+        if (!org.avalNuevo) {
+          return `Debe adjuntar el certificado de participación (PDF) para la organización ${i + 1}. Este documento es obligatorio.`;
+        }
+      }
+      
+      // Validar tipo si hay archivo nuevo
+      if (org.avalNuevo && org.avalNuevo.type !== 'application/pdf') {
+        return `El certificado de la organización ${i + 1} debe ser un archivo PDF`;
+      }
+      
+      // Validar tamaño si hay archivo nuevo (máximo 5MB)
+      if (org.avalNuevo && org.avalNuevo.size > 5 * 1024 * 1024) {
+        return `El certificado de la organización ${i + 1} no debe superar los 5MB`;
+      }
+    }
+  }
+
+  // Validar que los responsables tengan su archivo PDF
+  for (let i = 0; i < this.selectedResponsables.length; i++) {
+    const resp = this.selectedResponsables[i];
+    
+    // Si hay un responsable seleccionado
+    if (resp.id > 0) {
+      // En modo edición: debe tener archivo existente O nuevo archivo
+      if (this.editMode) {
+        if (!resp.documentoExistente && !resp.avalNuevo) {
+          return `Debe adjuntar el documento de aval (PDF) para el responsable ${i + 1}. Este documento debe estar firmado por la autoridad correspondiente.`;
+        }
+      } else {
+        // En modo creación: debe tener nuevo archivo
+        if (!resp.avalNuevo) {
+          return `Debe adjuntar el documento de aval (PDF) para el responsable ${i + 1}. Este documento debe estar firmado por la autoridad correspondiente.`;
+        }
+      }
+      
+      // Validar tipo si hay archivo nuevo
+      if (resp.avalNuevo && resp.avalNuevo.type !== 'application/pdf') {
+        return `El documento de aval del responsable ${i + 1} debe ser un archivo PDF`;
+      }
+      
+      // Validar tamaño si hay archivo nuevo (máximo 5MB)
+      if (resp.avalNuevo && resp.avalNuevo.size > 5 * 1024 * 1024) {
+        return `El documento de aval del responsable ${i + 1} no debe superar los 5MB`;
+      }
+    }
+  }
+
+  return null;
+}
 
   crear() {
     // Validar formulario
