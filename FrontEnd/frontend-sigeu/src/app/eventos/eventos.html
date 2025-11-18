@@ -79,16 +79,16 @@
           <button class="add-btn" id="addEventBtn" (click)="openModal()">+</button>
         </div>            
 
-      <table class="event-table">
-        <thead>
-          <tr>
-            <th>Código</th>
-            <th>Nombre</th>
-            <th>Tipo</th>
-            <th>Fecha</th>
-            <th>Estado</th>
-            <th></th>
-          </tr>
+        <table class="event-table">
+          <thead>
+            <tr>
+              <th>Código</th>
+              <th>Nombre</th>
+              <th>Tipo</th>
+              <th>Fecha</th>
+              <th>Estado</th>
+              <th></th>
+            </tr>
         </thead>
         <tbody id="eventTableBody">
           <tr *ngIf="!eventos.length">
@@ -100,9 +100,23 @@
             <td>{{ e.tipo }}</td>
             <td>{{ e.fecha }}</td>
             <td>{{ e.estado }}</td>
+    
+            <!-- ✅ BOTONES EXISTENTES -->
             <td><button class="small-btned" type="button" (click)="openEdit(e)">🖊 Editar</button></td>
-            <td><button class="small-btne" type="button" (click)="eliminarEvento(e.codigo)">🗑 Eliminar</button> </td>           
-            <td><button class="small-btnen" type="button" (click)="enviarEvento(e.codigo)">📤 Enviar Revisión</button> </td>                  
+            <td><button class="small-btne" type="button" (click)="eliminarEvento(e.codigo)">🗑 Eliminar</button></td>           
+            <td><button class="small-btnen" type="button" (click)="enviarEvento(e.codigo)">📤 Enviar Revisión</button></td>
+    
+            <!-- 🆕 NUEVO BOTÓN PARA VER DETALLES -->
+            <td>
+              <button 
+              *ngIf="e.estado === 'Aprobado' || e.estado === 'Rechazado'" 
+              class="small-btn" 
+              type="button" 
+              (click)="abrirDetallesEvaluacion(e.codigo)"
+              style="background-color: #4a90e2; color: white;">
+              👁 Ver Evaluación
+              </button>
+            </td>
           </tr>          
         </tbody>
       </table>
@@ -298,6 +312,65 @@
       </form>
     </div>
   </div>
+  <!-- ======= MODAL DE DETALLES DE EVALUACIÓN ======= -->
+<div class="modal" [style.display]="showDetallesModal ? 'flex' : 'none'">
+  <div class="modal-content" style="max-width: 600px;">
+    <div class="modal-header">
+      <h3>{{ detallesEvaluacion.estado === 'aprobado' ? '✅ Evento Aprobado' : '❌ Evento Rechazado' }}</h3>
+      <span class="close" (click)="cerrarDetallesModal()">&times;</span>
+    </div>
+    
+    <div style="padding: 20px 0;">
+      <div class="detalle-item">
+        <strong>Nombre del evento:</strong>
+        <p>{{ detallesEvaluacion.nombre }}</p>
+      </div>
+      
+      <div class="detalle-item">
+        <strong>Estado:</strong>
+        <p [style.color]="detallesEvaluacion.estado === 'aprobado' ? '#4caf50' : '#f44336'">
+          {{ detallesEvaluacion.estado | uppercase }}
+        </p>
+      </div>
+      
+      <div class="detalle-item" *ngIf="detallesEvaluacion.evaluadoPor">
+        <strong>Evaluado por:</strong>
+        <p>{{ detallesEvaluacion.evaluadoPor }}</p>
+      </div>
+      
+      <div class="detalle-item" *ngIf="detallesEvaluacion.estado === 'rechazado'">
+        <strong>Motivo del rechazo:</strong>
+        <p style="background-color: #ffebee; padding: 10px; border-radius: 6px; color: #c62828;">
+          {{ detallesEvaluacion.observaciones || 'No se proporcionaron observaciones' }}
+        </p>
+      </div>
+      
+      <div class="detalle-item" *ngIf="detallesEvaluacion.estado === 'aprobado'">
+        <strong>Mensaje:</strong>
+        <p style="background-color: #e8f5e9; padding: 10px; border-radius: 6px; color: #2e7d32;">
+          Su evento ha sido aprobado exitosamente por la Secretaría Académica. 
+          Puede proceder con la organización del mismo según la fecha programada.
+        </p>
+      </div>
+      
+      <div class="detalle-item" *ngIf="detallesEvaluacion.actaComite && detallesEvaluacion.estado === 'aprobado'">
+        <strong>Acta del comité:</strong>
+        <button class="small-btn" (click)="descargarActaComite()" style="margin-top: 5px;">
+          📄 Descargar Acta
+        </button>
+      </div>
+    </div>
+    
+    <div style="text-align: right; margin-top: 20px;">
+      <button 
+        class="save-btn" 
+        (click)="cerrarDetallesModal()"
+        [style.background-color]="detallesEvaluacion.estado === 'aprobado' ? '#4caf50' : '#f44336'">
+        Cerrar
+      </button>
+    </div>
+  </div>
+</div>
 
 </body>
 </html>
