@@ -101,24 +101,58 @@
             <td>{{ e.fecha }}</td>
             <td>{{ e.estado }}</td>
     
-            <!-- ✅ BOTONES EXISTENTES -->
-            <td><button class="small-btned" type="button" (click)="openEdit(e)">🖊 Editar</button></td>
-            <td><button class="small-btne" type="button" (click)="eliminarEvento(e.codigo)">🗑 Eliminar</button></td>           
-            <td><button class="small-btnen" type="button" (click)="enviarEvento(e.codigo)">📤 Enviar Revisión</button></td>
-    
-            <!-- 🆕 NUEVO BOTÓN PARA VER DETALLES -->
+            <!-- Botón Editar: solo si está en estado "Registrado" -->
             <td>
               <button 
-              *ngIf="e.estado === 'Aprobado' || e.estado === 'Rechazado'" 
-              class="small-btn" 
-              type="button" 
-              (click)="abrirDetallesEvaluacion(e.codigo)"
-              style="background-color: #4a90e2; color: white;">
-              👁 Ver Evaluación
+                *ngIf="e.estado === 'Registrado'" 
+                class="small-btned" 
+                type="button" 
+                (click)="openEdit(e)">
+                🖊 Editar
               </button>
             </td>
-          </tr>          
-        </tbody>
+    
+            <!-- Botón Eliminar: solo si está en estado "Registrado" -->
+            <td>
+              <button 
+                *ngIf="e.estado === 'Registrado'" 
+                class="small-btne" 
+                type="button" 
+                (click)="eliminarEvento(e.codigo)">
+                🗑 Eliminar
+              </button>
+            </td>
+    
+            <!-- Botón Enviar Revisión: solo si está en estado "Registrado" -->
+            <td>
+              <button 
+                *ngIf="e.estado === 'Registrado'" 
+                class="small-btnen" 
+                type="button" 
+                (click)="enviarEvento(e.codigo)">
+                📤 Enviar Revisión
+              </button>
+              <!-- Mostrar estado si ya fue enviado pero no evaluado -->
+                <span 
+                  *ngIf="e.estado === 'En revisión' || e.estado === 'Enviado'"
+                  style="color: #ff9800; font-weight: 500; font-size: 0.85rem;">
+                  {{ e.estado }}
+                </span>
+            </td>
+    
+            <!-- Botón Ver Evaluación: solo si fue Aprobado o Rechazado -->
+            <td>
+              <button 
+                *ngIf="e.estado === 'Aprobado' || e.estado === 'Rechazado'" 
+                class="small-btn" 
+                type="button" 
+                (click)="abrirDetallesEvaluacion(e.codigo)"
+                style="background-color: #4a90e2; color: white; padding: 5px 12px;">
+                👁 Ver Evaluación
+              </button>
+          </td>
+        </tr>
+      </tbody>
       </table>
       <div class="pagination">
         <button (click)="paginaAnterior()" [disabled]="paginaActual === 1">Anterior</button>
