@@ -18,7 +18,7 @@ export class Perfil {
   usuario: any = null;
   celular: string ='';
   showEdit = false;
-  edit = { celular: '', contrasenaActual: '', nuevaContrasena: '' };
+  edit = { celular: '', contrasenaActual: '', nuevaContrasena: '', confirmarContrasena: '' };
 
   constructor(private auth: AuthService, private router: Router, private api: Api, private perfil: PerfilService) {}
   rol: string = '';
@@ -67,13 +67,13 @@ export class Perfil {
 
   openEdit() { 
     this.showEdit = true; 
-    this.edit = { celular: this.usuario?.celular || '', contrasenaActual: '', nuevaContrasena: '' };
+    this.edit = { celular: this.usuario?.celular || '', contrasenaActual: '', nuevaContrasena: '', confirmarContrasena: '' };
     this.actualizarVistaPreviaImagen();
   }
   closeEdit() { 
     this.showEdit = false; 
     this.mensaje = '';
-    this.edit = { celular: '', contrasenaActual: '', nuevaContrasena: '' };
+    this.edit = { celular: '', contrasenaActual: '', nuevaContrasena: '', confirmarContrasena: '' };
   }
 
   onLogout() {
@@ -146,7 +146,7 @@ export class Perfil {
             this.cargarPerfil();
             
             // Reiniciar el objeto edit después de un cambio exitoso
-            this.edit = { celular: '', contrasenaActual: '', nuevaContrasena: '', confirmarContrasena: '' }; // 🎯 Resetear también el nuevo campo
+            this.edit = { celular: '', contrasenaActual: '', nuevaContrasena: '', confirmarContrasena: '' };
 
             setTimeout(() => this.mensaje = '', 3000);
         },
