@@ -1072,7 +1072,41 @@ public class EventoServiceImp implements IEventoService {
     public List<EventoModel> listarPorUsuario(Integer idUsuario) {
         return eventoRepository.findByIdUsuarioRegistra(idUsuario);
     }
-
+    @Override
+    public Map<String, Object> obtenerDetallesEvaluacion(Integer codigoEvento) {
+        EventoModel evento = eventoRepository.findById(codigoEvento)
+        .orElseThrow(() -> new RuntimeException("Evento no encontrado"));
+    
+        Map<String, Object> detalles = new HashMap<>();
+        detalles.put("estado", evento.getEstado().name());
+        detalles.put("nombre", evento.getNombre());
+    
+        // Buscar la evaluación más reciente del evento
+        List<EvaluacionModel> evaluaciones = evaluacionRepository.findByCodigoEvento_Codigo(codigoEvento);
+    
+            if (!evaluaciones.isEmpty()) {
+                // Obtener la evaluación más reciente
+                EvaluacionModel evaluacion = evaluaciones.get(evaluaciones.size() - 1);
+        
+                detalles.put("decision", evaluacion.getDecision());
+                detalles.put("observaciones", evaluacion.getObservaciones());
+                detalles.put("actaComite", evaluacion.getActa_comite());
+        
+                // Obtener nombre de la secretaria que evaluó
+                if (evaluacion.getIdSecreAcad() != null) {
+                    String nombreSecretaria = evaluacion.getIdSecreAcad().getNombre() + " " + 
+                                     evaluacion.getIdSecreAcad().getApellido();
+                                     detalles.put("evaluadoPor", nombreSecretaria);
+                }
+            } else {
+                detalles.put("decision", null);
+                detalles.put("observaciones", "No hay observaciones disponibles");
+                detalles.put("actaComite", null);
+                detalles.put("evaluadoPor", "No evaluado");
+            }
+    
+        return detalles;
+    }
 
     @Override
     public Optional<EventoModel> buscarPorCodigo(Integer codigo) {
