@@ -16,6 +16,7 @@ import com.gestion.eventos.DTO.EventoEdicionCompleto;
 import com.gestion.eventos.DTO.EventoRegistroCompleto;
 import com.gestion.eventos.Model.ColaboracionModel;
 import com.gestion.eventos.Model.EspacioModel;
+import com.gestion.eventos.Model.EvaluacionModel;
 import com.gestion.eventos.Model.EventoModel;
 import com.gestion.eventos.Model.FacultadModel;
 import com.gestion.eventos.Model.NotificacionModel;
@@ -1082,7 +1083,7 @@ public class EventoServiceImp implements IEventoService {
         detalles.put("nombre", evento.getNombre());
     
         // Buscar la evaluación más reciente del evento
-        List<EvaluacionModel> evaluaciones = evaluacionRepository.findByCodigoEvento_Codigo(codigoEvento);
+        List<EvaluacionModel> evaluaciones = IEspacioRepository.findByCodigoEvento_Codigo(codigoEvento);
     
             if (!evaluaciones.isEmpty()) {
                 // Obtener la evaluación más reciente

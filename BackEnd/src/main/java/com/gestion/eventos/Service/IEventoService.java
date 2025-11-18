@@ -5,6 +5,7 @@ import com.gestion.eventos.DTO.EventoEdicionCompleto;
 import com.gestion.eventos.DTO.EventoRegistroCompleto;
 import com.gestion.eventos.Model.EventoModel;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 
