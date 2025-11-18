@@ -602,6 +602,16 @@ private validarFormulario(): string | null {
   }
 
   showOrgInline = false;
+  showDetallesModal = false;
+  detallesEvaluacion: any = {
+  estado: '',
+  nombre: '',
+  decision: '',
+  observaciones: '',
+  actaComite: '',
+  evaluadoPor: ''
+  };
+
   orgInline: any = { nit: '', nombre: '', representante_legal: '', telefono: '', ubicacion: '', sector_economico: '', actividad_principal: '' };
 
   openOrgInlineModal() { 
