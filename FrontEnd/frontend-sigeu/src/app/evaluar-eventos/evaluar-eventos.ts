@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component} from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { EvaluacionService } from '../services/evaluacion.service';
@@ -13,7 +13,7 @@ import { AuthService } from '../services/auth.service';
   templateUrl: './evaluar-eventos.html',
   styleUrl: './evaluar-eventos.css'
 })
-export class EvaluarEventos {
+export class EvaluarEventos implements OnInit {
   busqueda: string = '';
   filtroEstado: string = '';
 
@@ -61,28 +61,75 @@ export class EvaluarEventos {
   ) {}
 
   ngOnInit() {
+    this.cargarEventosPendientes();
+  }
+
+  private cargarEventosPendientes() {
     const idSecretaria = this.authService.getUserId();
+    
+    // 🔴 VALIDACIÓN CRÍTICA: Verificar que el ID exista
     if (!idSecretaria) {
-      console.error("ID de secretaria no encontrado");
+      console.error("❌ ID de secretaria no encontrado en el almacenamiento local");
+      this.showMessage('error', 'Error de sesión', 'No se pudo obtener el ID de usuario. Por favor, cierre sesión y vuelva a iniciar.');
       this.eventos = [];
       return;
     }
+
+    console.log("✅ ID de secretaria obtenido:", idSecretaria);
+
     this.evaluacionService.listarPendientes(idSecretaria).subscribe({
-      next: (data) => {      
+      next: (data) => {
+        console.log("📦 Datos recibidos del backend:", data);
         
-        this.eventos = data.map((e: any) => ({
-          codigo: e.codigo,
-          nombre: e.nombre,
-          descripcion: e.descripcion,
-          tipo: e.tipo,
-          fecha: e.fecha,
-          hora_inicio: e.hora_inicio,
-          hora_fin: e.hora_fin,
-          estado: e.estado,
-          organizador: e.organizadorNombre || '-',
-        }));
+        // 🔴 VALIDACIÓN: Verificar que data sea un array
+        if (!Array.isArray(data)) {
+          console.error("❌ La respuesta del backend no es un array:", data);
+          this.showMessage('error', 'Error de datos', 'La respuesta del servidor tiene un formato inesperado');
+          this.eventos = [];
+          return;
+        }
+
+        // 🟢 MAPEO CORREGIDO: Usar el nombre correcto del campo
+        this.eventos = data.map((e: any) => {
+          console.log("🔍 Evento individual:", e); // Debug individual
+          
+          return {
+            codigo: e.codigo,
+            nombre: e.nombre,
+            descripcion: e.descripcion,
+            tipo: e.tipo,
+            fecha: e.fecha,
+            hora_inicio: e.hora_inicio,
+            hora_fin: e.hora_fin,
+            estado: e.estado,
+            // 🔴 CORRECCIÓN: Usar 'organizadorNombre' que es lo que retorna el backend
+            organizador: e.organizadorNombre || 'No asignado'
+          };
+        });
+
+        console.log("✅ Eventos procesados:", this.eventos);
+
+        if (this.eventos.length === 0) {
+          console.warn("⚠️ No hay eventos pendientes para esta secretaría");
+        }
       },
-      error: () => {
+      error: (err) => {
+        console.error("❌ Error al cargar eventos:", err);
+        
+        // Mostrar mensaje específico según el error
+        let mensajeError = 'No se pudieron cargar los eventos pendientes';
+        
+        if (err.status === 404) {
+          mensajeError = 'No se encontró el endpoint de evaluación';
+        } else if (err.status === 403) {
+          mensajeError = 'No tiene permisos para acceder a esta información';
+        } else if (err.status === 0) {
+          mensajeError = 'No se pudo conectar con el servidor. Verifique su conexión';
+        } else if (err.error?.mensaje) {
+          mensajeError = err.error.mensaje;
+        }
+
+        this.showMessage('error', 'Error al cargar eventos', mensajeError);
         this.eventos = [];
       }
     });
@@ -94,6 +141,8 @@ export class EvaluarEventos {
     this.messageTitle = title;
     this.messageText = message;
     this.showMessageModal = true;
+
+    console.log(`📢 Mensaje mostrado: [${type.toUpperCase()}] ${title}: ${message}`);
   }
 
   closeMessageModal() {
@@ -107,13 +156,18 @@ export class EvaluarEventos {
   }
 
   verDetalles(evento: any) {
+    console.log("👁️ Viendo detalles del evento:", evento.codigo);
     this.eventoSeleccionado = evento;
+    
     this.evaluacionService.obtenerDetalle(evento.codigo).subscribe({
       next: (det) => {
+        console.log("📋 Detalles cargados:", det);
         this.detallesEvento = det;
         this.modalVerMasVisible = true;
       },
-      error: () => {
+      error: (err) => {
+        console.error("❌ Error al cargar detalles:", err);
+        this.showMessage('error', 'Error', 'No se pudieron cargar los detalles del evento');
         this.detallesEvento = null;
         this.modalVerMasVisible = true;
       }
@@ -126,6 +180,7 @@ export class EvaluarEventos {
   }
 
   abrirModalEvaluacion(evento: any) {
+    console.log("📝 Abriendo modal de evaluación para:", evento.nombre);
     this.eventoSeleccionado = evento;
     this.decision = '';
     this.observaciones = '';
@@ -148,12 +203,12 @@ export class EvaluarEventos {
   onActaChange(event: Event) {
     const file = (event.target as HTMLInputElement).files?.[0] || null;
     if (file && file.type !== 'application/pdf') {
-      this.mensajeTexto = 'El acta debe ser un archivo PDF';
-      this.mensajeVisible = true;
+      this.showMessage('error', 'Archivo inválido', 'El acta debe ser un archivo PDF');
       (event.target as HTMLInputElement).value = '';
       return;
     }
     this.actaComite = file;
+    console.log("📎 Acta seleccionada:", file?.name);
   }
 
   confirmarEvaluacion() {
@@ -169,21 +224,28 @@ export class EvaluarEventos {
     }
 
     if (this.decision === 'aprobado' && (!this.actaComite)){
-      this.showMessage('error', 'Error en evaluación', 'El acta del cómite es obligatoria para aprobar un evento');     
+      this.showMessage('error', 'Error en evaluación', 'El acta del comité es obligatoria para aprobar un evento');     
       return;
     }
 
     const idSecretaria = this.authService.getUserId();
     if (!idSecretaria) {
-      this.mensajeTexto = 'No se encontró sesión activa';
-      this.mensajeVisible = true;
+      this.showMessage('error', 'Error de sesión', 'No se encontró sesión activa');
       return;
     }
+
+    console.log("🚀 Enviando evaluación:", {
+      decision: this.decision,
+      idSecretaria,
+      tieneActa: !!this.actaComite,
+      observaciones: this.observaciones
+    });
 
     // Crear FormData
     const formData = new FormData();
     formData.append('decision', this.decision);
     formData.append('idSecretaria', idSecretaria.toString());
+    
     if (this.observaciones){
       formData.append('observaciones', this.observaciones);
     }    
@@ -194,20 +256,24 @@ export class EvaluarEventos {
 
     // Llamar al servicio apropiado
     const accion$ = this.decision === 'aprobado'
-      ? this.evaluacionService.aprobar(this.eventoSeleccionado.codigo.toString(),formData)
+      ? this.evaluacionService.aprobar(this.eventoSeleccionado.codigo.toString(), formData)
       : this.evaluacionService.rechazar(this.eventoSeleccionado.codigo.toString(), formData);
 
     accion$.subscribe({
       next: (resp) => {
+        console.log("✅ Evaluación exitosa:", resp);
+        
         // Eliminar de la lista local
         this.eventos = this.eventos.filter(e => e.codigo !== this.eventoSeleccionado.codigo);
+        
         // Mensaje de éxito
         this.showMessage('success', '¡Evaluación Exitosa!', resp?.mensaje || 'El evento ha sido evaluado exitosamente');
         this.cerrarModalEvaluacion();
       },
       error: (err) => {
-        this.mensajeTexto = err?.error?.mensaje || err?.error?.message || 'No se pudo completar la acción';
-        this.mensajeVisible = true;
+        console.error("❌ Error en evaluación:", err);
+        const mensajeError = err?.error?.mensaje || err?.error?.message || 'No se pudo completar la acción';
+        this.showMessage('error', 'Error', mensajeError);
       }
     });
   }
