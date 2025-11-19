@@ -77,9 +77,8 @@ export class Eventos {
   paginaActual = 1;
   elementosPorPagina = 8; 
 
-
   get totalPaginas(): number {
-    return Math.ceil(this.eventos.length / this.elementosPorPagina);
+    return Math.ceil(this.eventosFiltrados.length / this.elementosPorPagina);
   }
 
   paginaAnterior() {
@@ -93,6 +92,7 @@ export class Eventos {
       this.paginaActual++;
     }
   }
+
   ngOnInit() {
     this.listar();
     this.cargarListas();
@@ -106,12 +106,28 @@ export class Eventos {
     }
     this.eventosService.listar(idUsuarioActivo).subscribe({
       next: (data) => {
-        this.eventos = data || [];
+        // Mapear los estados para que coincidan con el frontend
+        this.eventos = (data || []).map((evento: any) => ({
+          ...evento,
+          estado: this.mapearEstado(evento.estado)
+        }));
         this.eventosFiltrados = [...this.eventos];
       },
       error: () =>
         this.showMessage('error', 'Error de Carga', 'No fue posible cargar eventos'),
     });
+  }
+
+  // Método auxiliar para mapear estados del backend al frontend
+  private mapearEstado(estado: string): string {
+    const estadoLower = (estado || '').toLowerCase();
+    switch (estadoLower) {
+      case 'borrador': return 'borrador';
+      case 'enviado': return 'enviado';
+      case 'aprobado': return 'aprobado';
+      case 'rechazado': return 'rechazado';
+      default: return estadoLower;
+    }
   }
 
   private cargarListas() {
@@ -136,6 +152,7 @@ export class Eventos {
       }
     });
   }
+
   private contieneInyeccion(valor: string): boolean {
     if (!valor) return false;
 
@@ -150,139 +167,139 @@ export class Eventos {
     return patronesPeligrosos.some((patron) => patron.test(valor));
   }
 
-private validarFormulario(): string | null {
-  const campos = [
-    this.nuevoEvento.nombre, 
-    this.nuevoEvento.descripcion, 
-    this.nuevoEvento.representante_alterno
-  ];
+  private validarFormulario(): string | null {
+    const campos = [
+      this.nuevoEvento.nombre, 
+      this.nuevoEvento.descripcion, 
+      this.nuevoEvento.representante_alterno
+    ];
 
-  for (const i of campos) {
-    if (this.contieneInyeccion(i)) {
-      this.mensaje = 'No se permiten scripts o comandos en los campos de texto.';
-      this.esError = true;
-      return this.mensaje;
+    for (const i of campos) {
+      if (this.contieneInyeccion(i)) {
+        this.mensaje = 'No se permiten scripts o comandos en los campos de texto.';
+        this.esError = true;
+        return this.mensaje;
+      }
     }
-  }
 
-  // Validación de campos básicos
-  if (!this.nuevoEvento.nombre?.trim()) {
-    return 'El nombre del evento es obligatorio';
-  }
-  
-  if (this.nuevoEvento.nombre?.length > 40) {
-    return 'El nombre del evento puede tener un máximo de 40 caracteres';
-  }
-  
-  if (!this.nuevoEvento.fecha) {
-    return 'La fecha del evento es obligatoria';
-  }
-  
-  if (!this.nuevoEvento.hora_inicio) {
-    return 'La hora de inicio es obligatoria';
-  }
-  
-  if (!this.nuevoEvento.hora_fin) {
-    return 'La hora de fin es obligatoria';
-  }
-  
-  if (!this.nuevoEvento.tipo) {
-    return 'El tipo de evento es obligatorio';
-  }
-
-  // Validar fecha no sea anterior a hoy
-  const fechaEvento = new Date(this.nuevoEvento.fecha + 'T00:00:00');
-  const hoy = new Date();
-  hoy.setHours(0, 0, 0, 0);
-  
-  if (fechaEvento < hoy) {
-    return 'La fecha del evento debe ser igual o posterior a la fecha actual';
-  }
-
-  // Validar horas
-  const horaInicio = this.nuevoEvento.hora_inicio;
-  const horaFin = this.nuevoEvento.hora_fin;
-
-  if (horaInicio === horaFin) {
-    return 'La hora de inicio y la hora de fin no pueden ser iguales';
-  }
-
-  if (horaInicio >= horaFin) {
-    return 'La hora de fin debe ser posterior a la hora de inicio';
-  }
-
-  // Validar espacios
-  if (!this.selectedEspacios.length || this.selectedEspacios.every(e => !e)) {
-    return 'Debe seleccionar al menos un espacio para el evento';
-  }
-
-  // Validar responsables
-  if (!this.selectedResponsables.length || this.selectedResponsables.every(r => r.id === 0)) {
-    return 'Debe asignar al menos un responsable al evento';
-  }
-
-  // Validar que las organizaciones con colaboración tengan su archivo PDF
-  for (let i = 0; i < this.selectedOrganizaciones.length; i++) {
-    const org = this.selectedOrganizaciones[i];
+    // Validación de campos básicos
+    if (!this.nuevoEvento.nombre?.trim()) {
+      return 'El nombre del evento es obligatorio';
+    }
     
-    // Si hay una organización seleccionada
-    if (org.nit) {
-      // En modo edición: debe tener archivo existente O nuevo archivo
-      if (this.editMode) {
-        if (!org.certificadoExistente && !org.avalNuevo) {
-          return `Debe adjuntar el certificado de participación (PDF) para la organización ${i + 1}. Este documento es obligatorio.`;
-        }
-      } else {
-        // En modo creación: debe tener nuevo archivo
-        if (!org.avalNuevo) {
-          return `Debe adjuntar el certificado de participación (PDF) para la organización ${i + 1}. Este documento es obligatorio.`;
-        }
-      }
-      
-      // Validar tipo si hay archivo nuevo
-      if (org.avalNuevo && org.avalNuevo.type !== 'application/pdf') {
-        return `El certificado de la organización ${i + 1} debe ser un archivo PDF`;
-      }
-      
-      // Validar tamaño si hay archivo nuevo (máximo 5MB)
-      if (org.avalNuevo && org.avalNuevo.size > 5 * 1024 * 1024) {
-        return `El certificado de la organización ${i + 1} no debe superar los 5MB`;
-      }
+    if (this.nuevoEvento.nombre?.length > 40) {
+      return 'El nombre del evento puede tener un máximo de 40 caracteres';
     }
-  }
-
-  // Validar que los responsables tengan su archivo PDF
-  for (let i = 0; i < this.selectedResponsables.length; i++) {
-    const resp = this.selectedResponsables[i];
     
-    // Si hay un responsable seleccionado
-    if (resp.id > 0) {
-      // En modo edición: debe tener archivo existente O nuevo archivo
-      if (this.editMode) {
-        if (!resp.documentoExistente && !resp.avalNuevo) {
-          return `Debe adjuntar el documento de aval (PDF) para el responsable ${i + 1}. Este documento debe estar firmado por la autoridad correspondiente.`;
-        }
-      } else {
-        // En modo creación: debe tener nuevo archivo
-        if (!resp.avalNuevo) {
-          return `Debe adjuntar el documento de aval (PDF) para el responsable ${i + 1}. Este documento debe estar firmado por la autoridad correspondiente.`;
-        }
-      }
+    if (!this.nuevoEvento.fecha) {
+      return 'La fecha del evento es obligatoria';
+    }
+    
+    if (!this.nuevoEvento.hora_inicio) {
+      return 'La hora de inicio es obligatoria';
+    }
+    
+    if (!this.nuevoEvento.hora_fin) {
+      return 'La hora de fin es obligatoria';
+    }
+    
+    if (!this.nuevoEvento.tipo) {
+      return 'El tipo de evento es obligatorio';
+    }
+
+    // Validar fecha no sea anterior a hoy
+    const fechaEvento = new Date(this.nuevoEvento.fecha + 'T00:00:00');
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    
+    if (fechaEvento < hoy) {
+      return 'La fecha del evento debe ser igual o posterior a la fecha actual';
+    }
+
+    // Validar horas
+    const horaInicio = this.nuevoEvento.hora_inicio;
+    const horaFin = this.nuevoEvento.hora_fin;
+
+    if (horaInicio === horaFin) {
+      return 'La hora de inicio y la hora de fin no pueden ser iguales';
+    }
+
+    if (horaInicio >= horaFin) {
+      return 'La hora de fin debe ser posterior a la hora de inicio';
+    }
+
+    // Validar espacios
+    if (!this.selectedEspacios.length || this.selectedEspacios.every(e => !e)) {
+      return 'Debe seleccionar al menos un espacio para el evento';
+    }
+
+    // Validar responsables
+    if (!this.selectedResponsables.length || this.selectedResponsables.every(r => r.id === 0)) {
+      return 'Debe asignar al menos un responsable al evento';
+    }
+
+    // Validar que las organizaciones con colaboración tengan su archivo PDF
+    for (let i = 0; i < this.selectedOrganizaciones.length; i++) {
+      const org = this.selectedOrganizaciones[i];
       
-      // Validar tipo si hay archivo nuevo
-      if (resp.avalNuevo && resp.avalNuevo.type !== 'application/pdf') {
-        return `El documento de aval del responsable ${i + 1} debe ser un archivo PDF`;
-      }
-      
-      // Validar tamaño si hay archivo nuevo (máximo 5MB)
-      if (resp.avalNuevo && resp.avalNuevo.size > 5 * 1024 * 1024) {
-        return `El documento de aval del responsable ${i + 1} no debe superar los 5MB`;
+      // Si hay una organización seleccionada
+      if (org.nit) {
+        // En modo edición: debe tener archivo existente O nuevo archivo
+        if (this.editMode) {
+          if (!org.certificadoExistente && !org.avalNuevo) {
+            return `Debe adjuntar el certificado de participación (PDF) para la organización ${i + 1}. Este documento es obligatorio.`;
+          }
+        } else {
+          // En modo creación: debe tener nuevo archivo
+          if (!org.avalNuevo) {
+            return `Debe adjuntar el certificado de participación (PDF) para la organización ${i + 1}. Este documento es obligatorio.`;
+          }
+        }
+        
+        // Validar tipo si hay archivo nuevo
+        if (org.avalNuevo && org.avalNuevo.type !== 'application/pdf') {
+          return `El certificado de la organización ${i + 1} debe ser un archivo PDF`;
+        }
+        
+        // Validar tamaño si hay archivo nuevo (máximo 5MB)
+        if (org.avalNuevo && org.avalNuevo.size > 5 * 1024 * 1024) {
+          return `El certificado de la organización ${i + 1} no debe superar los 5MB`;
+        }
       }
     }
-  }
 
-  return null;
-}
+    // Validar que los responsables tengan su archivo PDF
+    for (let i = 0; i < this.selectedResponsables.length; i++) {
+      const resp = this.selectedResponsables[i];
+      
+      // Si hay un responsable seleccionado
+      if (resp.id > 0) {
+        // En modo edición: debe tener archivo existente O nuevo archivo
+        if (this.editMode) {
+          if (!resp.documentoExistente && !resp.avalNuevo) {
+            return `Debe adjuntar el documento de aval (PDF) para el responsable ${i + 1}. Este documento debe estar firmado por la autoridad correspondiente.`;
+          }
+        } else {
+          // En modo creación: debe tener nuevo archivo
+          if (!resp.avalNuevo) {
+            return `Debe adjuntar el documento de aval (PDF) para el responsable ${i + 1}. Este documento debe estar firmado por la autoridad correspondiente.`;
+          }
+        }
+        
+        // Validar tipo si hay archivo nuevo
+        if (resp.avalNuevo && resp.avalNuevo.type !== 'application/pdf') {
+          return `El documento de aval del responsable ${i + 1} debe ser un archivo PDF`;
+        }
+        
+        // Validar tamaño si hay archivo nuevo (máximo 5MB)
+        if (resp.avalNuevo && resp.avalNuevo.size > 5 * 1024 * 1024) {
+          return `El documento de aval del responsable ${i + 1} no debe superar los 5MB`;
+        }
+      }
+    }
+
+    return null;
+  }
 
   crear() {
     // Validar formulario
@@ -325,7 +342,6 @@ private validarFormulario(): string | null {
         formData.append(`colaboraciones[${index}].certificado_existente`, org.certificadoExistente);
       }
     });
-
 
     // Agregar responsables
     this.selectedResponsables
@@ -410,7 +426,6 @@ private validarFormulario(): string | null {
           formData.append(`colaboraciones[${index}].certificado_existente`, org.certificadoExistente);
         }
       });
-
 
     // Agregar responsables
     this.selectedResponsables
@@ -537,7 +552,7 @@ private validarFormulario(): string | null {
     this.messageText = message;
     this.showMessageModal = true;
     
-    // Auto cerrar después de 5 segundos
+    // Auto cerrar después de 8 segundos
     setTimeout(() => {
       this.closeMessageModal();
     }, 8000);
@@ -604,17 +619,23 @@ private validarFormulario(): string | null {
   showOrgInline = false;
   showDetallesModal = false;
   detallesEvaluacion: any = {
-  estado: '',
-  nombre: '',
-  decision: '',
-  observaciones: '',
-  actaComite: '',
-  evaluadoPor: ''
-
-  
+    estado: '',
+    nombre: '',
+    decision: '',
+    observaciones: '',
+    actaComite: '',
+    evaluadoPor: ''
   };
 
-  orgInline: any = { nit: '', nombre: '', representante_legal: '', telefono: '', ubicacion: '', sector_economico: '', actividad_principal: '' };
+  orgInline: any = { 
+    nit: '', 
+    nombre: '', 
+    representante_legal: '', 
+    telefono: '', 
+    ubicacion: '', 
+    sector_economico: '', 
+    actividad_principal: '' 
+  };
 
   openOrgInlineModal() { 
     this.orgInline = { 
@@ -648,13 +669,12 @@ private validarFormulario(): string | null {
     
     this.organizacionesService.registrar(body).subscribe({
       next: () => { 
-        // Solo agregar el NIT a las colaboraciones, no toda la información
+        // Solo agregar el NIT a las colaboraciones
         this.selectedOrganizaciones.push({ 
           nit: this.orgInline.nit, 
           tipo: 'legal', 
           alterno: '', 
           avalNuevo: null
-          // Eliminamos todos los demás campos que no necesitamos
         }); 
         
         this.showOrgInline = false; 
@@ -702,29 +722,30 @@ private validarFormulario(): string | null {
           // Cargar espacios
           this.selectedEspacios = (evento.reservaciones || []).map((r: any) => r.codigo_espacio);
 
-          // Cargar organizaciones - solo información básica
+          // Cargar organizaciones
           this.selectedOrganizaciones = (evento.organizaciones || []).map((org: any) => ({
             nit: org.nit,
             tipo: org.representante_alterno ? 'alterno' : 'legal',
             alterno: org.representante_alterno || '',
-            certificadoExistente: org.certificado_participacion, // Solo para referencia
+            certificadoExistente: org.certificado_participacion,
             avalNuevo: null
           }));
 
-          // Cargar responsables - solo información básica
+          // Cargar responsables
           this.selectedResponsables = (evento.responsables || []).map((resp: any) => ({
             id: resp.id_usuario,
             tipoAval: resp.tipoAval || undefined,
-            documentoExistente: resp.documentoAval, // Solo para referencia
+            documentoExistente: resp.documentoAval,
             avalNuevo: null
           }));
 
           this.openModal();
         },
         error: (err) => {          
-          const mensajeError = err?.error?.mensaje || err?.error?.message || 'No fue posible registrar el evento';
-          this.showMessage('error', 'Error al Registrar', mensajeError);
-     } });
+          const mensajeError = err?.error?.mensaje || err?.error?.message || 'No fue posible cargar los detalles del evento';
+          this.showMessage('error', 'Error al Cargar', mensajeError);
+        }
+      });
     }
   }
 
@@ -791,26 +812,29 @@ private validarFormulario(): string | null {
     });
   }
 
-  
   limpiarFiltro(): void {
     this.valorFiltro = '';
-    this.listar();
+    this.eventosFiltrados = [...this.eventos];
   }
 
   enviarEvento(codigo: number) {
-    if (!confirm('¿Seguro que deseas enviar este evento a revisión, luego de confirmar no puede modificar el evento?')) {
+    if (!confirm('¿Seguro que deseas enviar este evento a revisión? Luego de confirmar no podrás modificar el evento.')) {
       return;
     }
 
     this.eventosService.enviarEvento(codigo).subscribe({
       next: (response) => {
         this.showMessage('success', 'Evento enviado', response?.mensaje || 'Su evento fue enviado a revisión con éxito');
-        this.listar(); // 🔄 vuelve a cargar la lista para actualizar el estado
+        this.listar(); // Recargar lista para actualizar el estado
       },
       error: (error) => {
         let errorMsg: any = error?.error?.mensaje || error?.error?.message || error?.message || error?.error;
         if (typeof errorMsg === 'object') {
-          try { errorMsg = JSON.stringify(errorMsg); } catch { errorMsg = 'Error al enviar el evento.'; }
+          try { 
+            errorMsg = JSON.stringify(errorMsg); 
+          } catch { 
+            errorMsg = 'Error al enviar el evento.'; 
+          }
         }
         if (!errorMsg || typeof errorMsg !== 'string') {
           errorMsg = 'Error al enviar el evento.';
@@ -819,13 +843,14 @@ private validarFormulario(): string | null {
       }
     });
   }
-  // 1️⃣ Método para abrir el modal de detalles de evaluación
+
+  // Método para abrir el modal de detalles de evaluación
   abrirDetallesEvaluacion(codigo: number) {
-      this.eventosService.obtenerDetallesEvaluacion(codigo).subscribe({
-        next: (detalles: any) => {
+    this.eventosService.obtenerDetallesEvaluacion(codigo).subscribe({
+      next: (detalles: any) => {
         // Guarda los detalles recibidos del backend
         this.detallesEvaluacion = detalles;
-      
+        
         // Muestra el modal
         this.showDetallesModal = true;
       },
@@ -836,10 +861,10 @@ private validarFormulario(): string | null {
     });
   }
 
-  // 2️⃣ Método para cerrar el modal
+  // Método para cerrar el modal
   cerrarDetallesModal() {
     this.showDetallesModal = false;
-  
+    
     // Limpia los datos del modal
     this.detallesEvaluacion = {
       estado: '',
@@ -851,18 +876,16 @@ private validarFormulario(): string | null {
     };
   }
 
-  // 3️⃣ Método para descargar el acta del comité (si existe)
+  // Método para descargar el acta del comité (si existe)
   descargarActaComite() {
     if (this.detallesEvaluacion.actaComite) {
       // Construye la URL para descargar el archivo
-      const url = this.eventosService.getFileDownloadUrl('actas', this.detallesEvaluacion.actaComite);
-    
+      const url = this.eventosService.getFileDownloadUrl('acta', this.detallesEvaluacion.actaComite);
+      
       // Abre el archivo en una nueva pestaña
       window.open(url, '_blank');
     } else {
       this.showMessage('error', 'Sin acta', 'No hay acta disponible para este evento');
-   }
-   
+    }
   }
-
 }
