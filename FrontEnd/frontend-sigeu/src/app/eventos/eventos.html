@@ -87,7 +87,7 @@
               <th>Tipo</th>
               <th>Fecha</th>
               <th>Estado</th>
-              <th></th>
+              <th>Acciones</th>
             </tr>
         </thead>
         <tbody id="eventTableBody">
@@ -99,60 +99,72 @@
             <td>{{ e.nombre }}</td>
             <td>{{ e.tipo }}</td>
             <td>{{ e.fecha }}</td>
-            <td>{{ e.estado }}</td>
-    
-            <!-- Botón Editar: solo si está en estado "Registrado" -->
             <td>
-              <button 
-                *ngIf="e.estado === 'Registrado'" 
-                class="small-btned" 
-                type="button" 
-                (click)="openEdit(e)">
-                🖊 Editar
-              </button>
+              <span 
+                class="estado-badge"
+                [ngClass]="{
+                  'estado-registrado': e.estado === 'borrador',
+                  'estado-revision': e.estado === 'enviado',
+                  'estado-aprobado': e.estado === 'aprobado',
+                  'estado-rechazado': e.estado === 'rechazado'
+                }">
+                {{ e.estado }}
+              </span>
             </td>
-    
-            <!-- Botón Eliminar: solo si está en estado "Registrado" -->
+            
+            <!-- Columna de acciones -->
             <td>
-              <button 
-                *ngIf="e.estado === 'Registrado'" 
-                class="small-btne" 
-                type="button" 
-                (click)="eliminarEvento(e.codigo)">
-                🗑 Eliminar
-              </button>
-            </td>
-    
-            <!-- Botón Enviar Revisión: solo si está en estado "Registrado" -->
-            <td>
-              <button 
-                *ngIf="e.estado === 'Registrado'" 
-                class="small-btnen" 
-                type="button" 
-                (click)="enviarEvento(e.codigo)">
-                📤 Enviar Revisión
-              </button>
-              <!-- Mostrar estado si ya fue enviado pero no evaluado -->
+              <div style="display: flex; gap: 5px; flex-wrap: wrap;">
+                <!-- Botón Editar: solo si está en estado "borrador" o "rechazado" -->
+                <button 
+                  *ngIf="e.estado === 'borrador' || e.estado === 'rechazado'" 
+                  class="small-btned" 
+                  type="button" 
+                  (click)="openEdit(e)"
+                  title="Editar evento">
+                  🖊 Editar
+                </button>
+                
+                <!-- Botón Eliminar: solo si está en estado "borrador" o "rechazado" -->
+                <button 
+                  *ngIf="e.estado === 'borrador' || e.estado === 'rechazado'" 
+                  class="small-btne" 
+                  type="button" 
+                  (click)="eliminarEvento(e.codigo)"
+                  title="Eliminar evento">
+                  🗑 Eliminar
+                </button>
+                
+                <!-- Botón Enviar Revisión: solo si está en estado "borrador" -->
+                <button 
+                  *ngIf="e.estado === 'borrador'" 
+                  class="small-btnen" 
+                  type="button" 
+                  (click)="enviarEvento(e.codigo)"
+                  title="Enviar a revisión">
+                  📤 Enviar
+                </button>
+                
+                <!-- Mostrar estado si ya fue enviado pero no evaluado -->
                 <span 
-                  *ngIf="e.estado === 'En revisión' || e.estado === 'Enviado'"
-                  style="color: #ff9800; font-weight: 500; font-size: 0.85rem;">
-                  {{ e.estado }}
+                  *ngIf="e.estado === 'enviado'"
+                  style="color: #ff9800; font-weight: 500; font-size: 0.85rem; padding: 5px;">
+                  En revisión
                 </span>
+                
+                <!-- Botón Ver Evaluación: solo si fue Aprobado o Rechazado -->
+                <button 
+                  *ngIf="e.estado === 'aprobado' || e.estado === 'rechazado'" 
+                  class="small-btn-detalles" 
+                  type="button" 
+                  (click)="abrirDetallesEvaluacion(e.codigo)"
+                  title="Ver detalles de evaluación">
+                  👁 Ver Evaluación
+                </button>
+              </div>
             </td>
-    
-            <!-- Botón Ver Evaluación: solo si fue Aprobado o Rechazado -->
-            <td>
-              <button 
-                *ngIf="e.estado === 'Aprobado' || e.estado === 'Rechazado'" 
-                class="small-btn" 
-                type="button" 
-                (click)="abrirDetallesEvaluacion(e.codigo)"
-                style="background-color: #4a90e2; color: white; padding: 5px 12px;">
-                👁 Ver Evaluación
-              </button>
-          </td>
-        </tr>
-      </tbody>
+          </tr>
+        </tbody>
       </table>
       <div class="pagination">
         <button (click)="paginaAnterior()" [disabled]="paginaActual === 1">Anterior</button>
@@ -301,6 +313,7 @@
       </form>
     </div>
   </div>
+  
   <!-- ======= MODAL DE NUEVA ORGANIZACIÓN ======= -->
   <div class="modal" [style.display]="showOrgInline ? 'flex' : 'none'">
     <div class="modal-content">
@@ -346,65 +359,66 @@
       </form>
     </div>
   </div>
+  
   <!-- ======= MODAL DE DETALLES DE EVALUACIÓN ======= -->
-<div class="modal" [style.display]="showDetallesModal ? 'flex' : 'none'">
-  <div class="modal-content" style="max-width: 600px;">
-    <div class="modal-header">
-      <h3>{{ detallesEvaluacion.estado === 'aprobado' ? '✅ Evento Aprobado' : '❌ Evento Rechazado' }}</h3>
-      <span class="close" (click)="cerrarDetallesModal()">&times;</span>
-    </div>
-    
-    <div style="padding: 20px 0;">
-      <div class="detalle-item">
-        <strong>Nombre del evento:</strong>
-        <p>{{ detallesEvaluacion.nombre }}</p>
+  <div class="modal" [style.display]="showDetallesModal ? 'flex' : 'none'">
+    <div class="modal-content" style="max-width: 600px;">
+      <div class="modal-header">
+        <h3>{{ detallesEvaluacion.estado === 'aprobado' ? '✅ Evento Aprobado' : '❌ Evento Rechazado' }}</h3>
+        <span class="close" (click)="cerrarDetallesModal()">&times;</span>
       </div>
       
-      <div class="detalle-item">
-        <strong>Estado:</strong>
-        <p [style.color]="detallesEvaluacion.estado === 'aprobado' ? '#4caf50' : '#f44336'">
-          {{ detallesEvaluacion.estado | uppercase }}
-        </p>
+      <div style="padding: 20px 0;">
+        <div class="detalle-item">
+          <strong>Nombre del evento:</strong>
+          <p>{{ detallesEvaluacion.nombre }}</p>
+        </div>
+        
+        <div class="detalle-item">
+          <strong>Estado:</strong>
+          <p [style.color]="detallesEvaluacion.estado === 'aprobado' ? '#4caf50' : '#f44336'">
+            {{ detallesEvaluacion.estado | uppercase }}
+          </p>
+        </div>
+        
+        <div class="detalle-item" *ngIf="detallesEvaluacion.evaluadoPor">
+          <strong>Evaluado por:</strong>
+          <p>{{ detallesEvaluacion.evaluadoPor }}</p>
+        </div>
+        
+        <div class="detalle-item" *ngIf="detallesEvaluacion.estado === 'rechazado'">
+          <strong>Motivo del rechazo:</strong>
+          <p style="background-color: #ffebee; padding: 10px; border-radius: 6px; color: #c62828;">
+            {{ detallesEvaluacion.observaciones || 'No se proporcionaron observaciones' }}
+          </p>
+        </div>
+        
+        <div class="detalle-item" *ngIf="detallesEvaluacion.estado === 'aprobado'">
+          <strong>Mensaje:</strong>
+          <p style="background-color: #e8f5e9; padding: 10px; border-radius: 6px; color: #2e7d32;">
+            Su evento ha sido aprobado exitosamente por la Secretaría Académica. 
+            Puede proceder con la organización del mismo según la fecha programada.
+          </p>
+        </div>
+        
+        <div class="detalle-item" *ngIf="detallesEvaluacion.actaComite && detallesEvaluacion.estado === 'aprobado'">
+          <strong>Acta del comité:</strong>
+          <button class="small-btn" (click)="descargarActaComite()" style="margin-top: 5px;">
+            📄 Descargar Acta
+          </button>
+        </div>
       </div>
       
-      <div class="detalle-item" *ngIf="detallesEvaluacion.evaluadoPor">
-        <strong>Evaluado por:</strong>
-        <p>{{ detallesEvaluacion.evaluadoPor }}</p>
-      </div>
-      
-      <div class="detalle-item" *ngIf="detallesEvaluacion.estado === 'rechazado'">
-        <strong>Motivo del rechazo:</strong>
-        <p style="background-color: #ffebee; padding: 10px; border-radius: 6px; color: #c62828;">
-          {{ detallesEvaluacion.observaciones || 'No se proporcionaron observaciones' }}
-        </p>
-      </div>
-      
-      <div class="detalle-item" *ngIf="detallesEvaluacion.estado === 'aprobado'">
-        <strong>Mensaje:</strong>
-        <p style="background-color: #e8f5e9; padding: 10px; border-radius: 6px; color: #2e7d32;">
-          Su evento ha sido aprobado exitosamente por la Secretaría Académica. 
-          Puede proceder con la organización del mismo según la fecha programada.
-        </p>
-      </div>
-      
-      <div class="detalle-item" *ngIf="detallesEvaluacion.actaComite && detallesEvaluacion.estado === 'aprobado'">
-        <strong>Acta del comité:</strong>
-        <button class="small-btn" (click)="descargarActaComite()" style="margin-top: 5px;">
-          📄 Descargar Acta
+      <div style="text-align: right; margin-top: 20px;">
+        <button 
+          class="save-btn" 
+          (click)="cerrarDetallesModal()"
+          [style.background-color]="detallesEvaluacion.estado === 'aprobado' ? '#4caf50' : '#f44336'">
+          Cerrar
         </button>
       </div>
     </div>
-    
-    <div style="text-align: right; margin-top: 20px;">
-      <button 
-        class="save-btn" 
-        (click)="cerrarDetallesModal()"
-        [style.background-color]="detallesEvaluacion.estado === 'aprobado' ? '#4caf50' : '#f44336'">
-        Cerrar
-      </button>
-    </div>
   </div>
-</div>
 
 </body>
 </html>
