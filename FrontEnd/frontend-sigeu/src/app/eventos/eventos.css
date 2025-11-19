@@ -118,10 +118,17 @@ header {
 }
 
 .add-btn {
-  background-color: #fff;
+  background: #2a6df4;
+  color: white;
   border: none;
-  font-size: 1.5rem;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  font-size: 22px;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   transition: transform 0.2s ease;
 }
 
@@ -361,7 +368,7 @@ header {
 
 .save-btn:hover {
   background-color: #e45a5a;
-}
+  }
 
 /* ===== ESTILOS PARA MENSAJES DE VALIDACIÓN ===== */
 .mensaje-registro {
@@ -460,6 +467,7 @@ input[type="file"]::file-selector-button:hover {
 .modal-content::-webkit-scrollbar-thumb:hover {
   background: #555;
 }
+
 .existing-file-info {
   margin-top: 5px;
   padding: 5px;
@@ -504,34 +512,67 @@ input[type="file"]::file-selector-button:hover {
   font-weight: bold;
 }
 
-.small-btne {
-  background-color: rgb(31, 49, 49);
-  color:#e3f2f7;
-}
-.small-btne:hover {
-  transform: translateY(-3px);
-  background: linear-gradient(180deg, #526a8a, rgb(31, 49, 49));
+/* ===== BOTONES DE ACCIÓN EN TABLA ===== */
+.small-btne,
+.small-btned,
+.small-btnen,
+.small-btn-detalles {
+  padding: 6px 10px;
+  font-size: 0.8rem;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
 }
 
-.small-btned{
-  background-color:rgb(6, 151, 161);
+.small-btne {
+  background-color: rgb(31, 49, 49);
+  color: #e3f2f7;
+}
+
+.small-btne:hover {
+  transform: translateY(-2px);
+  background: linear-gradient(180deg, #526a8a, rgb(31, 49, 49));
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.small-btned {
+  background-color: rgb(6, 151, 161);
   border-color: cadetblue;
   color: #e3f2f7;
 }
+
 .small-btned:hover {
-  transform: translateY(-3px);
+  transform: translateY(-2px);
   background: linear-gradient(180deg, #b4c0c2, rgb(6, 151, 161));
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
 }
-.small-btnen{
-  background-color:rgb(216, 81, 81);
+
+.small-btnen {
+  background-color: rgb(216, 81, 81);
   border-color: rgb(196, 116, 116);
   color: #e3f2f7;
 }
+
 .small-btnen:hover {
-  transform: translateY(-3px);
-  background: linear-gradient(180deg, #c2b4b4,rgb(216, 81, 81));
+  transform: translateY(-2px);
+  background: linear-gradient(180deg, #c2b4b4, rgb(216, 81, 81));
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
 }
 
+.small-btn-detalles {
+  background-color: #6c63ff;
+  color: white;
+}
+
+.small-btn-detalles:hover {
+  background-color: #5349e6;
+  transform: translateY(-2px);
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+/* ===== FILTROS ===== */
 .filter-container {
   display: flex;
   align-items: center;
@@ -571,26 +612,6 @@ input[type="file"]::file-selector-button:hover {
   outline: none;
 }
 
-.add-btn {
-  background: #2a6df4;
-  color: white;
-  border: none;
-  border-radius: 50%;
-  width: 36px;
-  height: 36px;
-  font-size: 22px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;  
-}
-
-.filter-container {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
 .btn-filtrar {
   background-color: #ebb1eb;
   color: white;
@@ -607,7 +628,7 @@ input[type="file"]::file-selector-button:hover {
   background-color: #9e00b3;
 }
 
-.btn-limpiar{
+.btn-limpiar {
   background-color: #eecbee;
   color: white;
   border: none;
@@ -618,7 +639,7 @@ input[type="file"]::file-selector-button:hover {
   transition: background-color 0.2s;
 }
 
-.btn-limpiar:hover{
+.btn-limpiar:hover {
   background-color: #9e00b3;
 }
 
@@ -649,23 +670,7 @@ input[type="file"]::file-selector-button:hover {
   line-height: 1.5;
 }
 
-.small-btn-detalles {
-  background-color: #6c63ff;
-  color: white;
-  border: none;
-  border-radius: 5px;
-  padding: 5px 12px;
-  font-size: 0.85rem;
-  cursor: pointer;
-  transition: background-color 0.2s, transform 0.2s;
-  margin-top: 5px;
-}
-
-.small-btn-detalles:hover {
-  background-color: #5349e6;
-  transform: translateY(-2px);
-}
-/* Estilos para indicadores de estado */
+/* ===== ESTILOS PARA INDICADORES DE ESTADO ===== */
 .estado-badge {
   display: inline-block;
   padding: 4px 10px;
