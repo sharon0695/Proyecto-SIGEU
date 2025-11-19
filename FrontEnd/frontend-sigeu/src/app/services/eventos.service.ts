@@ -56,13 +56,9 @@ export interface ReservacionDTO {
 
 @Injectable({ providedIn: 'root' })
 export class EventosService {
-  url: any;
-  obtenerDetallesEvaluacion(codigo: number): Observable<any> {
-    return this.http.get(`${this.url}/detalles-evaluacion/${codigo}`);
-  }
-  
   private baseUrl = buildApiUrl(API_PATHS.eventos);
   private baseArcUrl = 'http://localhost:8080/archivos';
+  
   constructor(private http: HttpClient) {}
 
   listar(idUsuario: number): Observable<any> {
@@ -83,6 +79,15 @@ export class EventosService {
 
   obtenerParaEdicion(codigo: number): Observable<any> {
     return this.http.get(`${this.baseUrl}/edicion/${codigo}`);
+  }
+
+  /**
+   * 🔴 MÉTODO AGREGADO: Obtener detalles de evaluación
+   * Este método llama al endpoint que retorna la evaluación (aprobación/rechazo)
+   */
+  obtenerDetallesEvaluacion(codigo: number): Observable<any> {
+    console.log(`📡 Llamando a /eventos/detalles-evaluacion/${codigo}`);
+    return this.http.get(`${this.baseUrl}/detalles-evaluacion/${codigo}`);
   }
 
   getFileViewUrl(folder: string, rutaRelativa: string): string {
@@ -106,5 +111,4 @@ export class EventosService {
   enviarEvento(codigo: number): Observable<any> {
     return this.http.put(`${this.baseUrl}/enviar/${codigo}`, {}); 
   }
-
 }
