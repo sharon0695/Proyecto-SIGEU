@@ -6,5 +6,5 @@ import java.util.List;
 
 public interface IEvaluacionRepository extends JpaRepository<EvaluacionModel, Long>{
     List<EvaluacionModel> findByDecision(String decision);
-    List<EvaluacionModel> findByCodigoEvento_Codigo(Integer codigoEvento);
+    List<EvaluacionModel> findByCodigoEvento_Codigo(Integer codigoEvento); // ← Esta línea debe existir
 }
