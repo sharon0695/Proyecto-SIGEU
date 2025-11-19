@@ -67,7 +67,6 @@ export class EvaluarEventos implements OnInit {
   private cargarEventosPendientes() {
     const idSecretaria = this.authService.getUserId();
     
-    // 🔴 VALIDACIÓN CRÍTICA: Verificar que el ID exista
     if (!idSecretaria) {
       console.error("❌ ID de secretaria no encontrado en el almacenamiento local");
       this.showMessage('error', 'Error de sesión', 'No se pudo obtener el ID de usuario. Por favor, cierre sesión y vuelva a iniciar.');
@@ -81,7 +80,6 @@ export class EvaluarEventos implements OnInit {
       next: (data) => {
         console.log("📦 Datos recibidos del backend:", data);
         
-        // 🔴 VALIDACIÓN: Verificar que data sea un array
         if (!Array.isArray(data)) {
           console.error("❌ La respuesta del backend no es un array:", data);
           this.showMessage('error', 'Error de datos', 'La respuesta del servidor tiene un formato inesperado');
@@ -89,9 +87,8 @@ export class EvaluarEventos implements OnInit {
           return;
         }
 
-        // 🟢 MAPEO CORREGIDO: Usar el nombre correcto del campo
         this.eventos = data.map((e: any) => {
-          console.log("🔍 Evento individual:", e); // Debug individual
+          console.log("🔍 Evento individual:", e);
           
           return {
             codigo: e.codigo,
@@ -102,7 +99,6 @@ export class EvaluarEventos implements OnInit {
             hora_inicio: e.hora_inicio,
             hora_fin: e.hora_fin,
             estado: e.estado,
-            // 🔴 CORRECCIÓN: Usar 'organizadorNombre' que es lo que retorna el backend
             organizador: e.organizadorNombre || 'No asignado'
           };
         });
@@ -116,7 +112,6 @@ export class EvaluarEventos implements OnInit {
       error: (err) => {
         console.error("❌ Error al cargar eventos:", err);
         
-        // Mostrar mensaje específico según el error
         let mensajeError = 'No se pudieron cargar los eventos pendientes';
         
         if (err.status === 404) {
@@ -135,7 +130,6 @@ export class EvaluarEventos implements OnInit {
     });
   }
 
-  // Métodos para el modal de mensajes
   showMessage(type: 'success' | 'error', title: string, message: string) {
     this.messageType = type;
     this.messageTitle = title;
@@ -217,7 +211,6 @@ export class EvaluarEventos implements OnInit {
       return;
     }
 
-    // Validar observaciones obligatorias para rechazo
     if (this.decision === 'rechazado' && (!this.observaciones || !this.observaciones.trim())) {
       this.showMessage('error', 'Error en evaluación', 'Las observaciones son obligatorias para rechazar un evento');     
       return;
@@ -241,7 +234,6 @@ export class EvaluarEventos implements OnInit {
       observaciones: this.observaciones
     });
 
-    // Crear FormData
     const formData = new FormData();
     formData.append('decision', this.decision);
     formData.append('idSecretaria', idSecretaria.toString());
@@ -254,7 +246,6 @@ export class EvaluarEventos implements OnInit {
       formData.append('actaComite', this.actaComite, this.actaComite.name);
     }
 
-    // Llamar al servicio apropiado
     const accion$ = this.decision === 'aprobado'
       ? this.evaluacionService.aprobar(this.eventoSeleccionado.codigo.toString(), formData)
       : this.evaluacionService.rechazar(this.eventoSeleccionado.codigo.toString(), formData);
@@ -263,10 +254,8 @@ export class EvaluarEventos implements OnInit {
       next: (resp) => {
         console.log("✅ Evaluación exitosa:", resp);
         
-        // Eliminar de la lista local
         this.eventos = this.eventos.filter(e => e.codigo !== this.eventoSeleccionado.codigo);
         
-        // Mensaje de éxito
         this.showMessage('success', '¡Evaluación Exitosa!', resp?.mensaje || 'El evento ha sido evaluado exitosamente');
         this.cerrarModalEvaluacion();
       },

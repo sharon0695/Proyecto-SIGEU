@@ -656,7 +656,7 @@ export class Eventos {
 
   onSubmitOrgInline(event: Event) {
     event.preventDefault();
-    const idUsuario = this.auth.getUserId(); 
+    const idUsuario = this.auth.getUserId();
     if (!idUsuario) { 
       this.showMessage('error', 'Error de Sesión', 'Debes iniciar sesión'); 
       return; 
@@ -844,28 +844,25 @@ export class Eventos {
     });
   }
 
-  // Método para abrir el modal de detalles de evaluación
   abrirDetallesEvaluacion(codigo: number) {
+    console.log("👁️ Abriendo detalles de evaluación para evento:", codigo);
+    
     this.eventosService.obtenerDetallesEvaluacion(codigo).subscribe({
       next: (detalles: any) => {
-        // Guarda los detalles recibidos del backend
+        console.log("✅ Detalles recibidos:", detalles);
         this.detallesEvaluacion = detalles;
-        
-        // Muestra el modal
         this.showDetallesModal = true;
       },
-      error: (err: { error: { mensaje: string; }; }) => {
+      error: (err: any) => {
+        console.error("❌ Error al cargar detalles:", err);
         const mensaje = err?.error?.mensaje || 'No se pudieron cargar los detalles de evaluación';
         this.showMessage('error', 'Error al cargar detalles', mensaje);
       }
     });
   }
 
-  // Método para cerrar el modal
   cerrarDetallesModal() {
     this.showDetallesModal = false;
-    
-    // Limpia los datos del modal
     this.detallesEvaluacion = {
       estado: '',
       nombre: '',
@@ -876,16 +873,55 @@ export class Eventos {
     };
   }
 
-  // Método para descargar el acta del comité (si existe)
-  descargarActaComite() {
-    if (this.detallesEvaluacion.actaComite) {
-      // Construye la URL para descargar el archivo
-      const url = this.eventosService.getFileDownloadUrl('acta', this.detallesEvaluacion.actaComite);
-      
-      // Abre el archivo en una nueva pestaña
-      window.open(url, '_blank');
-    } else {
+  verActaComite() {
+    console.log("👁️ Intentando ver acta:", this.detallesEvaluacion.actaComite);
+    
+    if (!this.detallesEvaluacion.actaComite) {
       this.showMessage('error', 'Sin acta', 'No hay acta disponible para este evento');
+      return;
+    }
+
+    try {
+      const url = this.eventosService.getActaViewUrl(this.detallesEvaluacion.actaComite);
+      
+      console.log("🔗 URL generada para ver:", url);
+      
+      if (!url) {
+        this.showMessage('error', 'Error', 'No se pudo generar la URL del acta');
+        return;
+      }
+      
+      window.open(url, '_blank');
+      
+    } catch (error) {
+      console.error("❌ Error al intentar ver acta:", error);
+      this.showMessage('error', 'Error', 'Ocurrió un error al intentar acceder al acta');
+    }
+  }
+
+  descargarActaComite() {
+    console.log("📥 Intentando descargar acta:", this.detallesEvaluacion.actaComite);
+    
+    if (!this.detallesEvaluacion.actaComite) {
+      this.showMessage('error', 'Sin acta', 'No hay acta disponible para este evento');
+      return;
+    }
+
+    try {
+      const url = this.eventosService.getActaDownloadUrl(this.detallesEvaluacion.actaComite);
+      
+      console.log("🔗 URL generada:", url);
+      
+      if (!url) {
+        this.showMessage('error', 'Error', 'No se pudo generar la URL del acta');
+        return;
+      }
+      
+      window.open(url, '_blank');
+      
+    } catch (error) {
+      console.error("❌ Error al intentar descargar acta:", error);
+      this.showMessage('error', 'Error', 'Ocurrió un error al intentar acceder al acta');
     }
   }
 }

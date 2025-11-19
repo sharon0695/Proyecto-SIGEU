@@ -81,12 +81,8 @@ export class EventosService {
     return this.http.get(`${this.baseUrl}/edicion/${codigo}`);
   }
 
-  /**
-   * 🔴 MÉTODO AGREGADO: Obtener detalles de evaluación
-   * Este método llama al endpoint que retorna la evaluación (aprobación/rechazo)
-   */
   obtenerDetallesEvaluacion(codigo: number): Observable<any> {
-    console.log(`📡 Llamando a /eventos/detalles-evaluacion/${codigo}`);
+    console.log(`📡 [EventosService] Llamando a GET /eventos/detalles-evaluacion/${codigo}`);
     return this.http.get(`${this.baseUrl}/detalles-evaluacion/${codigo}`);
   }
 
@@ -102,6 +98,22 @@ export class EventosService {
     const evento = parts[1];
     const filename = parts[2];
     return `${this.baseArcUrl}/download/${folder}/${evento}/${filename}`;
+  }
+
+  getActaViewUrl(rutaRelativa: string): string {
+    if (!rutaRelativa) return '';
+    const partes = rutaRelativa.split('/');
+    const evento = partes[1]; 
+    const filename = partes[2];
+    return `${this.baseArcUrl}/view/acta/${evento}/${filename}`;
+  }
+
+  getActaDownloadUrl(rutaRelativa: string): string {
+    if (!rutaRelativa) return '';
+    const partes = rutaRelativa.split('/');
+    const evento = partes[1];
+    const filename = partes[2];
+    return `${this.baseArcUrl}/download/acta/${evento}/${filename}`;
   }
 
   eliminarEvento(codigo: number): Observable<any> {

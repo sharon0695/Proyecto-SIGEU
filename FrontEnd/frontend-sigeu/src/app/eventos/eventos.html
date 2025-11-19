@@ -396,16 +396,28 @@
         <div class="detalle-item" *ngIf="detallesEvaluacion.estado === 'aprobado'">
           <strong>Mensaje:</strong>
           <p style="background-color: #e8f5e9; padding: 10px; border-radius: 6px; color: #2e7d32;">
-            Su evento ha sido aprobado exitosamente por la Secretaría Académica. 
+            Su evento ha sido aprobado exitosamente por la Secretaría
+            Académica. 
             Puede proceder con la organización del mismo según la fecha programada.
           </p>
         </div>
         
         <div class="detalle-item" *ngIf="detallesEvaluacion.actaComite && detallesEvaluacion.estado === 'aprobado'">
           <strong>Acta del comité:</strong>
-          <button class="small-btn" (click)="descargarActaComite()" style="margin-top: 5px;">
-            📄 Descargar Acta
-          </button>
+          <div style="display: flex; gap: 10px; margin-top: 10px;">
+            <button 
+              class="small-btn" 
+              (click)="verActaComite()" 
+              style="background-color: #2196f3; color: white;">
+              👁️ Ver Acta
+            </button>
+            <button 
+              class="small-btn" 
+              (click)="descargarActaComite()" 
+              style="background-color: #4caf50; color: white;">
+              📥 Descargar Acta
+            </button>
+          </div>
         </div>
       </div>
       
