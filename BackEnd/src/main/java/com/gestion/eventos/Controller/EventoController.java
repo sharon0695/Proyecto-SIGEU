@@ -82,7 +82,8 @@ public class EventoController {
     public ResponseEntity<Map<String, Object>> obtenerDetallesEvaluacion(@PathVariable Integer codigo) {
         Map<String, Object> detalles = eventoService.obtenerDetallesEvaluacion(codigo);
         return ResponseEntity.ok(detalles);
-    }
+    } 
+    
 }
 
 
