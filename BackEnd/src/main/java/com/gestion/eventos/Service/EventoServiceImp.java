@@ -32,6 +32,7 @@ import com.gestion.eventos.Repository.IOrganizacionRepository;
 import com.gestion.eventos.Repository.IReservacionRepository;
 import com.gestion.eventos.Repository.IResponsableEventoRepository;
 import com.gestion.eventos.Repository.IUsuarioRepository;
+import com.gestion.eventos.Repository.IEvaluacionRepository;
 
 @Service
 public class EventoServiceImp implements IEventoService {
@@ -45,7 +46,6 @@ public class EventoServiceImp implements IEventoService {
     @Autowired private IUsuarioRepository usuarioRepository;
     @Autowired private FileStorageService fileStorageService;
     @Autowired private INotificacionRepository notificacionRepository;
-
 
     @Override
     @Transactional
@@ -1073,39 +1073,46 @@ public class EventoServiceImp implements IEventoService {
     public List<EventoModel> listarPorUsuario(Integer idUsuario) {
         return eventoRepository.findByIdUsuarioRegistra(idUsuario);
     }
+    @Autowired 
+    private IEvaluacionRepository evaluacionRepository;
+
     @Override
-    public Map<String, Object> obtenerDetallesEvaluacion(Integer codigoEvento) {
-        EventoModel evento = eventoRepository.findById(codigoEvento)
-        .orElseThrow(() -> new RuntimeException("Evento no encontrado"));
-    
-        Map<String, Object> detalles = new HashMap<>();
-        detalles.put("estado", evento.getEstado().name());
-        detalles.put("nombre", evento.getNombre());
-    
+    public Map<String, Object> obtenerDetallesEvaluacion(Integer codigo) {
+        // Buscar el evento
+        EventoModel evento = eventoRepository.findById(codigo)
+            .orElseThrow(() -> new RuntimeException("Evento no encontrado"));
+
+            Map<String, Object> detalles = new HashMap<>();
+            detalles.put("estado", evento.getEstado().name());
+            detalles.put("nombre", evento.getNombre());
+
         // Buscar la evaluación más reciente del evento
-        List<EvaluacionModel> evaluaciones = IEspacioRepository.findByCodigoEvento_Codigo(codigoEvento);
-    
-            if (!evaluaciones.isEmpty()) {
-                // Obtener la evaluación más reciente
-                EvaluacionModel evaluacion = evaluaciones.get(evaluaciones.size() - 1);
-        
+        List<EvaluacionModel> evaluaciones = evaluacionRepository.findByCodigoEvento_Codigo(codigo);
+
+        if (!evaluaciones.isEmpty()) {
+            // Obtener la evaluación más reciente (última en la lista)
+            EvaluacionModel evaluacion = evaluaciones.get(evaluaciones.size() - 1);
+
                 detalles.put("decision", evaluacion.getDecision());
                 detalles.put("observaciones", evaluacion.getObservaciones());
                 detalles.put("actaComite", evaluacion.getActa_comite());
-        
-                // Obtener nombre de la secretaria que evaluó
-                if (evaluacion.getIdSecreAcad() != null) {
-                    String nombreSecretaria = evaluacion.getIdSecreAcad().getNombre() + " " + 
-                                     evaluacion.getIdSecreAcad().getApellido();
-                                     detalles.put("evaluadoPor", nombreSecretaria);
-                }
+
+            // Obtener nombre de la secretaria que evaluó
+            if (evaluacion.getIdSecreAcad() != null) {
+                String nombreSecretaria = evaluacion.getIdSecreAcad().getNombre() + " " + 
+                             evaluacion.getIdSecreAcad().getApellido();
+                detalles.put("evaluadoPor", nombreSecretaria);
             } else {
-                detalles.put("decision", null);
-                detalles.put("observaciones", "No hay observaciones disponibles");
-                detalles.put("actaComite", null);
-                detalles.put("evaluadoPor", "No evaluado");
+                detalles.put("evaluadoPor", "No disponible");
             }
-    
+        }  else {
+            // No hay evaluación todavía
+            detalles.put("decision", null);
+            detalles.put("observaciones", "No hay observaciones disponibles");
+            detalles.put("actaComite", null);
+            detalles.put("evaluadoPor", "No evaluado");
+        }
+
         return detalles;
     }
 
@@ -1174,4 +1181,5 @@ public class EventoServiceImp implements IEventoService {
         eventoRepository.delete(evento);
         System.out.println("✓ Evento " + codigo + " eliminado de la base de datos.");
     }
+ 
 }
