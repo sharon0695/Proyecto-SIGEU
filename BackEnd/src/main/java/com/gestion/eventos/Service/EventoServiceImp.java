@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.gestion.eventos.DTO.EventoCompletoResponse;
 import com.gestion.eventos.DTO.EventoEdicionCompleto;
+import com.gestion.eventos.DTO.EventoPublicoDTO;
 import com.gestion.eventos.DTO.EventoRegistroCompleto;
 import com.gestion.eventos.Model.ColaboracionModel;
 import com.gestion.eventos.Model.EspacioModel;
@@ -1073,6 +1074,43 @@ public class EventoServiceImp implements IEventoService {
     public List<EventoModel> listarPorUsuario(Integer idUsuario) {
         return eventoRepository.findByIdUsuarioRegistra(idUsuario);
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<EventoPublicoDTO> listarEventosPublicados() {
+
+        List<EventoModel> eventos = eventoRepository.findByEstado(EventoModel.estado.aprobado);
+
+        return eventos.stream().map(evento -> {
+
+            EventoPublicoDTO dto = new EventoPublicoDTO();
+            dto.setCodigo(evento.getCodigo());
+            dto.setNombre(evento.getNombre());
+            dto.setDescripcion(evento.getDescripcion());
+            dto.setTipo(evento.getTipo());
+            dto.setFecha(evento.getFecha());
+            dto.setHora_inicio(evento.getHora_inicio());
+            dto.setHora_fin(evento.getHora_fin());
+
+            List<ReservacionModel> reservaciones =
+                    reservacionRepository.findAllByCodigoEvento_Codigo(evento.getCodigo());
+
+            List<EventoPublicoDTO.EspacioDTO> espaciosDto =
+                    reservaciones.stream().map(res -> {
+                        EventoPublicoDTO.EspacioDTO esp = new EventoPublicoDTO.EspacioDTO();
+                        esp.setNombreEspacio(res.getCodigo_espacio().getNombre());
+                        esp.setHoraInicio(res.getHora_inicio());
+                        esp.setHoraFin(res.getHora_fin());
+                        return esp;
+                    }).toList();
+
+            dto.setEspacios(espaciosDto);
+
+            return dto;
+
+        }).toList();
+    }
+
     @Autowired 
     private IEvaluacionRepository evaluacionRepository;
 

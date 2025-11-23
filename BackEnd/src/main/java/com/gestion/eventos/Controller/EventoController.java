@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.gestion.eventos.DTO.EventoCompletoResponse;
 import com.gestion.eventos.DTO.EventoEdicionCompleto;
+import com.gestion.eventos.DTO.EventoPublicoDTO;
 import com.gestion.eventos.DTO.EventoRegistroCompleto;
 import com.gestion.eventos.DTO.EventoRegistroResponse;
 import com.gestion.eventos.Model.EventoModel;
@@ -45,6 +46,12 @@ public class EventoController {
         List<EventoModel> eventos = eventoService.listarPorUsuario(idUsuario);
         return ResponseEntity.ok(eventos);
     }
+
+    @GetMapping("/publicados")
+    public ResponseEntity<List<EventoPublicoDTO>> listarPublicados() {
+        return ResponseEntity.ok(eventoService.listarEventosPublicados());
+    }
+
     @PutMapping(value = "/editar", consumes = "multipart/form-data")
     public ResponseEntity<?> editarEvento(@ModelAttribute EventoEdicionCompleto request) {
             EventoModel eventoEditado = eventoService.editarEventoCompleto(request);

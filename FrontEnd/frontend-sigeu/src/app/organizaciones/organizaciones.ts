@@ -85,9 +85,7 @@ export class Organizaciones {
   }
 
   private containsInvalidChars(text: string): boolean {
-    // Expresión Regular: Permite letras (a-z, A-Z), números (0-9), espacios, guiones (-) y puntos (.).
-    // Esto es un estándar común para nombres y documentos.
-    const regex = /[^a-zA-Z0-9\s\.\-]/; 
+    const regex = /[^a-zA-Z0-9\sáéíóúÁÉÍÓÚ\.\-]/;
     return regex.test(text);
   }
   
@@ -104,8 +102,10 @@ export class Organizaciones {
   }
 
   registrarNueva(org: any) {
+    this.editMode = false;     
     const idUsuario = this.auth.getUserId();
     if (!idUsuario) { this.mensaje = 'Debes iniciar sesión para registrar organizaciones'; return; }
+    this.openModal();   
     const body = { ...org, usuario: { identificacion: idUsuario } };
     this.orgs.registrar(body).subscribe({ next: () => this.listar(), error: () => (this.mensaje = 'No fue posible registrar la organización') });
   }  
@@ -127,25 +127,29 @@ export class Organizaciones {
       return;
     }
     
-    if (body.nombre.length > 30) {
-        this.showMessage('error', 'Longitud excedida', 'El Nombre de la Organización no puede exceder los 30 caracteres.');
+    if (body.nombre.length > 70) {
+        this.showMessage('error', 'Longitud excedida', 'El Nombre de la Organización no puede exceder los 70 caracteres.');
         return;
     }
-    if (body.representante_legal.length > 30) {
-        this.showMessage('error', 'Longitud excedida', 'El Representante Legal no puede exceder los 30 caracteres.');
+    if (body.representante_legal.length > 40) {
+        this.showMessage('error', 'Longitud excedida', 'El Representante Legal no puede exceder los 40 caracteres.');
         return;
     }
-    if (body.ubicacion.length > 40) {
-        this.showMessage('error', 'Longitud excedida', 'La Ubicación no puede exceder los 40 caracteres.');
+    if (body.ubicacion.length > 150) {
+        this.showMessage('error', 'Longitud excedida', 'La Ubicación no puede exceder los 150 caracteres.');
         return;
     }
-    if (body.sector_economico.length > 20) {
-        this.showMessage('error', 'Longitud excedida', 'El Sector Económico no puede exceder los 20 caracteres.');
+    if (body.telefono.length > 10) {
+        this.showMessage('error', 'Longitud excedida', 'El teléfono no puede exceder los 10 números.');
         return;
     }
-    if (body.actividad_principal.length > 100) { 
-        this.showMessage('error', 'Longitud excedida', 'La Descripción (Actividad Principal) no puede exceder los 100 caracteres.');
+    if (body.sector_economico.length > 30) {
+        this.showMessage('error', 'Longitud excedida', 'El Sector Económico no puede exceder los 30 caracteres.');
         return;
+    }
+    if (body.actividad_principal.length > 1000) { 
+        this.showMessage('error', 'Longitud excedida', 'La Actividad Principal no puede exceder los 1000 caracteres.');
+        return; 
     }
 
     // A. Validación de caracteres especiales
@@ -156,14 +160,8 @@ export class Organizaciones {
       return;
     }
 
-    // B. Validación de 9 caracteres del NIT (Manteniendo la restricción anterior)
-    if (!this.editMode && body.nit.length > 9) {
-      this.showMessage('error', 'NIT inválido', 'El NIT no puede tener más de 9 caracteres.');
-      return;
-    }
-
-    // Esta validación solo se aplica al crear (ya que en modo edición el NIT es readonly)
-    if (!this.editMode && body.nit.length > 9) {
+    // Validación de 9 caracteres del NIT (Manteniendo la restricción anterior)
+    if (!this.editMode && body.nit.length > 10) {
       this.showMessage('error', 'NIT inválido', 'El NIT no puede tener más de 9 caracteres.');
       return;
     }
@@ -179,6 +177,7 @@ export class Organizaciones {
           this.showMessage('success', '¡Éxito!', 'Organización actualizada correctamente');
           this.listar();
           this.showModal = false;
+          this.limpiar();
         },
         error: (err) => {
           this.showMessage('error', 'Error al Actualizar', err?.error?.mensaje || 'No se pudo actualizar la organización');
@@ -208,7 +207,9 @@ export class Organizaciones {
     }
   }
   openModal() { this.showModal = true; }
-  closeModal() { this.showModal = false; }
+  closeModal() { this.showModal = false; 
+    this.limpiar();
+  }
 
   // Métodos para el modal de mensajes
   showMessage(type: 'success' | 'error', title: string, message: string) {
@@ -253,6 +254,9 @@ export class Organizaciones {
 
   onVisualizar(org: any) { this.viewOrg = { ...org }; this.showViewModal = true; }
   closeViewModal() { this.showViewModal = false; this.viewOrg = null; this.editMode = false; this.originalNit = null;
+    this.limpiar();
+  }
+  limpiar(){
     this.newOrg = {
       nit: '',
       nombre: '',

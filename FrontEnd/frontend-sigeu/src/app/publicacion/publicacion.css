@@ -1,0 +1,158 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Poppins", sans-serif;
+}
+
+body {
+  background-color: #f8faff;
+  color: #333;
+}
+.contenedor-eventos {
+  margin: auto;
+  padding: 50px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 25px;
+}
+
+.card {
+  background: rgb(245, 239, 239);
+  border-radius: 10px;
+  gap: 30px;  
+  padding: 15px;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+}
+
+.card-header {
+  display: flex;
+  padding: 2px 12px;
+  border-radius: 10px;
+  background-color: #e4b0c5;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.tipo {
+  font-size: 13px;
+  padding: 3px 8px;
+  border-radius: 5px;
+  background: #ff4e8a;
+  color: white;
+}
+
+.descripcion {
+  color: #555;
+  margin: 10px 0;
+}
+
+.info {
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+
+.espacios ul {
+  padding-left: 18px;
+}
+
+.btn-detalle {
+  background: #c41459;
+  color: white;
+  padding: 8px 12px;
+  width: 100%;
+  border-radius: 5px;
+  border: none;
+  cursor: pointer;
+}
+
+.btn-detalle:hover {
+  background: #a3134d;
+}
+
+.mensaje {
+  text-align: center;
+  font-size: 18px;
+}
+
+.error {
+  color: red;
+}
+header {
+  width: 100%;
+  background-color: #f5f7ff;
+  border-bottom: 1px solid #e0e5f5;
+  padding: 15px 40px;
+}
+
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.nav-left {
+  display: flex;
+  align-items: center;
+  gap: 35px;
+}
+
+.nav-left a {
+  text-decoration: none;
+  color: #333;
+  font-size: 0.9rem;
+  transition: color 0.2s;
+}
+
+.nav-left a:hover {
+  color: #6c63ff;
+}
+
+.nav-left a.active {
+  background-color: #eec9c9;
+  padding: 3px 8px;
+  border-radius: 10px;
+  font-weight: 500;
+}
+
+/* ===== ICONOS ===== */
+.nav-icons {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.icon,
+.profile-pic {
+  font-size: 26px;
+  color: #333;
+  cursor: pointer;
+  transition: transform 0.2s ease, color 0.2s;
+}
+
+.icon:hover,
+.profile-pic:hover {
+  transform: scale(1.1);
+  color: #6c63ff;
+}
+.paginacion {
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+}
+
+button {
+  padding: 6px 14px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}

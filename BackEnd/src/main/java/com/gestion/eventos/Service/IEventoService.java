@@ -2,6 +2,7 @@ package com.gestion.eventos.Service;
 
 import com.gestion.eventos.DTO.EventoCompletoResponse;
 import com.gestion.eventos.DTO.EventoEdicionCompleto;
+import com.gestion.eventos.DTO.EventoPublicoDTO;
 import com.gestion.eventos.DTO.EventoRegistroCompleto;
 import com.gestion.eventos.Model.EventoModel;
 import java.util.List;
@@ -17,7 +18,7 @@ public interface IEventoService {
     EventoModel editarEventoCompleto(EventoEdicionCompleto request);
     EventoCompletoResponse obtenerEventoCompleto(Integer codigo);
     List<EventoModel> listarPorUsuario(Integer idUsuario);
+    List<EventoPublicoDTO> listarEventosPublicados();
     EventoModel enviarEventoAValidacion(Integer codigoEvento);
-    // Agregar esta línea en la interfaz IEventoService.java
     Map<String, Object> obtenerDetallesEvaluacion(Integer codigo);
 }

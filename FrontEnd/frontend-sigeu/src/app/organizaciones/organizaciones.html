@@ -16,6 +16,7 @@
         <a routerLink="/homeO">Inicio</a>
         <a routerLink="/eventos">Eventos</a>
         <a routerLink="/organizacionExt" class="active">Organizaciones</a>
+        <a routerLink="/publicaciones">Eventos Publicados</a>
       </div>
 
       <div class="nav-icons">
@@ -34,7 +35,7 @@
         <div class="search-container">
           <input type="text" placeholder="Nombre a buscar" id="searchInput" name="nombreBusqueda" [(ngModel)]="nombreBusqueda">
           <button class="add-btn" type="button" (click)="buscar()">Buscar</button>
-          <button class="add-btn" id="addOrgBtn" type="button" (click)="openModal()">+</button>          
+          <button class="add-btn" id="addOrgBtn" type="button" (click)="registrarNueva(newOrg)">+</button>          
         </div>
       </div>
 

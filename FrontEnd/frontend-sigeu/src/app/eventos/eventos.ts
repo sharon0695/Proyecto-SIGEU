@@ -8,7 +8,6 @@ import { OrganizacionesService } from '../services/organizaciones.service';
 import { Api } from '../services/usuarios.service';
 import { AuthService } from '../services/auth.service';
 import { Notificaciones } from '../notificaciones/notificaciones';
-import { Observable } from 'rxjs';
 
 @Component({
   selector: 'app-eventos',

@@ -73,6 +73,10 @@ export class EventosService {
     return this.http.put(`${this.baseUrl}/editar`, formData);
   }
 
+  listarEventosPublicados(): Observable<any> {
+    return this.http.get(`${this.baseUrl}/publicados`);
+  }
+
   obtenerDetalles(codigo: number): Observable<any> {
     return this.http.get(`${this.baseUrl}/${codigo}`);
   }
