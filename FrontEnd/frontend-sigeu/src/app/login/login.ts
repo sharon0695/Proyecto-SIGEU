@@ -29,9 +29,9 @@ export class Login {
           this.router.navigateByUrl('/homeO');
         }
       },
-      error: () => {
+      error: (err) => {
         this.esError = true;
-        this.mensaje = 'Credenciales inválidas';
+        this.mensaje = 'error' in err && err.error && err.error.mensaje ? err.error.mensaje : 'Error de autenticación. Por favor, verifica tus credenciales.';
       },
     });
   }

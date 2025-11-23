@@ -11,6 +11,7 @@ import { inject } from '@angular/core';
 import { HomeS } from './home-s/home-s';
 import { RoleGuard } from './guards/role-guard';
 import { EvaluarEventos } from './evaluar-eventos/evaluar-eventos';
+import { Publicacion } from './publicacion/publicacion';
 
 export const routes: Routes = [
   { path: '', component: Login},
@@ -23,5 +24,6 @@ export const routes: Routes = [
   { path: 'perfil', component: Perfil, canActivate: [() => !!inject(AuthService).isAuthenticated() || (location.href = '/login', false)]},
   { path: 'recuperar-contrasena', component: RecuperarContrasena},
   { path: 'evaluar-evento', component: EvaluarEventos, canActivate: [RoleGuard], data: { roles: ['secretaria_academica'] }},
+  { path: 'publicaciones', component: Publicacion, canActivate: [RoleGuard], data: { roles: ['docente', 'estudiante'] }},
   { path: '**', redirectTo: ''}
 ];

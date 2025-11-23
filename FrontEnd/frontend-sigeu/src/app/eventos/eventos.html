@@ -15,6 +15,7 @@
         <a routerLink="/homeO">Inicio</a>
         <a routerLink="/eventos" class="active">Eventos</a>
         <a routerLink="/organizacionExt">Organizaciones</a>
+        <a routerLink="/publicaciones">Eventos Publicados</a>
       </div>
 
       <div class="nav-icons">
@@ -137,7 +138,7 @@
                 
                 <!-- Botón Enviar Revisión: solo si está en estado "borrador" -->
                 <button 
-                  *ngIf="e.estado === 'borrador'" 
+                  *ngIf="e.estado === 'borrador' || e.estado === 'rechazado'" 
                   class="small-btnen" 
                   type="button" 
                   (click)="enviarEvento(e.codigo)"

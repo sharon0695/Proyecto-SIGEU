@@ -16,6 +16,7 @@
         <a *ngIf="rol && (rol.includes('estudiant') || rol.includes('docent'))" routerLink="/homeO">Inicio</a>
         <a *ngIf="rol && (rol.includes('estudiant') || rol.includes('docent'))" routerLink="/eventos">Eventos</a>
         <a *ngIf="rol && (rol.includes('docent') || rol.includes('estudiant'))" routerLink="/organizacionExt">Organizaciones</a>
+        <a *ngIf="rol && (rol.includes('docent') || rol.includes('estudiant'))" routerLink="/publicaciones">Eventos Publicados</a>
 
         <a *ngIf="rol && rol.includes('secret')" routerLink="/homeS">Inicio</a>
         <a *ngIf="rol && rol.includes('secret')" routerLink="/evaluar-evento">Evaluar eventos</a>

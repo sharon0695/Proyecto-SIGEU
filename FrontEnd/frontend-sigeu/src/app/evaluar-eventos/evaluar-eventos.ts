@@ -130,6 +130,20 @@ export class EvaluarEventos implements OnInit {
     });
   }
 
+  private contieneInyeccion(valor: string): boolean {
+    if (!valor) return false;
+
+    // Palabras o patrones comunes de inyección SQL o HTML
+    const patronesPeligrosos = [
+      /<script.*?>.*?<\/script>/i,  // scripts HTML
+      /<[^>]+>/,                    // etiquetas HTML
+      /['"`;]/,                     // comillas o punto y coma
+      /\b(SELECT|INSERT|UPDATE|DELETE|DROP|UNION|ALTER|CREATE|EXEC|--|#)\b/i // SQL
+    ];
+
+    return patronesPeligrosos.some((patron) => patron.test(valor));
+  }
+
   showMessage(type: 'success' | 'error', title: string, message: string) {
     this.messageType = type;
     this.messageTitle = title;
@@ -215,6 +229,22 @@ export class EvaluarEventos implements OnInit {
       this.showMessage('error', 'Error en evaluación', 'Las observaciones son obligatorias para rechazar un evento');     
       return;
     }
+
+    if (this.decision === 'rechazado' && (this.observaciones.trim().length < 10)) {
+      this.showMessage('error', 'Error en evaluación', 'Las observaciones deben tener una justificación mínima de 10 caracteres');     
+      return;
+    }
+
+    if (this.decision === 'rechazado'){
+    const campos = [
+      this.observaciones];
+
+    for (const i of campos){
+      if (this.contieneInyeccion(i)) {
+        this.showMessage('error', 'Error en evaluación', 'No se permiten scripts o comandos en los campos de texto.');
+        return;
+      }
+    }}
 
     if (this.decision === 'aprobado' && (!this.actaComite)){
       this.showMessage('error', 'Error en evaluación', 'El acta del comité es obligatoria para aprobar un evento');     

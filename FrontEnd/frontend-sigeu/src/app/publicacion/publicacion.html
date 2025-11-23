@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+  <title>Eventos Publicados</title>
+</head>
+<body>
+<header>
+    <nav class="navbar">
+      <div class="nav-left">
+        <a routerLink="/homeO">Inicio</a>
+        <a routerLink="/eventos" >Eventos</a>
+        <a routerLink="/organizacionExt">Organizaciones</a>
+        <a routerLink="/publicaciones" class="active">Eventos Publicados</a>
+      </div>
+
+      <div class="nav-icons">
+        <app-notificaciones></app-notificaciones>
+        <a routerLink="/perfil">
+        <span class="material-symbols-outlined profile-pic" id="perfil">account_circle</span></a>
+      </div>
+    </nav>
+  </header>
+<div class="contenedor-eventos">
+
+  <div class="grid">
+    <div class="card" *ngFor="let ev of eventosPaginados">
+
+      <h3>{{ ev.nombre }}</h3>
+      <span class="tipo">{{ ev.tipo }}</span>
+      <p>{{ ev.descripcion }}</p>
+
+      <div class="info">
+        <p>📅 {{ ev.fecha | date:'mediumDate' }}</p>
+        <p>⏰ {{ ev.hora_inicio }} - {{ ev.hora_fin }}</p>
+      </div>
+
+      <div class="espacios">
+        <strong>Espacios reservados:</strong>
+
+        <div *ngIf="ev.espacios?.length > 0; else sinEspacios">
+          <p *ngFor="let esp of ev.espacios">
+            ( {{ esp.nombreEspacio }} – {{ esp.horaInicio }} - {{ esp.horaFin }} )
+          </p>
+        </div>
+
+        <ng-template #sinEspacios>
+          <p>( - )</p>
+        </ng-template>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- PAGINADO -->
+  <div class="paginacion">
+
+    <button (click)="paginaAnterior()" [disabled]="paginaActual === 1">
+      ⬅ Anterior
+    </button>
+
+    <span>Página {{ paginaActual }} / {{ totalPaginas }}</span>
+
+    <button (click)="paginaSiguiente()" [disabled]="paginaActual === totalPaginas">
+      Siguiente ➡
+    </button>
+
+  </div>
+
+</div>
