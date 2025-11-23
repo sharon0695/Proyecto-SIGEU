@@ -1,7 +1,3 @@
-
-
-
-
 /*//////////////////////////////////////////////////////////////////
 [ FONT ]*/
 
@@ -206,7 +202,7 @@ iframe {
 /*------------------------------------------------------------------
 [  ]*/
 .login100-form {
-  width: 260px; /* reducido para campos más pequeños */
+  width: 260px;
 }
 
 .login100-form-title {
@@ -227,19 +223,22 @@ iframe {
   position: relative;
   width: 100%;
   z-index: 1;
-  margin-bottom: 10px;
+  margin-bottom: 20px; /* Aumentado para dar espacio al label */
+  padding-top: 12px; /* Espacio para el label arriba */
 }
 
-/* Posicionar label sobre el input para que no aumente la altura del contenedor */
+/* Label posicionado arriba del input, fuera del flujo del input */
 .label-input100 {
   position: absolute;
-  left: 56px; /* coincide con el padding-left del input */
-  top: -10px;
-  font-size: 12px;
+  left: 15px;
+  top: 0px; /* Posicionado en la parte superior del contenedor */
+  font-size: 11px;
   color: #666666;
-  background: #fff; /* cubrir el fondo del formulario */
+  background: #fff;
   padding: 0 6px;
-  pointer-events: none; /* no interfiere con el foco */
+  pointer-events: none;
+  z-index: 2;
+  font-family: Poppins-Medium;
 }
 
 .input100 {
@@ -251,9 +250,9 @@ iframe {
   display: block;
   width: 100%;
   background: #e6e6e6;
-  height: 40px; /* altura reducida */
-  border-radius: 20px; /* menos redondeo para proporción */
-  padding: 0 20px 0 56px; /* menos padding lateral */
+  height: 40px;
+  border-radius: 20px;
+  padding: 0 20px 0 56px;
 }
 
 
@@ -267,7 +266,7 @@ iframe {
   left: 0;
   z-index: -1;
   width: 100%;
-  height: 100%;
+  height: 40px; /* Ajustado a la altura del input */
   box-shadow: 0px 0px 0px 0px;
   color: rgba(87,184,70, 0.8);
 }
@@ -303,11 +302,10 @@ iframe {
   position: absolute;
   border-radius: 20px;
   left: 0;
-  top: 50%;
-  transform: translateY(-50%); /* centrar verticalmente con el input */
+  bottom: 0; /* Alineado con el input */
   width: 100%;
-  height: auto;
-  padding-left: 28px; /* ajustar para menor altura */
+  height: 40px; /* Altura igual al input */
+  padding-left: 28px;
   pointer-events: none;
   color: #666666;
 
@@ -344,7 +342,7 @@ iframe {
   text-transform: uppercase;
 
   width: 100%;
-  height: 40px; /* botón más compacto */
+  height: 40px;
   border-radius: 20px;
   background: #57b846;
   display: -webkit-box;
@@ -503,4 +501,23 @@ iframe {
     visibility: visible;
     opacity: 1;
   }
+}
+
+/* Estilos para mensaje de registro */
+.mensaje-registro {
+  margin-top: 15px;
+  text-align: center;
+  font-family: Poppins-Medium;
+  font-size: 14px;
+  padding: 10px;
+  border-radius: 5px;
+}
+
+/* Estilos adicionales para mejor espaciado */
+.text-center {
+  text-align: center;
+}
+
+.p-t-12 {
+  padding-top: 12px;
 }
